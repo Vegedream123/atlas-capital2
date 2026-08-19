@@ -438,6 +438,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     margin-bottom: 32px;
+    overflow: hidden;
 }
 
 .card-header {
@@ -715,7 +716,25 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
-    .chart-container { height: 250px; }
+    .chart-container { height: 220px; gap: 8px; }
+
+    /* Graphique "Évolution des Cumuls" : s'adapte à la largeur de l'écran au lieu de déborder */
+    .y-axis {
+        min-width: 30px;
+        font-size: 0.65rem;
+    }
+    .chart-area {
+        gap: 4px;
+    }
+    .bar-group {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+    }
+    .x-label {
+        font-size: 0.6rem;
+        bottom: -20px;
+    }
 
     /* Sous-onglets Finances : tous visibles sans scroll horizontal */
     .finances-subnav {
