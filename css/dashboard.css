@@ -378,8 +378,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 }
 
 .kpi-card.accent-border { border-top-color: var(--accent); }
-
-Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(--success); }
+.kpi-card.success-border { border-top-color: var(--success); }
 .kpi-card.primary-border { border-top-color: var(--primary); }
 .kpi-card.warning-border { border-top-color: var(--warning); }
 
@@ -439,8 +438,6 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     margin-bottom: 32px;
-    max-width: 100%;
-    overflow: hidden;
 }
 
 .card-header {
@@ -479,8 +476,6 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
     display: flex;
     height: 300px;
     gap: 16px;
-    width: 100%;
-    max-width: 100%;
 }
 
 .y-axis {
@@ -492,12 +487,10 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
     padding-bottom: 24px; /* Space for x-labels */
     text-align: right;
     min-width: 40px;
-    flex-shrink: 0;
 }
 
 .chart-area {
     flex: 1;
-    min-width: 0; /* allow shrinking below content size in flex context */
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -524,9 +517,7 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
     align-items: center;
     position: relative;
     z-index: 1;
-    flex: 1 1 0;
-    min-width: 0;
-    max-width: 30px;
+    width: 30px;
 }
 
 .bar {
@@ -673,6 +664,8 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
 .transaction-meta { text-align: right; }
 .transaction-amount { font-weight: 600; margin-top: 2px; }
 .transaction-date { font-size: 0.8125rem; color: var(--text-secondary); }
+
+/* Bottom Navigation (Mobile Only) */
 .bottom-nav {
     display: none;
     position: fixed;
@@ -722,19 +715,30 @@ Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(-
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
-    .chart-card { padding: 16px; }
-    .chart-container { height: 220px; gap: 8px; }
-    .y-axis { min-width: 32px; font-size: 0.65rem; }
-    .bar-group { max-width: 20px; }
-    .bar { border-radius: 2px 2px 0 0; }
-    .x-label { font-size: 0.6rem; }
-}
+    .chart-container { height: 250px; }
 
-@media (max-width: 380px) {
-    .chart-container { gap: 4px; }
-    .y-axis { min-width: 26px; font-size: 0.6rem; }
-    .bar-group { max-width: 14px; }
-    .x-label { font-size: 0.52rem; }
+    /* Sous-onglets Finances : tous visibles sans scroll horizontal */
+    .finances-subnav {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .subnav-btn {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    /* "Investissements Actifs" : empiler au lieu d'écraser sur 2 colonnes */
+    .active-invest-split {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .invest-list, .invest-analysis {
+        min-width: 0;
+    }
+    .mini-chart-placeholder {
+        width: 100%;
+        overflow: hidden;
+    }
 }
 
 /* ==========================================================================
