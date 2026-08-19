@@ -2,9 +2,11 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Connectez-vous ou créez votre compte Atlas Capital.">
     <meta name="author" content="Atlas Capital">
+    <meta name="theme-color" content="#0B1D3A">
+    <meta name="format-detection" content="telephone=no">
     <title>Connexion | Atlas Capital</title>
 
     <!-- Favicon -->
@@ -34,24 +36,45 @@
     <!-- Contenu Connexion / Inscription -->
     <main class="auth-page">
         <div class="auth-card">
-            <div class="auth-tabs">
-                <button type="button" class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
-                <button type="button" class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Inscription</button>
+
+            <!-- Onglets Connexion / Inscription -->
+            <div class="auth-tabs" role="tablist" aria-label="Authentification">
+                <button type="button" class="auth-tab active" id="tab-login" role="tab" aria-selected="true" aria-controls="login-modal" onclick="switchAuthTab('login')">Connexion</button>
+                <button type="button" class="auth-tab" id="tab-register" role="tab" aria-selected="false" aria-controls="register-modal" onclick="switchAuthTab('register')">Inscription</button>
             </div>
 
             <!-- Panneau Connexion -->
-            <div class="auth-panel active" id="login-modal">
+            <div class="auth-panel active" id="login-modal" role="tabpanel" aria-labelledby="tab-login">
                 <h2>Content de vous revoir</h2>
-                <form id="login-form">
+                <p>Accédez à votre espace Atlas Capital en toute sécurité.</p>
+
+                <form id="login-form" novalidate>
                     <div class="form-group">
                         <label for="login-email">Email</label>
-                        <input type="email" id="login-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                        <input
+                            type="email"
+                            id="login-email"
+                            class="form-control"
+                            placeholder="jean.dupont@email.com"
+                            autocomplete="email"
+                            inputmode="email"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            required
+                        >
                     </div>
                     <div class="form-group">
                         <label for="login-password">Mot de passe</label>
                         <div class="password-input">
-                            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('login-password')" aria-label="Afficher/Masquer">
+                            <input
+                                type="password"
+                                id="login-password"
+                                class="form-control"
+                                placeholder="••••••••"
+                                autocomplete="current-password"
+                                required
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('login-password')" aria-label="Afficher/Masquer le mot de passe">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             </button>
                         </div>
@@ -68,29 +91,62 @@
             </div>
 
             <!-- Panneau Inscription -->
-            <div class="auth-panel" id="register-modal">
+            <div class="auth-panel" id="register-modal" role="tabpanel" aria-labelledby="tab-register">
                 <h2>Créez votre compte</h2>
-                <form id="register-form">
+                <p>Rejoignez Atlas Capital et prenez le contrôle de vos investissements.</p>
+
+                <form id="register-form" novalidate>
                     <div class="form-group">
                         <label for="reg-name">Nom complet</label>
-                        <input type="text" id="reg-name" class="form-control" placeholder="Jean Dupont" required>
+                        <input
+                            type="text"
+                            id="reg-name"
+                            class="form-control"
+                            placeholder="Jean Dupont"
+                            autocomplete="name"
+                            required
+                        >
                     </div>
                     <div class="form-group">
                         <label for="reg-email">Email</label>
-                        <input type="email" id="reg-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                        <input
+                            type="email"
+                            id="reg-email"
+                            class="form-control"
+                            placeholder="jean.dupont@email.com"
+                            autocomplete="email"
+                            inputmode="email"
+                            autocapitalize="off"
+                            spellcheck="false"
+                            required
+                        >
                     </div>
                     <div class="form-group">
                         <label for="reg-password">Mot de passe</label>
                         <div class="password-input">
-                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('reg-password')" aria-label="Afficher/Masquer">
+                            <input
+                                type="password"
+                                id="reg-password"
+                                class="form-control"
+                                placeholder="••••••••"
+                                autocomplete="new-password"
+                                required
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('reg-password')" aria-label="Afficher/Masquer le mot de passe">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                             </button>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="reg-confirm">Confirmer le mot de passe</label>
-                        <input type="password" id="reg-confirm" class="form-control" placeholder="••••••••" required>
+                        <input
+                            type="password"
+                            id="reg-confirm"
+                            class="form-control"
+                            placeholder="••••••••"
+                            autocomplete="new-password"
+                            required
+                        >
                     </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="terms" required>
@@ -99,21 +155,23 @@
                     <button type="submit" class="btn btn-primary">Créer mon compte</button>
                 </form>
             </div>
+
         </div>
     </main>
 
     <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container"></div>
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
     <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
     <script>
         function switchAuthTab(tab) {
             const isLogin = tab === 'login';
             document.getElementById('tab-login').classList.toggle('active', isLogin);
+            document.getElementById('tab-login').setAttribute('aria-selected', isLogin);
             document.getElementById('tab-register').classList.toggle('active', !isLogin);
+            document.getElementById('tab-register').setAttribute('aria-selected', !isLogin);
             openModal(isLogin ? 'login-modal' : 'register-modal');
             closeModal(isLogin ? 'register-modal' : 'login-modal');
             document.body.style.overflow = '';
