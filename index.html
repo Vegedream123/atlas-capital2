@@ -1,0 +1,683 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Atlas Capital - Investissez intelligemment, construisez votre avenir. Plateforme d'investissement sécurisée et performante.">
+    <meta name="keywords" content="investissement, finance, bourse, IA, portefeuille, rendement">
+    <meta name="author" content="Atlas Capital">
+    <title>Atlas Capital | Investissez intelligemment</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233B82F6'/></svg>">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="container">
+            <a href="#" class="brand">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="m19 9-5 5-4-4-3 3"/>
+                </svg>
+                Atlas Capital
+            </a>
+            
+            <ul class="nav-links">
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                <li><a href="#tarifs">Tarifs</a></li>
+                <li><a href="#securite">Sécurité</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+            
+            <div class="nav-actions">
+                <button class="btn btn-outline" onclick="openModal('login-modal')">Connexion</button>
+                <button class="btn btn-primary" onclick="openModal('register-modal')">Commencer</button>
+            </div>
+            
+            <div class="burger" id="burger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="accueil">
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-content fade-in-left visible">
+                    <h1>Investissez intelligemment,<br>construisez votre avenir</h1>
+                    <p>Découvrez la plateforme d'investissement nouvelle génération. Simple, sécurisée et boostée par l'intelligence artificielle pour maximiser vos rendements.</p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-lg" onclick="openModal('register-modal')">Créer un compte</button>
+                        <a href="#fonctionnalites" class="btn btn-outline btn-lg">Découvrir</a>
+                    </div>
+                    <div class="hero-note">Aucun frais caché · Retrait à tout moment</div>
+                </div>
+                
+                <div class="hero-visual fade-in-right visible">
+                    <div class="stats-card">
+                        <div class="stats-card-header">
+                            <span class="stats-card-title">Portefeuille Actuel</span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gray-400)" stroke-width="2">
+                                <circle cx="12" cy="12" r="1"/>
+                                <circle cx="19" cy="12" r="1"/>
+                                <circle cx="5" cy="12" r="1"/>
+                            </svg>
+                        </div>
+                        <div class="stats-card-value">24 350 FCFA</div>
+                        <div class="stats-card-growth">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                            +12.5% rendement
+                        </div>
+                        <div class="chart-mockup">
+                            <div class="chart-bar" style="height: 40%"></div>
+                            <div class="chart-bar" style="height: 55%"></div>
+                            <div class="chart-bar" style="height: 45%"></div>
+                            <div class="chart-bar" style="height: 70%"></div>
+                            <div class="chart-bar" style="height: 60%"></div>
+                            <div class="chart-bar active" style="height: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <div class="container fade-in-up visible">
+        <div class="stats-bar">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" data-target="15000">15 000+</div>
+                    <div class="stat-label">Investisseurs actifs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="50">50 Millions FCFA+</div>
+                    <div class="stat-label">Volume géré</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="12.5">12.5%</div>
+                    <div class="stat-label">Rendement moyen</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-target="99.9">99.9%</div>
+                    <div class="stat-label">Disponibilité</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <section class="section-padding" id="fonctionnalites">
+        <div class="container">
+            <h2 class="fade-in-up">Tout ce dont vous avez besoin</h2>
+            <p class="section-subtitle fade-in-up">Une suite complète d'outils professionnels pour gérer et faire croître votre patrimoine en toute sérénité.</p>
+            
+            <div class="features-grid">
+                <!-- Feature 1 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                    </div>
+                    <h3>Portefeuille Diversifié</h3>
+                    <p>Accédez à une large gamme d'actifs : actions, ETF, cryptomonnaies et immobilier fractionné depuis une interface unique.</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <h3>Suivi en Temps Réel</h3>
+                    <p>Visualisez vos performances instantanément grâce à nos tableaux de bord dynamiques et nos alertes personnalisées.</p>
+                </div>
+                
+                <!-- Feature 3 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h3>Intelligence Artificielle</h3>
+                    <p>Nos algorithmes analysent les marchés 24/7 pour vous suggérer les meilleures opportunités d'investissement.</p>
+                </div>
+                
+                <!-- Feature 4 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <h3>Sécurité Maximale</h3>
+                    <p>Vos fonds sont protégés par les standards de sécurité bancaire les plus stricts et une authentification forte.</p>
+                </div>
+                
+                <!-- Feature 5 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                    </div>
+                    <h3>Support Expert 24/7</h3>
+                    <p>Une équipe dédiée d'experts financiers est à votre disposition pour vous accompagner dans vos stratégies.</p>
+                </div>
+                
+                <!-- Feature 6 -->
+                <div class="feature-card fade-in-up">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <h3>Optimisation Fiscale</h3>
+                    <p>Maximisez vos gains nets grâce à nos outils de déclaration automatisés et nos conseils en défiscalisation.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works -->
+    <section class="section-padding" style="background-color: var(--white);" id="comment-ca-marche">
+        <div class="container">
+            <h2 class="fade-in-up">Comment ça marche</h2>
+            <p class="section-subtitle fade-in-up">Démarrez votre parcours d'investisseur en quelques minutes, sans complexité.</p>
+            
+            <div class="steps-container">
+                <div class="step-card fade-in-up">
+                    <div class="step-number">01</div>
+                    <h3>Créez votre compte</h3>
+                    <p>Inscription en 2 minutes. Vérification d'identité rapide et entièrement sécurisée.</p>
+                </div>
+                <div class="step-card fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="step-number">02</div>
+                    <h3>Déposez vos fonds</h3>
+                    <p>Transfert sécurisé par virement bancaire ou carte de crédit. Zéro frais sur les dépôts.</p>
+                </div>
+                <div class="step-card fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="step-number">03</div>
+                    <h3>Investissez</h3>
+                    <p>Choisissez votre stratégie ou laissez notre IA construire le portefeuille idéal pour vos objectifs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Section -->
+    <section class="section-padding" id="securite">
+        <div class="container">
+            <div class="security-grid">
+                <div class="fade-in-left">
+                    <h2>Votre sécurité, notre priorité</h2>
+                    <p>Nous appliquons les normes de sécurité les plus strictes de l'industrie financière pour garantir la protection absolue de vos données et de vos actifs.</p>
+                    
+                    <ul class="security-list">
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Chiffrement AES-256 de bout en bout
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Authentification à deux facteurs (2FA)
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Conformité RGPD et AMF
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Fonds ségrégués chez des banques partenaires
+                        </li>
+                        <li>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Audits de sécurité trimestriels
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="security-visual fade-in-right">
+                    <div class="security-badges">
+                        <div class="security-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <div>Données Chiffrées</div>
+                        </div>
+                        <div class="security-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            <div>Paiements Sécurisés</div>
+                        </div>
+                        <div class="security-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            <div>Régulé AMF</div>
+                        </div>
+                        <div class="security-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                            </svg>
+                            <div>Fonds Garantis</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="section-padding" style="background-color: var(--white);" id="tarifs">
+        <div class="container">
+            <h2 class="fade-in-up">Choisissez votre plan</h2>
+            <p class="section-subtitle fade-in-up">Des tarifs transparents, adaptés à votre profil d'investisseur.</p>
+            
+            <div class="pricing-grid">
+                <!-- Starter -->
+                <div class="pricing-card fade-in-up">
+                    <div class="plan-name">Starter</div>
+                    <div class="plan-price">0 FCFA<span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Jusqu'à 50 000 FCFA d'investissement
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Portefeuille basique
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Suivi mensuel
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Support email
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            1 stratégie
+                        </li>
+                    </ul>
+                    <button class="btn btn-outline-dark" onclick="openModal('register-modal')">Commencer gratuitement</button>
+                </div>
+                
+                <!-- Pro -->
+                <div class="pricing-card popular fade-in-up" style="transition-delay: 0.1s;">
+                    <div class="popular-badge">Populaire</div>
+                    <div class="plan-name">Pro</div>
+                    <div class="plan-price">10 000 FCFA<span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Jusqu'à 500 000 FCFA
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Portefeuille avancé
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Suivi temps réel
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Support prioritaire
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            IA Advisory
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            5 stratégies
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Optimisation fiscale
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary" onclick="openModal('register-modal')">Essayer Pro</button>
+                </div>
+                
+                <!-- Premium -->
+                <div class="pricing-card fade-in-up" style="transition-delay: 0.2s;">
+                    <div class="plan-name">Premium</div>
+                    <div class="plan-price">25 000 FCFA<span>/mois</span></div>
+                    <ul class="plan-features">
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Investissement illimité
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Portefeuille premium
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Suivi temps réel
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Conseiller dédié
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            IA Advisory+
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Stratégies illimitées
+                        </li>
+                        <li>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Accès anticipé
+                        </li>
+                    </ul>
+                    <button class="btn btn-outline-dark" onclick="openModal('register-modal')">Contacter les ventes</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section-padding" id="faq">
+        <div class="container">
+            <h2 class="fade-in-up">Questions fréquentes</h2>
+            
+            <div class="faq-container fade-in-up">
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Quelles sont les conditions d'éligibilité pour investir avec Atlas Capital ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Atlas Capital s'adresse aux investisseurs particuliers comme aux institutionnels. L'ouverture d'un compte est possible à partir d'un premier versement de 5 000 FCFA. Votre profil investisseur (tolérance au risque et objectifs) doit cependant être validé par notre équipe de conformité (KYC/AML) avant la première transaction.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Comment Atlas Capital sécurise-t-il les actifs de ses clients ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>La sécurité de vos fonds est notre priorité absolue. Vos actifs sont détenus dans des comptes ségrégués auprès de banques dépositaires de premier plan (Tier-1). En cas de défaillance, vos fonds restent les vôtres et ne sont jamais mélangés avec le bilan d'Atlas Capital. Nous sommes audités régulièrement par des cabinets indépendants et régulés par les autorités financières.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Quelle est la structure des frais de gestion et de performance ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Nous appliquons une tarification totalement transparente. Les frais varient selon le plan choisi (Starter, Pro, Premium) allant de 0 à 25 000 FCFA/mois, incluant les frais de courtage et de gestion de portefeuille. Il n'y a aucun frais caché d'entrée ou de sortie sur la majorité de nos produits standards.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Quelle est la liquidité des investissements proposés ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>La liquidité dépend du plan choisi. Les portefeuilles liquides (fonds sécurisés ou marchés publics) permettent des retraits sous 2 à 3 jours ouvrés. Certains placements alternatifs ou à durée bloquée disposent de termes spécifiques (ex: 3, 6 ou 12 mois) que vous choisissez lors de votre souscription initiale.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Proposez-vous des stratégies d'investissement ESG ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Oui, Atlas Capital est profondément engagé en faveur de la finance durable. Nos filtres propriétaires intègrent des critères Environnementaux, Sociaux et de Gouvernance (ESG) à vos portefeuilles sur simple demande, vous permettant de faire croître votre patrimoine tout en ayant un impact positif.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <button class="faq-question">
+                        Comment fonctionne le reporting fiscal et réglementaire ?
+                        <svg class="faq-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                    <div class="faq-answer">
+                        <p>À la fin de chaque exercice, nous vous mettons à disposition un Imprimé Fiscal Unique (IFU) ou son équivalent local détaillé. Ce document, téléchargeable directement depuis votre espace "Portefeuille", pré-remplit les cases nécessaires pour faciliter grandement votre déclaration de revenus.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section class="section-padding newsletter-section" id="contact">
+        <div class="container fade-in-up">
+            <div class="newsletter-box">
+                <h2>Restez informé</h2>
+                <p>Recevez nos analyses de marché hebdomadaires et des conseils exclusifs pour optimiser vos investissements.</p>
+                <form class="newsletter-form" onsubmit="event.preventDefault(); showToast('Inscription réussie ! Vous recevrez bientôt notre newsletter.', 'success');">
+                    <input type="email" placeholder="Votre adresse email" required aria-label="Email pour la newsletter">
+                    <button type="submit" class="btn btn-primary">S'inscrire</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section-padding cta-section">
+        <div class="container fade-in-up">
+            <h2>Prêt à commencer ?</h2>
+            <p class="section-subtitle">Rejoignez plus de 15 000 investisseurs qui ont déjà choisi Atlas Capital pour construire leur avenir financier.</p>
+            <button class="btn btn-outline btn-lg" onclick="openModal('register-modal')">Créer mon compte gratuitement</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="brand">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3v18h18"/>
+                            <path d="m19 9-5 5-4-4-3 3"/>
+                        </svg>
+                        Atlas Capital
+                    </div>
+                    <p class="footer-desc">La plateforme d'investissement qui combine la puissance de l'IA et l'expertise humaine pour faire croître votre patrimoine.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="LinkedIn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                        </a>
+                        <a href="#" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5 2.8 12 3 12c.5.1 1.1.2 1.6.1-2.9-.6-3.1-4.3-3.1-4.3.5.3 1.1.5 1.7.5-1.9-1.3-2.2-4.5-1-6.5 2.4 3 6.9 4.8 11.2 5.2-.2-1.1-.1-2.2.5-3.1 1.2-1.5 3.5-1.8 5-1.2 1.1-.3 2.1-.9 2.9-1.5-.4 1.2-1.3 2-2.1 2.6 1-.1 1.9-.3 2.8-.7-.6 1.1-1.3 2-2.2 2.7z"></path></svg>
+                        </a>
+                        <a href="#" aria-label="Facebook">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                        </a>
+                        <a href="#" aria-label="Instagram">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4>Produit</h4>
+                    <ul class="footer-links">
+                        <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+                        <li><a href="#tarifs">Tarifs</a></li>
+                        <li><a href="#securite">Sécurité</a></li>
+                        <li><a href="#">API</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4>Entreprise</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">À propos</a></li>
+                        <li><a href="#">Carrières</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Presse</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4>Contact</h4>
+                    <ul class="contact-info">
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            contact@Atlas Capital.fr
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            +33 1 23 45 67 89
+                        </li>
+                        <li>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                            42 Avenue des Champs-Élysées, Paris
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <div>&copy; 2024 Atlas Capital. Tous droits réservés.</div>
+                <div class="footer-legal">
+                    <a href="#">Mentions légales</a>
+                    <a href="#">Politique de confidentialité</a>
+                    <a href="#">CGU</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('login-modal')" aria-label="Fermer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2>Content de vous revoir</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <div class="password-input">
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('login-password')" aria-label="Afficher/Masquer">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="remember-me">
+                        <label for="remember-me">Se souvenir de moi</label>
+                    </div>
+                    <a href="#">Mot de passe oublié ?</a>
+                </div>
+                <button type="submit" class="btn btn-primary">Se connecter</button>
+            </form>
+            <div class="modal-footer">
+                Pas encore de compte ? <a href="#" onclick="closeModal('login-modal'); setTimeout(() => openModal('register-modal'), 300);">Créer un compte</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="register-modal">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('register-modal')" aria-label="Fermer">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <h2>Créez votre compte</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="reg-name">Nom complet</label>
+                    <input type="text" id="reg-name" class="form-control" placeholder="Jean Dupont" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Mot de passe</label>
+                    <div class="password-input">
+                        <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('reg-password')" aria-label="Afficher/Masquer">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reg-confirm">Confirmer le mot de passe</label>
+                    <input type="password" id="reg-confirm" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terms" required>
+                    <label for="terms">J'accepte les conditions générales d'utilisation et la politique de confidentialité</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Créer mon compte</button>
+            </form>
+            <div class="modal-footer">
+                Déjà un compte ? <a href="#" onclick="closeModal('register-modal'); setTimeout(() => openModal('login-modal'), 300);">Se connecter</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
+
+
