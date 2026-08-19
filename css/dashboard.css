@@ -38,17 +38,12 @@
     --transition: all 0.3s ease;
 }
 
-html {
-    background-color: var(--gray-50);
-}
-
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--gray-50);
     color: var(--text-primary);
     line-height: 1.5;
     overflow-x: hidden;
-    overscroll-behavior-y: none;
 }
 
 a {
@@ -70,7 +65,6 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    min-height: 100dvh;
 }
 
 /* Top Navigation */
@@ -384,7 +378,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 }
 
 .kpi-card.accent-border { border-top-color: var(--accent); }
-.kpi-card.success-border { border-top-color: var(--success); }
+
+Voir les lignes du milieu du f.kpi-card.success-border { border-top-color: var(--success); }
 .kpi-card.primary-border { border-top-color: var(--primary); }
 .kpi-card.warning-border { border-top-color: var(--warning); }
 
@@ -444,6 +439,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     margin-bottom: 32px;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .card-header {
@@ -482,6 +479,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     display: flex;
     height: 300px;
     gap: 16px;
+    width: 100%;
+    max-width: 100%;
 }
 
 .y-axis {
@@ -493,10 +492,12 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     padding-bottom: 24px; /* Space for x-labels */
     text-align: right;
     min-width: 40px;
+    flex-shrink: 0;
 }
 
 .chart-area {
     flex: 1;
+    min-width: 0; /* allow shrinking below content size in flex context */
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
@@ -523,7 +524,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     align-items: center;
     position: relative;
     z-index: 1;
-    width: 30px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 30px;
 }
 
 .bar {
@@ -670,8 +673,6 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .transaction-meta { text-align: right; }
 .transaction-amount { font-weight: 600; margin-top: 2px; }
 .transaction-date { font-size: 0.8125rem; color: var(--text-secondary); }
-
-/* Bottom Navigation (Mobile Only) */
 .bottom-nav {
     display: none;
     position: fixed;
@@ -682,12 +683,6 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     border-top: 1px solid var(--gray-200);
     z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom);
-    /* Force sa propre couche GPU pour Ã©viter qu'elle ne disparaisse/clignote
-       pendant l'animation de la barre d'adresse sur Chrome Android */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: transform;
-    backface-visibility: hidden;
 }
 
 .bottom-nav-item {
@@ -727,7 +722,19 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
-    .chart-container { height: 250px; }
+    .chart-card { padding: 16px; }
+    .chart-container { height: 220px; gap: 8px; }
+    .y-axis { min-width: 32px; font-size: 0.65rem; }
+    .bar-group { max-width: 20px; }
+    .bar { border-radius: 2px 2px 0 0; }
+    .x-label { font-size: 0.6rem; }
+}
+
+@media (max-width: 380px) {
+    .chart-container { gap: 4px; }
+    .y-axis { min-width: 26px; font-size: 0.6rem; }
+    .bar-group { max-width: 14px; }
+    .x-label { font-size: 0.52rem; }
 }
 
 /* ==========================================================================
