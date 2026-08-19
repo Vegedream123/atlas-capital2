@@ -208,7 +208,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
-                        showToast('Connexion rÃ©ussie !', 'success');
+                        // Sauvegarde de la session pour dashboard.js
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userEmail', data.user.email);
+                        localStorage.setItem('userName', (data.user.user_metadata && data.user.user_metadata.full_name) || data.user.email);
+
+                        showToast('Connexion reussie !', 'success');
                         window.location.href = 'dashboard.html';
                     }
                 } catch (err) {
