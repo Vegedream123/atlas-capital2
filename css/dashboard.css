@@ -750,7 +750,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 @media (max-width: 640px) {
     .active-invest-split { grid-template-columns: 1fr; }
     .finances-subnav { gap: 4px; }
-    .subnav-btn { padding: 10px 4px; font-size: 0.8rem; }
+    .finances-subnav { gap: 8px; }
+    .subnav-btn { padding: 8px 4px; font-size: 0.72rem; }
     .finance-card { padding: 20px !important; }
     .finance-card .btn { white-space: normal; max-width: 100%; }
 }
@@ -875,11 +876,22 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .wallet-actions {
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.wallet-actions .btn {
+    flex: 1 1 140px;
 }
 
 @media (max-width: 768px) {
     .wallet-overview {
         grid-template-columns: 1fr;
+    }
+    .wallet-balance-card, .wallet-info-card {
+        padding: 20px;
+    }
+    .wallet-amount {
+        font-size: 2rem;
     }
 }
 
@@ -1049,6 +1061,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     text-align: center;
     white-space: normal;
     line-height: 1.3;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 .subnav-btn:hover {
