@@ -208,6 +208,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userEmail', data.user.email);
+                        localStorage.setItem('userName', data.user.user_metadata?.full_name || data.user.email);
                         showToast('Connexion réussie !', 'success');
                         window.location.href = 'dashboard.html';
                     }
