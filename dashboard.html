@@ -1,15 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Espace Client - Atlas Capital</title>
-    <meta name="description" content="GÃ©rez vos investissements avec Atlas Capital.">
+    <meta name="description" content="Gérez vos investissements avec Atlas Capital.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
-<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-layout">
@@ -24,7 +24,7 @@
                     </svg>
                     <span>Atlas Capital</span>
                 </div>
-                
+
                 <nav class="main-nav">
                     <a href="#" class="nav-link active" data-target="dashboard">Tableau de bord</a>
                     <a href="#" class="nav-link" data-target="finances">Finances</a>
@@ -44,16 +44,16 @@
                             <div class="notif-header">Centre de notifications</div>
                             <div class="notif-list">
                                 <div class="notif-item unread">
-                                    <div class="notif-title">DÃ©pÃ´t confirmÃ©</div>
-                                    <div class="notif-desc">Votre dÃ©pÃ´t de 50 000 FCFA a Ã©tÃ© reÃ§u et ajoutÃ© Ã  votre portefeuille.</div>
+                                    <div class="notif-title">Dépôt confirmé</div>
+                                    <div class="notif-desc">Votre dépôt de 50 000 FCFA a été reçu et ajouté à votre portefeuille.</div>
                                 </div>
                                 <div class="notif-item unread">
                                     <div class="notif-title">Nouveau produit disponible</div>
-                                    <div class="notif-desc">DÃ©couvrez le nouveau plan "Croissance Plus" dans l'onglet Investissements.</div>
+                                    <div class="notif-desc">Découvrez le nouveau plan "Croissance Plus" dans l'onglet Investissements.</div>
                                 </div>
                                 <div class="notif-item">
-                                    <div class="notif-title">QuÃªte journaliÃ¨re complÃ©tÃ©e</div>
-                                    <div class="notif-desc">Vous avez gagnÃ© 500 FCFA pour votre connexion consÃ©cutive !</div>
+                                    <div class="notif-title">Quête journalière complétée</div>
+                                    <div class="notif-desc">Vous avez gagné 500 FCFA pour votre connexion consécutive !</div>
                                 </div>
                             </div>
                         </div>
@@ -69,7 +69,7 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Vue d'ensemble</h1>
-                        <p class="page-subtitle">Bienvenue, <span class="user-name">Jean</span> ðŸ‘‹</p>
+                        <p class="page-subtitle">Bienvenue, <span class="user-name">Jean</span> 👋</p>
                     </div>
                     <div class="header-actions">
                         <button class="btn btn-primary" onclick="document.querySelector('[data-target=\'investissements\']').click()">+ Nouvel Investissement</button>
@@ -122,7 +122,7 @@
 
                     <div class="kpi-card warning-border">
                         <div class="kpi-header">
-                            <span class="kpi-label">QuÃªtes JournaliÃ¨res</span>
+                            <span class="kpi-label">Quêtes Journalières</span>
                             <div class="kpi-icon">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </div>
@@ -130,7 +130,7 @@
                         <div class="kpi-value stat-number" data-target="1280" data-suffix=" FCFA">0 FCFA</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive">+15%</span>
-                            <span class="kpi-period">vs semaine derniÃ¨re</span>
+                            <span class="kpi-period">vs semaine dernière</span>
                         </div>
                     </div>
                 </div>
@@ -138,7 +138,7 @@
                 <!-- Chart Section -->
                 <div class="chart-card">
                     <div class="card-header">
-                        <h2 class="card-title">Ã‰volution des Cumuls (FCFA)</h2>
+                        <h2 class="card-title">Évolution des Cumuls (FCFA)</h2>
                         <div class="period-tabs">
                             <button class="tab-btn">1M</button>
                             <button class="tab-btn">3M</button>
@@ -158,17 +158,17 @@
                         </div>
                         <div class="chart-area" id="mainChart">
                             <div class="bar-group"><div class="bar" style="height: 30%;"></div><span class="x-label">Jan</span></div>
-                            <div class="bar-group"><div class="bar" style="height: 45%;"></div><span class="x-label">FÃ©v</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 45%;"></div><span class="x-label">Fév</span></div>
                             <div class="bar-group"><div class="bar" style="height: 40%;"></div><span class="x-label">Mar</span></div>
                             <div class="bar-group"><div class="bar" style="height: 55%;"></div><span class="x-label">Avr</span></div>
                             <div class="bar-group"><div class="bar" style="height: 50%;"></div><span class="x-label">Mai</span></div>
                             <div class="bar-group"><div class="bar" style="height: 65%;"></div><span class="x-label">Juin</span></div>
                             <div class="bar-group"><div class="bar" style="height: 70%;"></div><span class="x-label">Juil</span></div>
-                            <div class="bar-group"><div class="bar" style="height: 68%;"></div><span class="x-label">AoÃ»</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 68%;"></div><span class="x-label">Aoû</span></div>
                             <div class="bar-group"><div class="bar" style="height: 80%;"></div><span class="x-label">Sep</span></div>
                             <div class="bar-group"><div class="bar" style="height: 85%;"></div><span class="x-label">Oct</span></div>
                             <div class="bar-group"><div class="bar" style="height: 90%;"></div><span class="x-label">Nov</span></div>
-                            <div class="bar-group"><div class="bar" style="height: 100%;"></div><span class="x-label">DÃ©c</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 100%;"></div><span class="x-label">Déc</span></div>
                         </div>
                     </div>
                 </div>
@@ -179,26 +179,26 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Mes Finances</h1>
-                        <p class="page-subtitle">GÃ©rez vos revenus, analysez vos actifs et participez aux quÃªtes.</p>
+                        <p class="page-subtitle">Gérez vos revenus, analysez vos actifs et participez aux quêtes.</p>
                     </div>
                 </div>
-                
+
                 <!-- Sous-onglets Finances -->
                 <div class="finances-subnav">
                     <button class="subnav-btn active" data-sub="revenu">Revenu Annuel</button>
                     <button class="subnav-btn" data-sub="actifs">Investissements Actifs</button>
-                    <button class="subnav-btn" data-sub="quetes">QuÃªtes Quotidiennes</button>
+                    <button class="subnav-btn" data-sub="quetes">Quêtes Quotidiennes</button>
                 </div>
 
                 <div class="finances-content">
-                    
+
                     <!-- Sous-onglet 1: Revenu Annuel -->
                     <div id="sub-revenu" class="sub-view active">
                         <div class="finance-card interactive-card" style="text-align:center; padding: 40px; cursor: pointer;">
                             <h3 style="margin-bottom:10px;">Produits de Revenu Annuel</h3>
                             <div class="amount" style="color: var(--success); font-size:2.5rem; margin-bottom: 20px;">12.5%</div>
-                            <p style="margin-bottom: 20px;">Cet espace accueillera bientÃ´t vos futurs produits gÃ©nÃ©rant des revenus annuels.</p>
-                            <button class="btn btn-primary" onclick="showToast('Section des produits en cours d\'intÃ©gration.', 'info')">DÃ©couvrir les offres (BientÃ´t)</button>
+                            <p style="margin-bottom: 20px;">Cet espace accueillera bientôt vos futurs produits générant des revenus annuels.</p>
+                            <button class="btn btn-primary" onclick="showToast('Section des produits en cours d\'intégration.', 'info')">Découvrir les offres (Bientôt)</button>
                         </div>
                     </div>
 
@@ -211,7 +211,7 @@
                                 <ul>
                                     <li>Plan Pro <span class="positive">+12.8%</span></li>
                                     <li>Plan Premium <span class="positive">+18.5%</span></li>
-                                    <li>Fonds SÃ©curisÃ© <span class="positive">+4.2%</span></li>
+                                    <li>Fonds Sécurisé <span class="positive">+4.2%</span></li>
                                 </ul>
                                 <button class="btn btn-outline mt-3" style="width:100%; margin-top: auto;">Voir tout</button>
                             </div>
@@ -228,22 +228,22 @@
                                     <div class="mc-bar" style="height:100%"></div>
                                 </div>
                                 <p class="analysis-text" style="color: var(--success); font-weight: 500;">
-                                    Tendance haussiÃ¨re confirmÃ©e sur la pÃ©riode actuelle.
+                                    Tendance haussière confirmée sur la période actuelle.
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sous-onglet 3: QuÃªtes Quotidiennes -->
+                    <!-- Sous-onglet 3: Quêtes Quotidiennes -->
                     <div id="sub-quetes" class="sub-view">
                         <div class="finance-card interactive-card" style="text-align:center; padding: 40px; cursor: pointer;">
-                            <h3 style="margin-bottom:10px;">QuÃªtes Quotidiennes</h3>
+                            <h3 style="margin-bottom:10px;">Quêtes Quotidiennes</h3>
                             <div class="amount" style="color: var(--warning); font-size:2.5rem; margin-bottom: 20px;">1 280 FCFA</div>
-                            <p style="margin-bottom: 20px;">Espace rÃ©servÃ© pour vos futures missions et rÃ©compenses quotidiennes.</p>
-                            <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="showToast('Vous avez cliquÃ© sur les QuÃªtes !', 'success')">Participer aux quÃªtes</button>
+                            <p style="margin-bottom: 20px;">Espace réservé pour vos futures missions et récompenses quotidiennes.</p>
+                            <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="showToast('Vous avez cliqué sur les Quêtes !', 'success')">Participer aux quêtes</button>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
 
@@ -252,20 +252,20 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Mon Portefeuille</h1>
-                        <p class="page-subtitle">GÃ©rez vos dÃ©pÃ´ts, retraits et mÃ©thodes de paiement.</p>
+                        <p class="page-subtitle">Gérez vos dépôts, retraits et méthodes de paiement.</p>
                     </div>
                 </div>
-                
+
                 <div class="wallet-overview">
                     <div class="wallet-balance-card">
                         <div class="wallet-label">Solde Disponible</div>
                         <div class="wallet-amount">125 000 FCFA</div>
                         <div class="wallet-actions">
-                            <button class="btn btn-primary" onclick="showToast('Connexion Ã  Supabase requise pour les dÃ©pÃ´ts.', 'info')">Faire un dÃ©pÃ´t</button>
-                            <button class="btn btn-outline" onclick="showToast('Connexion Ã  Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
+                            <button class="btn btn-primary" onclick="showToast('Connexion à Supabase requise pour les dépôts.', 'info')">Faire un dépôt</button>
+                            <button class="btn btn-outline" onclick="showToast('Connexion à Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
                         </div>
                     </div>
-                    
+
                     <div class="wallet-info-card">
                         <h3>Moyens de paiement</h3>
                         <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
@@ -279,11 +279,11 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Historique des Transactions</h1>
-                        <p class="page-subtitle">Retrouvez l'intÃ©gralitÃ© de vos opÃ©rations financiÃ¨res.</p>
+                        <p class="page-subtitle">Retrouvez l'intégralité de vos opérations financières.</p>
                     </div>
-                    <button class="btn btn-outline">TÃ©lÃ©charger PDF</button>
+                    <button class="btn btn-outline">Télécharger PDF</button>
                 </div>
-                
+
                 <div class="transactions-card full-width">
                     <div class="transactions-list">
                         <div class="transaction-item">
@@ -291,7 +291,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
                             </div>
                             <div class="transaction-info">
-                                <div class="transaction-title">DÃ©pÃ´t Mobile Money</div>
+                                <div class="transaction-title">Dépôt Mobile Money</div>
                                 <div class="transaction-desc">ID: TR-9847291</div>
                             </div>
                             <div class="transaction-meta">
@@ -299,27 +299,27 @@
                                 <div class="transaction-amount positive">+50 000 FCFA</div>
                             </div>
                         </div>
-                        
+
                         <div class="transaction-item">
                             <div class="transaction-icon bg-primary-light text-primary">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                             </div>
                             <div class="transaction-info">
                                 <div class="transaction-title">Investissement Plan Pro</div>
-                                <div class="transaction-desc">DurÃ©e : 12 mois</div>
+                                <div class="transaction-desc">Durée : 12 mois</div>
                             </div>
                             <div class="transaction-meta">
                                 <div class="transaction-date">18/08/2024 - 14:35</div>
                                 <div class="transaction-amount">-50 000 FCFA</div>
                             </div>
                         </div>
-                        
+
                         <div class="transaction-item">
                             <div class="transaction-icon bg-warning-light text-warning">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </div>
                             <div class="transaction-info">
-                                <div class="transaction-title">QuÃªte JournaliÃ¨re ValidÃ©e</div>
+                                <div class="transaction-title">Quête Journalière Validée</div>
                                 <div class="transaction-desc">Bonus de connexion</div>
                             </div>
                             <div class="transaction-meta">
@@ -327,7 +327,7 @@
                                 <div class="transaction-amount positive">+500 FCFA</div>
                             </div>
                         </div>
-                        
+
                         <div class="transaction-item">
                             <div class="transaction-icon bg-danger-light text-danger">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
@@ -350,10 +350,10 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Mon Compte</h1>
-                        <p class="page-subtitle">Informations du compte, sÃ©curitÃ© et support technique.</p>
+                        <p class="page-subtitle">Informations du compte, sécurité et support technique.</p>
                     </div>
                 </div>
-                
+
                 <div class="content-grid account-grid">
                     <!-- Profile settings -->
                     <div class="invest-card">
@@ -367,21 +367,21 @@
                         </div>
                         <hr style="border:none; border-top:1px solid var(--gray-200); margin: 20px 0;">
                         <button class="btn btn-outline btn-full mb-3">Modifier le profil</button>
-                        <button class="btn btn-outline btn-full mb-3">SÃ©curitÃ© & Mot de passe</button>
-                        <button class="btn btn-outline btn-full text-danger logout-btn" style="border-color:var(--danger-light);">DÃ©connexion</button>
+                        <button class="btn btn-outline btn-full mb-3">Sécurité & Mot de passe</button>
+                        <button class="btn btn-outline btn-full text-danger logout-btn" style="border-color:var(--danger-light);">Déconnexion</button>
                     </div>
-                    
+
                     <!-- Support & Info -->
                     <div style="display:flex; flex-direction:column; gap:24px;">
                         <div class="investments-card">
                             <h2 class="card-title" style="margin-bottom:15px;">Support Technique</h2>
-                            <p class="text-secondary" style="margin-bottom:15px;">Besoin d'aide avec vos investissements ? Notre Ã©quipe est disponible 24/7 pour vous accompagner.</p>
+                            <p class="text-secondary" style="margin-bottom:15px;">Besoin d'aide avec vos investissements ? Notre équipe est disponible 24/7 pour vous accompagner.</p>
                             <button class="btn btn-primary">Contacter le support</button>
                         </div>
-                        
+
                         <div class="investments-card">
-                            <h2 class="card-title" style="margin-bottom:15px;">L'Ã©quipe Atlas Capital</h2>
-                            <p class="text-secondary" style="margin-bottom:15px;">Atlas Capital est composÃ© d'experts financiers et d'ingÃ©nieurs dÃ©vouÃ©s Ã  maximiser vos revenus en toute sÃ©curitÃ©.</p>
+                            <h2 class="card-title" style="margin-bottom:15px;">L'équipe Atlas Capital</h2>
+                            <p class="text-secondary" style="margin-bottom:15px;">Atlas Capital est composé d'experts financiers et d'ingénieurs dévoués à maximiser vos revenus en toute sécurité.</p>
                             <a href="#" class="view-all">En savoir plus sur notre mission</a>
                         </div>
                     </div>
@@ -422,6 +422,3 @@
     <script src="js/dashboard.js"></script>
 </body>
 </html>
-
-
-
