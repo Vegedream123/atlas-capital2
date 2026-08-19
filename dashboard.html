@@ -252,157 +252,29 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Mon Portefeuille</h1>
-                        <p class="page-subtitle">Gérez vos dépôts, retraits et méthodes de paiement.</p>
+                        <p class="page-subtitle">GÃ©rez vos dÃ©pÃ´ts, retraits et mÃ©thodes de paiement.</p>
                     </div>
                 </div>
                 
                 <div class="wallet-overview">
                     <div class="wallet-balance-card">
                         <div class="wallet-label">Solde Disponible</div>
-                        <div class="wallet-amount" id="wallet-balance">125 000 FCFA</div>
+                        <div class="wallet-amount">125 000 FCFA</div>
                         <div class="wallet-actions">
-                            <button class="btn btn-primary" id="open-deposit-btn">+ Faire un dépôt</button>
-                            <button class="btn btn-outline" id="open-withdraw-btn">Retirer des fonds</button>
+                            <button class="btn btn-primary" onclick="showToast('Connexion Ã  Supabase requise pour les dÃ©pÃ´ts.', 'info')">Faire un dÃ©pÃ´t</button>
+                            <button class="btn btn-outline" onclick="showToast('Connexion Ã  Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
                         </div>
                     </div>
                     
                     <div class="wallet-info-card">
                         <h3>Moyens de paiement</h3>
-                        <p class="text-secondary mb-4">Vos dépôts et retraits utilisent les moyens de paiement disponibles dans votre pays : <strong id="wallet-country-name">—</strong>.</p>
-                        <div id="wallet-methods-preview" class="method-chip-list"></div>
+                        <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
+                        <button class="btn btn-outline" style="width:100%">+ Ajouter un moyen de paiement</button>
                     </div>
-                </div>
-
-                <!-- Opérations en attente de validation -->
-                <div class="investments-card" id="wallet-pending-card" style="display:none; margin-top:24px;">
-                    <div class="card-header">
-                        <h2 class="card-title">Vos opérations en attente</h2>
-                    </div>
-                    <div class="transactions-list" id="wallet-pending-list"></div>
                 </div>
             </div>
 
-            <!-- ================= MODAL DE DÉPÔT ================= -->
-            <div class="wallet-modal-overlay" id="deposit-modal-overlay">
-                <div class="wallet-modal-card">
-                    <button type="button" class="wallet-modal-close" data-close-modal="deposit-modal-overlay" aria-label="Fermer">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="wallet-modal-header">
-                        <h2>Effectuer un dépôt</h2>
-                        <p class="text-secondary">Choisissez un montant, un moyen de paiement, puis confirmez votre transaction.</p>
-                    </div>
-
-                    <form id="deposit-form">
-                        <!-- Étape 1 : Montant -->
-                        <div class="wallet-step">
-                            <div class="wallet-step-label"><span class="step-num">1</span> Choisissez le montant à déposer</div>
-                            <div class="amount-grid" id="deposit-amount-grid">
-                                <button type="button" class="amount-btn" data-amount="5000">5 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="10000">10 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="20000">20 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="40000">40 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="80000">80 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="160000">160 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="220000">220 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="440000">440 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="880000">880 000 <span>FCFA</span></button>
-                                <button type="button" class="amount-btn" data-amount="1600000">1 600 000 <span>FCFA</span></button>
-                            </div>
-                            <div class="custom-amount-group">
-                                <label for="deposit-custom-amount">Ou saisissez un montant personnalisé</label>
-                                <div class="custom-amount-input">
-                                    <input type="number" id="deposit-custom-amount" class="form-control" placeholder="Ex : 75 000" min="1000" step="500">
-                                    <span class="currency-suffix">FCFA</span>
-                                </div>
-                                <small class="field-hint">Montant minimum : 1 000 FCFA</small>
-                            </div>
-                        </div>
-
-                        <!-- Étape 2 : Moyen de paiement -->
-                        <div class="wallet-step">
-                            <div class="wallet-step-label"><span class="step-num">2</span> Choisissez votre moyen de paiement</div>
-                            <div class="payment-method-grid" id="deposit-method-grid">
-                                <!-- rempli dynamiquement en JS selon le pays de l'utilisateur -->
-                            </div>
-                        </div>
-
-                        <!-- Détails du paiement (affichés après sélection d'un moyen) -->
-                        <div class="wallet-step" id="deposit-instructions-block" style="display:none;">
-                            <div class="wallet-step-label"><span class="step-num">3</span> Effectuez le paiement</div>
-                            <div class="payment-instructions" id="deposit-instructions-content"></div>
-                        </div>
-
-                        <!-- Étape 4 : Preuve de paiement -->
-                        <div class="wallet-step" id="deposit-upload-block" style="display:none;">
-                            <div class="wallet-step-label"><span class="step-num">4</span> Téléchargez la preuve de paiement</div>
-                            <label class="upload-dropzone" id="deposit-dropzone" for="deposit-proof-input">
-                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                <span class="upload-main-text">Cliquez pour télécharger un fichier</span>
-                                <span class="upload-sub-text">Capture d'écran ou photo du reçu — JPG, PNG ou PDF (max 5 Mo)</span>
-                                <input type="file" id="deposit-proof-input" accept="image/*,application/pdf" hidden>
-                            </label>
-                            <div class="upload-preview" id="deposit-upload-preview" style="display:none;"></div>
-                        </div>
-
-                        <div class="wallet-modal-footer">
-                            <button type="submit" class="btn btn-primary btn-full" id="deposit-submit-btn" disabled>Soumettre le dépôt</button>
-                            <p class="field-hint" style="text-align:center; margin-top:10px;">Votre dépôt sera crédité après vérification par notre équipe (généralement sous 24h).</p>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- ================= MODAL DE RETRAIT ================= -->
-            <div class="wallet-modal-overlay" id="withdraw-modal-overlay">
-                <div class="wallet-modal-card">
-                    <button type="button" class="wallet-modal-close" data-close-modal="withdraw-modal-overlay" aria-label="Fermer">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                    <div class="wallet-modal-header">
-                        <h2>Retirer des fonds</h2>
-                        <p class="text-secondary">Votre demande sera traitée par notre équipe après vérification.</p>
-                    </div>
-
-                    <form id="withdraw-form">
-                        <div class="wallet-step">
-                            <div class="wallet-step-label"><span class="step-num">1</span> Montant à retirer</div>
-                            <div class="custom-amount-group">
-                                <div class="custom-amount-input">
-                                    <input type="number" id="withdraw-amount" class="form-control" placeholder="Ex : 50 000" min="1000" step="500" required>
-                                    <span class="currency-suffix">FCFA</span>
-                                </div>
-                                <small class="field-hint">Solde disponible : <strong id="withdraw-balance-hint">—</strong></small>
-                            </div>
-                        </div>
-
-                        <div class="wallet-step">
-                            <div class="wallet-step-label"><span class="step-num">2</span> Moyen de réception</div>
-                            <div class="payment-method-grid" id="withdraw-method-grid"></div>
-                        </div>
-
-                        <div class="wallet-step" id="withdraw-details-block" style="display:none;">
-                            <div class="wallet-step-label"><span class="step-num">3</span> Vos informations de réception</div>
-                            <div class="form-group">
-                                <label for="withdraw-account">Numéro / IBAN de réception</label>
-                                <input type="text" id="withdraw-account" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
-                            </div>
-                            <div class="form-group">
-                                <label for="withdraw-holder">Nom du titulaire du compte</label>
-                                <input type="text" id="withdraw-holder" class="form-control" placeholder="Nom complet">
-                            </div>
-                        </div>
-
-                        <div class="wallet-modal-footer">
-                            <button type="submit" class="btn btn-primary btn-full" id="withdraw-submit-btn" disabled>Soumettre la demande de retrait</button>
-                            <p class="field-hint" style="text-align:center; margin-top:10px;">Les retraits sont traités sous 24 à 72h ouvrées.</p>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            
-<!-- VIEW: TRANSACTIONS -->
+            <!-- VIEW: TRANSACTIONS -->
             <div id="view-transactions" class="view-section">
                 <div class="page-header">
                     <div>
@@ -546,7 +418,6 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/payment-methods.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/dashboard.js"></script>
 </body>
