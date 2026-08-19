@@ -165,8 +165,8 @@ svg { flex-shrink: 0; }
 .bar { width: 60%; max-width: 26px; background: linear-gradient(180deg, var(--accent), var(--primary-light)); border-radius: 4px 4px 0 0; transition: height 0.6s ease; }
 .x-label { font-size: 0.7rem; color: var(--text-secondary); white-space: nowrap; }
 
-.finances-subnav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; }
-.subnav-btn { padding: 8px 16px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); transition: var(--transition); }
+.finances-subnav { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.subnav-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); transition: var(--transition); white-space: nowrap; }
 .subnav-btn.active { background: var(--accent); color: var(--white); }
 .sub-view { display: none; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
