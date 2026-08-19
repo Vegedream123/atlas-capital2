@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
 </head>
 <body>
     <div class="dashboard-layout">
@@ -24,7 +24,7 @@
                     </svg>
                     <span>Atlas Capital</span>
                 </div>
-
+                
                 <nav class="main-nav">
                     <a href="#" class="nav-link active" data-target="dashboard">Tableau de bord</a>
                     <a href="#" class="nav-link" data-target="finances">Finances</a>
@@ -182,7 +182,7 @@
                         <p class="page-subtitle">Gérez vos revenus, analysez vos actifs et participez aux quêtes.</p>
                     </div>
                 </div>
-
+                
                 <!-- Sous-onglets Finances -->
                 <div class="finances-subnav">
                     <button class="subnav-btn active" data-sub="revenu">Revenu Annuel</button>
@@ -191,7 +191,7 @@
                 </div>
 
                 <div class="finances-content">
-
+                    
                     <!-- Sous-onglet 1: Revenu Annuel -->
                     <div id="sub-revenu" class="sub-view active">
                         <div class="finance-card interactive-card" style="text-align:center; padding: 40px; cursor: pointer;">
@@ -243,7 +243,7 @@
                             <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="showToast('Vous avez cliqué sur les Quêtes !', 'success')">Participer aux quêtes</button>
                         </div>
                     </div>
-
+                    
                 </div>
             </div>
 
@@ -255,7 +255,7 @@
                         <p class="page-subtitle">Gérez vos dépôts, retraits et méthodes de paiement.</p>
                     </div>
                 </div>
-
+                
                 <div class="wallet-overview">
                     <div class="wallet-balance-card">
                         <div class="wallet-label">Solde Disponible</div>
@@ -265,7 +265,7 @@
                             <button class="btn btn-outline" onclick="showToast('Connexion à Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
                         </div>
                     </div>
-
+                    
                     <div class="wallet-info-card">
                         <h3>Moyens de paiement</h3>
                         <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
@@ -283,7 +283,7 @@
                     </div>
                     <button class="btn btn-outline">Télécharger PDF</button>
                 </div>
-
+                
                 <div class="transactions-card full-width">
                     <div class="transactions-list">
                         <div class="transaction-item">
@@ -299,7 +299,7 @@
                                 <div class="transaction-amount positive">+50 000 FCFA</div>
                             </div>
                         </div>
-
+                        
                         <div class="transaction-item">
                             <div class="transaction-icon bg-primary-light text-primary">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
@@ -313,7 +313,7 @@
                                 <div class="transaction-amount">-50 000 FCFA</div>
                             </div>
                         </div>
-
+                        
                         <div class="transaction-item">
                             <div class="transaction-icon bg-warning-light text-warning">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
@@ -327,7 +327,7 @@
                                 <div class="transaction-amount positive">+500 FCFA</div>
                             </div>
                         </div>
-
+                        
                         <div class="transaction-item">
                             <div class="transaction-icon bg-danger-light text-danger">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
@@ -353,7 +353,7 @@
                         <p class="page-subtitle">Informations du compte, sécurité et support technique.</p>
                     </div>
                 </div>
-
+                
                 <div class="content-grid account-grid">
                     <!-- Profile settings -->
                     <div class="invest-card">
@@ -370,7 +370,7 @@
                         <button class="btn btn-outline btn-full mb-3">Sécurité & Mot de passe</button>
                         <button class="btn btn-outline btn-full text-danger logout-btn" style="border-color:var(--danger-light);">Déconnexion</button>
                     </div>
-
+                    
                     <!-- Support & Info -->
                     <div style="display:flex; flex-direction:column; gap:24px;">
                         <div class="investments-card">
@@ -378,7 +378,7 @@
                             <p class="text-secondary" style="margin-bottom:15px;">Besoin d'aide avec vos investissements ? Notre équipe est disponible 24/7 pour vous accompagner.</p>
                             <button class="btn btn-primary">Contacter le support</button>
                         </div>
-
+                        
                         <div class="investments-card">
                             <h2 class="card-title" style="margin-bottom:15px;">L'équipe Atlas Capital</h2>
                             <p class="text-secondary" style="margin-bottom:15px;">Atlas Capital est composé d'experts financiers et d'ingénieurs dévoués à maximiser vos revenus en toute sécurité.</p>
