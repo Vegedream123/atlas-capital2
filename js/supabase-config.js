@@ -1,4 +1,4 @@
-﻿// ==========================================
+// ==========================================
 // SUPABASE CONFIGURATION
 // ==========================================
 const SUPABASE_URL = 'https://lpgcnhycveliaxnkwgig.supabase.co';
