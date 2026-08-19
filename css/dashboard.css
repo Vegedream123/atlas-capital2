@@ -5,6 +5,12 @@
     box-sizing: border-box;
 }
 
+img, svg, video, canvas, picture {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
 :root {
     --primary: #0A2540; /* Updated Atlas Capital deeper blue */
     --primary-light: #1E3A5F;
