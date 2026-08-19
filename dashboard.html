@@ -1,1056 +1,424 @@
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-:root {
-    --primary: #0A2540; /* Updated Atlas Capital deeper blue */
-    --primary-light: #1E3A5F;
-    --primary-hover: #2A5082;
-    --accent: #3B82F6; /* Or rich gold #D4AF37 if requested later, keeping professional blue for now */
-    --accent-hover: #2563EB;
-    --success: #10B981;
-    --success-light: #D1FAE5;
-    --warning: #F59E0B;
-    --warning-light: #FEF3C7;
-    --danger: #EF4444;
-    --danger-light: #FEE2E2;
-    --white: #FFFFFF;
-    --gray-50: #F8FAFC;
-    --gray-100: #F1F5F9;
-    --gray-200: #E2E8F0;
-    --gray-300: #CBD5E1;
-    --gray-500: #64748B;
-    --gray-700: #334155;
-    --text-primary: #0A2540;
-    --text-secondary: #5A6A7E;
-    
-    --shadow-sm: 0 1px 2px rgba(10,37,64,0.05);
-    --shadow: 0 4px 6px -1px rgba(10,37,64,0.07), 0 2px 4px -2px rgba(10,37,64,0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(10,37,64,0.08), 0 4px 6px -4px rgba(10,37,64,0.05);
-    
-    --radius-sm: 8px;
-    --radius: 12px;
-    --radius-lg: 16px;
-    
-    --transition: all 0.3s ease;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--gray-50);
-    color: var(--text-primary);
-    line-height: 1.5;
-    overflow-x: hidden;
-}
-
-a {
-    text-decoration: none;
-    color: inherit;
-}
-
-ul { list-style: none; }
-button { cursor: pointer; border: none; background: none; font-family: inherit; }
-
-/* Custom Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: var(--radius-sm); }
-::-webkit-scrollbar-thumb:hover { background: var(--gray-500); }
-
-/* Layout */
-.dashboard-layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-/* Top Navigation */
-.top-nav {
-    background: var(--white);
-    border-bottom: 1px solid var(--gray-200);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.nav-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 24px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.nav-brand svg {
-    color: var(--accent);
-}
-
-.main-nav {
-    display: flex;
-    gap: 32px;
-    height: 100%;
-}
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    font-weight: 500;
-    color: var(--text-secondary);
-    position: relative;
-    transition: var(--transition);
-}
-
-.nav-link:hover {
-    color: var(--primary);
-}
-
-.nav-link.active {
-    color: var(--primary);
-    font-weight: 600;
-}
-
-.nav-link.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: var(--accent);
-    border-radius: 3px 3px 0 0;
-}
-
-.nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.search-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.search-box svg {
-    position: absolute;
-    left: 12px;
-    color: var(--gray-500);
-}
-
-.search-box input {
-    padding: 8px 16px 8px 36px;
-    border-radius: 20px;
-    border: 1px solid var(--gray-200);
-    background: var(--gray-50);
-    font-size: 0.875rem;
-    width: 200px;
-    transition: var(--transition);
-}
-
-.search-box input:focus {
-    width: 250px;
-    background: var(--white);
-    border-color: var(--accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.icon-btn {
-    position: relative;
-    color: var(--text-secondary);
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-}
-
-.icon-btn:hover {
-    background: var(--gray-100);
-    color: var(--primary);
-}
-
-.badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: var(--danger);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    width: 16px;
-    height: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    border: 2px solid var(--white);
-}
-
-.profile-menu {
-    position: relative;
-}
-
-.profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 0.875rem;
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    background: var(--white);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    width: 240px;
-    padding: 8px 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: var(--transition);
-    border: 1px solid var(--gray-200);
-}
-
-.profile-menu:focus-within .dropdown-menu,
-.profile-menu:hover .dropdown-menu {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.dropdown-header {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-}
-
-.dropdown-header .user-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.dropdown-header .user-email {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-
-.dropdown-divider {
-    height: 1px;
-    background: var(--gray-200);
-    margin: 4px 0;
-}
-
-.dropdown-item {
-    display: block;
-    padding: 10px 16px;
-    color: var(--text-primary);
-    font-size: 0.875rem;
-    transition: var(--transition);
-}
-
-.dropdown-item:hover {
-    background: var(--gray-50);
-    color: var(--accent);
-}
-
-.text-danger { color: var(--danger); }
-.text-danger:hover { background: var(--danger-light); color: var(--danger); }
-
-/* Main Content */
-.dashboard-main {
-    flex: 1;
-    padding: 32px 24px;
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 32px;
-}
-
-.page-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 4px;
-}
-
-.page-subtitle {
-    color: var(--text-secondary);
-}
-
-.header-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.btn {
-    padding: 10px 20px;
-    border-radius: var(--radius-sm);
-    font-weight: 600;
-    font-size: 0.875rem;
-    transition: var(--transition);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: var(--white);
-}
-
-.btn-primary:hover {
-    background: var(--primary-hover);
-    box-shadow: var(--shadow);
-}
-
-.btn-outline {
-    background: transparent;
-    border: 1px solid var(--gray-300);
-    color: var(--text-primary);
-}
-
-.btn-outline:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: var(--gray-50);
-}
-
-/* KPI Cards */
-.kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.kpi-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    border-top: 4px solid transparent;
-    transition: var(--transition);
-}
-
-.kpi-card:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
-
-.kpi-card.accent-border { border-top-color: var(--accent); }
-.kpi-card.success-border { border-top-color: var(--success); }
-.kpi-card.primary-border { border-top-color: var(--primary); }
-.kpi-card.warning-border { border-top-color: var(--warning); }
-
-.kpi-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 16px;
-}
-
-.kpi-label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.kpi-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-sm);
-    background: var(--gray-50);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-}
-
-.kpi-value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin-bottom: 8px;
-    color: var(--primary);
-}
-
-.kpi-footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8125rem;
-}
-
-.kpi-change {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-}
-
-.kpi-change.positive { color: var(--success); }
-.kpi-change.negative { color: var(--danger); }
-.kpi-period { color: var(--gray-500); }
-
-/* Chart Section */
-.chart-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    margin-bottom: 32px;
-}
-
-.card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.card-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--primary);
-}
-
-.period-tabs {
-    display: flex;
-    background: var(--gray-100);
-    border-radius: var(--radius-sm);
-    padding: 4px;
-}
-
-.tab-btn {
-    padding: 6px 12px;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    border-radius: 4px;
-    transition: var(--transition);
-}
-
-.tab-btn:hover { color: var(--primary); }
-.tab-btn.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow-sm); }
-
-.chart-container {
-    display: flex;
-    height: 300px;
-    gap: 16px;
-}
-
-.y-axis {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    color: var(--gray-500);
-    font-size: 0.75rem;
-    padding-bottom: 24px; /* Space for x-labels */
-    text-align: right;
-    min-width: 40px;
-}
-
-.chart-area {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding-bottom: 24px;
-    position: relative;
-    border-bottom: 1px solid var(--gray-200);
-}
-
-/* Add grid lines */
-.chart-area::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 24px;
-    background-image: linear-gradient(to bottom, var(--gray-100) 1px, transparent 1px);
-    background-size: 100% 20%;
-    z-index: 0;
-}
-
-.bar-group {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-    width: 30px;
-}
-
-.bar {
-    width: 100%;
-    background: linear-gradient(to top, var(--primary-light), var(--accent));
-    border-radius: 4px 4px 0 0;
-    transition: height 1s ease-out;
-}
-
-.x-label {
-    position: absolute;
-    bottom: -24px;
-    font-size: 0.75rem;
-    color: var(--gray-500);
-}
-
-.chart-summary {
-    display: flex;
-    gap: 32px;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid var(--gray-100);
-}
-
-.summary-item { display: flex; flex-direction: column; gap: 4px; }
-.summary-label { font-size: 0.8125rem; color: var(--text-secondary); }
-.summary-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
-.summary-value.positive { color: var(--success); }
-
-/* Content Grid (Table + Form) */
-.content-grid {
-    display: grid;
-    grid-template-columns: 3fr 2fr;
-    gap: 24px;
-    margin-bottom: 32px;
-}
-
-.investments-card, .invest-card, .transactions-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-}
-
-.filter-select {
-    padding: 8px 12px;
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-sm);
-    background: var(--white);
-    font-size: 0.875rem;
-    color: var(--text-primary);
-}
-
-.table-responsive { overflow-x: auto; }
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th, .data-table td {
-    padding: 16px;
-    text-align: left;
-    border-bottom: 1px solid var(--gray-100);
-}
-
-.data-table th {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    color: var(--gray-500);
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    background: var(--gray-50);
-}
-
-.data-table tr:hover td { background: var(--gray-50); }
-.data-table tr:last-child td { border-bottom: none; }
-
-.font-medium { font-weight: 500; }
-.font-bold { font-weight: 700; }
-.text-secondary { color: var(--text-secondary); font-size: 0.875rem; }
-.positive { color: var(--success); }
-.negative { color: var(--danger); }
-
-.badge {
-    padding: 4px 8px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-.badge-success { background: var(--success-light); color: var(--success); }
-.badge-gray { background: var(--gray-100); color: var(--gray-500); }
-
-/* Forms */
-.dashboard-form .form-group { margin-bottom: 20px; }
-.dashboard-form label { display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 8px; color: var(--text-primary); }
-.form-control {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-sm);
-    font-size: 0.95rem;
-    transition: var(--transition);
-}
-.form-control:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-.input-with-icon { position: relative; }
-.input-icon-right { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-500); }
-
-.estimate-card {
-    background: var(--gray-50);
-    border-radius: var(--radius-sm);
-    padding: 16px;
-    margin-bottom: 20px;
-    border: 1px dashed var(--gray-300);
-}
-
-.estimate-card h3 { font-size: 0.875rem; margin-bottom: 12px; color: var(--text-secondary); }
-.estimate-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.875rem; }
-.estimate-row:last-child { margin-bottom: 0; }
-.btn-full { width: 100%; }
-
-/* Transactions */
-.view-all { color: var(--accent); font-size: 0.875rem; font-weight: 500; }
-.view-all:hover { text-decoration: underline; }
-
-.transactions-list { display: flex; flex-direction: column; gap: 16px; }
-.transaction-item { display: flex; align-items: center; padding: 12px; border-radius: var(--radius-sm); transition: var(--transition); border: 1px solid transparent; }
-.transaction-item:hover { background: var(--gray-50); border-color: var(--gray-200); }
-.transaction-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 16px; }
-
-.bg-success-light { background: var(--success-light); }
-.text-success { color: var(--success); }
-.bg-primary-light { background: rgba(11,29,58,0.1); }
-.text-primary { color: var(--primary); }
-.bg-warning-light { background: var(--warning-light); }
-.text-warning { color: var(--warning); }
-.bg-danger-light { background: var(--danger-light); }
-.text-danger { color: var(--danger); }
-
-.transaction-info { flex: 1; }
-.transaction-title { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
-.transaction-desc { font-size: 0.8125rem; color: var(--text-secondary); }
-.transaction-meta { text-align: right; }
-.transaction-amount { font-weight: 600; margin-top: 2px; }
-.transaction-date { font-size: 0.8125rem; color: var(--text-secondary); }
-
-/* Bottom Navigation (Mobile Only) */
-.bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: var(--white);
-    border-top: 1px solid var(--gray-200);
-    z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.bottom-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 0;
-    color: var(--gray-500);
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-.bottom-nav-item svg { margin-bottom: 4px; }
-.bottom-nav-item span { font-size: 0.65rem; font-weight: 500; }
-.bottom-nav-item.active, .bottom-nav-item:hover { color: var(--primary); }
-
-/* Toasts */
-.toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 3000; display: flex; flex-direction: column; gap: 1rem; }
-.toast { background: var(--white); border-radius: var(--radius-sm); padding: 1rem 1.5rem; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 1rem; transform: translateX(120%); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); border-left: 4px solid var(--accent); }
-.toast.show { transform: translateX(0); }
-.toast.success { border-color: var(--success); }
-.toast.error { border-color: var(--danger); }
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-    .content-grid { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .main-nav { display: none; }
-    .hidden-mobile { display: none; }
-    .dashboard-main { padding: 20px 16px 80px 16px; } /* Space for bottom nav */
-    .bottom-nav { display: flex; }
-    
-    .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .kpi-grid { grid-template-columns: 1fr; }
-    .chart-container { height: 250px; }
-
-    /* Sous-onglets Finances : tous visibles sans scroll horizontal */
-    .finances-subnav {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .subnav-btn {
-        padding: 10px 14px;
-        font-size: 0.9rem;
-    }
-
-    /* "Investissements Actifs" : empiler au lieu d'écraser sur 2 colonnes */
-    .active-invest-split {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    .invest-list, .invest-analysis {
-        min-width: 0;
-    }
-    .mini-chart-placeholder {
-        width: 100%;
-        overflow: hidden;
-    }
-}
-
-/* ==========================================================================
-   Multi-View SPA & Notification Additions
-   ========================================================================== */
-.view-section {
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-
-.view-section.active {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Notification Panel */
-.notification-wrapper {
-    position: relative;
-}
-
-.notification-panel {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 15px);
-    width: 320px;
-    background: var(--white);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-xl);
-    border: 1px solid var(--gray-200);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: var(--transition);
-    z-index: 200;
-}
-
-.notification-panel.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-}
-
-.notif-header {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--gray-200);
-    font-weight: 600;
-    color: var(--primary);
-}
-
-.notif-list {
-    max-height: 350px;
-    overflow-y: auto;
-}
-
-.notif-item {
-    padding: 15px 20px;
-    border-bottom: 1px solid var(--gray-100);
-    transition: var(--transition);
-}
-
-.notif-item:hover {
-    background: var(--gray-50);
-    cursor: pointer;
-}
-
-.notif-item.unread {
-    background: #F0F7FF;
-    border-left: 3px solid var(--accent);
-}
-
-.notif-title {
-    font-weight: 600;
-    font-size: 0.875rem;
-    color: var(--text-primary);
-}
-
-.notif-desc {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 4px;
-    line-height: 1.4;
-}
-
-/* Utilities */
-.mb-3 { margin-bottom: 1rem; }
-.mb-4 { margin-bottom: 1.5rem; }
-.full-width { grid-column: 1 / -1; }
-
-.wallet-overview {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-}
-
-.wallet-balance-card, .wallet-info-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 30px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-}
-
-.wallet-label {
-    font-size: 1rem;
-    color: var(--text-secondary);
-    margin-bottom: 8px;
-}
-
-.wallet-amount {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 24px;
-}
-
-.wallet-actions {
-    display: flex;
-    gap: 12px;
-}
-
-@media (max-width: 768px) {
-    .wallet-overview {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ==========================================================================
-   Onglet Finances (Redesign)
-   ========================================================================== */
-.finances-dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
-    gap: 24px;
-    margin-top: 24px;
-}
-
-.finance-card {
-    background: var(--white);
-    border-radius: var(--radius);
-    padding: 24px;
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--gray-200);
-    display: flex;
-    flex-direction: column;
-}
-
-.finance-card h3 {
-    font-size: 1.1rem;
-    color: var(--primary);
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-
-.interactive-card {
-    transition: var(--transition);
-    cursor: pointer;
-}
-
-.interactive-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--primary-light);
-}
-
-.finance-card .amount {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 8px;
-}
-
-.finance-card p {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    flex-grow: 1;
-}
-
-.mt-3 { margin-top: 1rem; }
-
-/* Split section inside Investissements Actifs */
-.span-2-cols {
-    grid-column: span 2;
-}
-
-.active-invest-split {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    height: 100%;
-}
-
-.invest-list, .invest-analysis {
-    background: var(--gray-50);
-    border-radius: var(--radius-sm);
-    padding: 20px;
-    border: 1px solid var(--gray-200);
-}
-
-.invest-list h4, .invest-analysis h4 {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    margin-bottom: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.invest-list ul {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.invest-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--gray-200);
-    font-weight: 500;
-}
-
-.invest-list li:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.mini-chart-placeholder {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    height: 100px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid var(--gray-300);
-    padding-bottom: 5px;
-}
-
-.mc-bar {
-    flex: 1;
-    background: linear-gradient(to top, var(--primary-light), var(--accent));
-    border-radius: 3px 3px 0 0;
-    transition: height 1s ease;
-}
-
-.analysis-text {
-    font-size: 0.875rem;
-    color: var(--success) !important;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-@media (max-width: 1024px) {
-    .finances-dashboard-grid {
-        grid-template-columns: 1fr;
-    }
-    .span-2-cols {
-        grid-column: span 1;
-    }
-}
-
-/* ==========================================================================
-   Finances Sub-Navigation
-   ========================================================================== */
-.finances-subnav {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--gray-200);
-}
-
-.subnav-btn {
-    padding: 12px 24px;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    position: relative;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.subnav-btn:hover {
-    color: var(--primary);
-}
-
-.subnav-btn.active {
-    color: var(--primary);
-    font-weight: 600;
-}
-
-.subnav-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: var(--accent);
-    border-radius: 3px 3px 0 0;
-}
-
-.sub-view {
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-
-.sub-view.active {
-    display: block;
-}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Client - Atlas Capital</title>
+    <meta name="description" content="Gérez vos investissements avec Atlas Capital.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--primary)" stroke="none">
+                        <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
+                        <path d="M4 10h2v9H4v-9zm5 0h2v9H9v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"></path>
+                        <path d="M2 20h20v2H2v-2z"></path>
+                    </svg>
+                    <span>Atlas Capital</span>
+                </div>
+
+                <nav class="main-nav">
+                    <a href="#" class="nav-link active" data-target="dashboard">Tableau de bord</a>
+                    <a href="#" class="nav-link" data-target="finances">Finances</a>
+                    <a href="#" class="nav-link" data-target="portefeuille">Portefeuille</a>
+                    <a href="#" class="nav-link" data-target="transactions">Transactions</a>
+                    <a href="#" class="nav-link" data-target="compte">Compte</a>
+                </nav>
+
+                <div class="nav-actions">
+                    <!-- Notification Wrapper -->
+                    <div class="notification-wrapper">
+                        <button class="icon-btn notification-btn" id="notif-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="badge">3</span>
+                        </button>
+                        <div class="notification-panel" id="notif-panel">
+                            <div class="notif-header">Centre de notifications</div>
+                            <div class="notif-list">
+                                <div class="notif-item unread">
+                                    <div class="notif-title">Dépôt confirmé</div>
+                                    <div class="notif-desc">Votre dépôt de 50 000 FCFA a été reçu et ajouté à votre portefeuille.</div>
+                                </div>
+                                <div class="notif-item unread">
+                                    <div class="notif-title">Nouveau produit disponible</div>
+                                    <div class="notif-desc">Découvrez le nouveau plan "Croissance Plus" dans l'onglet Investissements.</div>
+                                </div>
+                                <div class="notif-item">
+                                    <div class="notif-title">Quête journalière complétée</div>
+                                    <div class="notif-desc">Vous avez gagné 500 FCFA pour votre connexion consécutive !</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- VIEW: TABLEAU DE BORD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Vue d'ensemble</h1>
+                        <p class="page-subtitle">Bienvenue, <span class="user-name">Jean</span> 👋</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="document.querySelector('[data-target=\'investissements\']').click()">+ Nouvel Investissement</button>
+                    </div>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card accent-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Solde Total</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" data-target="254350" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive">+8.2%</span>
+                            <span class="kpi-period">cumul des revenus</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card success-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Revenu Annuel</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" data-target="12.5" data-suffix="%">0%</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive">+2.1%</span>
+                            <span class="kpi-period">vs mois dernier</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card primary-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Investissements Actifs</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" data-target="3" data-suffix="">0</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive">+1</span>
+                            <span class="kpi-period">ce mois</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card warning-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Quêtes Journalières</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" data-target="1280" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive">+15%</span>
+                            <span class="kpi-period">vs semaine dernière</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Section -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Évolution des Cumuls (FCFA)</h2>
+                        <div class="period-tabs">
+                            <button class="tab-btn">1M</button>
+                            <button class="tab-btn">3M</button>
+                            <button class="tab-btn">6M</button>
+                            <button class="tab-btn active">1A</button>
+                            <button class="tab-btn">Tout</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="y-axis">
+                            <span>250K</span>
+                            <span>200K</span>
+                            <span>150K</span>
+                            <span>100K</span>
+                            <span>50K</span>
+                            <span>0</span>
+                        </div>
+                        <div class="chart-area" id="mainChart">
+                            <div class="bar-group"><div class="bar" style="height: 30%;"></div><span class="x-label">Jan</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 45%;"></div><span class="x-label">Fév</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 40%;"></div><span class="x-label">Mar</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 55%;"></div><span class="x-label">Avr</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 50%;"></div><span class="x-label">Mai</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 65%;"></div><span class="x-label">Juin</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 70%;"></div><span class="x-label">Juil</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 68%;"></div><span class="x-label">Aoû</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 80%;"></div><span class="x-label">Sep</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 85%;"></div><span class="x-label">Oct</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 90%;"></div><span class="x-label">Nov</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 100%;"></div><span class="x-label">Déc</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: FINANCES -->
+            <div id="view-finances" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mes Finances</h1>
+                        <p class="page-subtitle">Gérez vos revenus, analysez vos actifs et participez aux quêtes.</p>
+                    </div>
+                </div>
+
+                <!-- Sous-onglets Finances -->
+                <div class="finances-subnav">
+                    <button class="subnav-btn active" data-sub="revenu">Revenu Annuel</button>
+                    <button class="subnav-btn" data-sub="actifs">Investissements Actifs</button>
+                    <button class="subnav-btn" data-sub="quetes">Quêtes Quotidiennes</button>
+                </div>
+
+                <div class="finances-content">
+
+                    <!-- Sous-onglet 1: Revenu Annuel -->
+                    <div id="sub-revenu" class="sub-view active">
+                        <div class="finance-card interactive-card" style="text-align:center; padding: 40px; cursor: pointer;">
+                            <h3 style="margin-bottom:10px;">Produits de Revenu Annuel</h3>
+                            <div class="amount" style="color: var(--success); font-size:2.5rem; margin-bottom: 20px;">12.5%</div>
+                            <p style="margin-bottom: 20px;">Cet espace accueillera bientôt vos futurs produits générant des revenus annuels.</p>
+                            <button class="btn btn-primary" onclick="showToast('Section des produits en cours d\'intégration.', 'info')">Découvrir les offres (Bientôt)</button>
+                        </div>
+                    </div>
+
+                    <!-- Sous-onglet 2: Investissements Actifs (2 colonnes: Constant et Analyse) -->
+                    <div id="sub-actifs" class="sub-view">
+                        <div class="active-invest-split">
+                            <!-- Col 1: Constant -->
+                            <div class="invest-list">
+                                <h4>Constant</h4>
+                                <ul>
+                                    <li>Plan Pro <span class="positive">+12.8%</span></li>
+                                    <li>Plan Premium <span class="positive">+18.5%</span></li>
+                                    <li>Fonds Sécurisé <span class="positive">+4.2%</span></li>
+                                </ul>
+                                <button class="btn btn-outline mt-3" style="width:100%; margin-top: auto;">Voir tout</button>
+                            </div>
+                            <!-- Col 2: Analyse -->
+                            <div class="invest-analysis">
+                                <h4>Analyse</h4>
+                                <div class="mini-chart-placeholder">
+                                    <div class="mc-bar" style="height:30%"></div>
+                                    <div class="mc-bar" style="height:50%"></div>
+                                    <div class="mc-bar" style="height:40%"></div>
+                                    <div class="mc-bar" style="height:70%"></div>
+                                    <div class="mc-bar" style="height:60%"></div>
+                                    <div class="mc-bar" style="height:90%"></div>
+                                    <div class="mc-bar" style="height:100%"></div>
+                                </div>
+                                <p class="analysis-text" style="color: var(--success); font-weight: 500;">
+                                    Tendance haussière confirmée sur la période actuelle.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sous-onglet 3: Quêtes Quotidiennes -->
+                    <div id="sub-quetes" class="sub-view">
+                        <div class="finance-card interactive-card" style="text-align:center; padding: 40px; cursor: pointer;">
+                            <h3 style="margin-bottom:10px;">Quêtes Quotidiennes</h3>
+                            <div class="amount" style="color: var(--warning); font-size:2.5rem; margin-bottom: 20px;">1 280 FCFA</div>
+                            <p style="margin-bottom: 20px;">Espace réservé pour vos futures missions et récompenses quotidiennes.</p>
+                            <button class="btn btn-outline" style="border-color: var(--warning); color: var(--warning);" onclick="showToast('Vous avez cliqué sur les Quêtes !', 'success')">Participer aux quêtes</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- VIEW: PORTEFEUILLE -->
+            <div id="view-portefeuille" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mon Portefeuille</h1>
+                        <p class="page-subtitle">Gérez vos dépôts, retraits et méthodes de paiement.</p>
+                    </div>
+                </div>
+
+                <div class="wallet-overview">
+                    <div class="wallet-balance-card">
+                        <div class="wallet-label">Solde Disponible</div>
+                        <div class="wallet-amount">125 000 FCFA</div>
+                        <div class="wallet-actions">
+                            <button class="btn btn-primary" onclick="showToast('Connexion à Supabase requise pour les dépôts.', 'info')">Faire un dépôt</button>
+                            <button class="btn btn-outline" onclick="showToast('Connexion à Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
+                        </div>
+                    </div>
+
+                    <div class="wallet-info-card">
+                        <h3>Moyens de paiement</h3>
+                        <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
+                        <button class="btn btn-outline" style="width:100%">+ Ajouter un moyen de paiement</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: TRANSACTIONS -->
+            <div id="view-transactions" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Historique des Transactions</h1>
+                        <p class="page-subtitle">Retrouvez l'intégralité de vos opérations financières.</p>
+                    </div>
+                    <button class="btn btn-outline">Télécharger PDF</button>
+                </div>
+
+                <div class="transactions-card full-width">
+                    <div class="transactions-list">
+                        <div class="transaction-item">
+                            <div class="transaction-icon bg-success-light text-success">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-title">Dépôt Mobile Money</div>
+                                <div class="transaction-desc">ID: TR-9847291</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <div class="transaction-date">18/08/2024 - 14:30</div>
+                                <div class="transaction-amount positive">+50 000 FCFA</div>
+                            </div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-icon bg-primary-light text-primary">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-title">Investissement Plan Pro</div>
+                                <div class="transaction-desc">Durée : 12 mois</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <div class="transaction-date">18/08/2024 - 14:35</div>
+                                <div class="transaction-amount">-50 000 FCFA</div>
+                            </div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-icon bg-warning-light text-warning">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-title">Quête Journalière Validée</div>
+                                <div class="transaction-desc">Bonus de connexion</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <div class="transaction-date">18/08/2024 - 08:00</div>
+                                <div class="transaction-amount positive">+500 FCFA</div>
+                            </div>
+                        </div>
+
+                        <div class="transaction-item">
+                            <div class="transaction-icon bg-danger-light text-danger">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                            </div>
+                            <div class="transaction-info">
+                                <div class="transaction-title">Retrait vers Banque</div>
+                                <div class="transaction-desc">Compte terminant par ****4589</div>
+                            </div>
+                            <div class="transaction-meta">
+                                <div class="transaction-date">25/07/2024 - 10:15</div>
+                                <div class="transaction-amount negative">-25 000 FCFA</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: COMPTE -->
+            <div id="view-compte" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mon Compte</h1>
+                        <p class="page-subtitle">Informations du compte, sécurité et support technique.</p>
+                    </div>
+                </div>
+
+                <div class="content-grid account-grid">
+                    <!-- Profile settings -->
+                    <div class="invest-card">
+                        <div class="card-header">
+                            <h2 class="card-title">Profil Utilisateur</h2>
+                        </div>
+                        <div style="text-align:center; margin-bottom: 20px;">
+                            <div class="avatar" style="width: 80px; height: 80px; font-size: 2rem; margin: 0 auto 10px auto;">JD</div>
+                            <h3 class="user-name" style="font-size:1.2rem; color:var(--primary);">Jean Dupont</h3>
+                            <p class="user-email text-secondary">jean@email.com</p>
+                        </div>
+                        <hr style="border:none; border-top:1px solid var(--gray-200); margin: 20px 0;">
+                        <button class="btn btn-outline btn-full mb-3">Modifier le profil</button>
+                        <button class="btn btn-outline btn-full mb-3">Sécurité & Mot de passe</button>
+                        <button class="btn btn-outline btn-full text-danger logout-btn" style="border-color:var(--danger-light);">Déconnexion</button>
+                    </div>
+
+                    <!-- Support & Info -->
+                    <div style="display:flex; flex-direction:column; gap:24px;">
+                        <div class="investments-card">
+                            <h2 class="card-title" style="margin-bottom:15px;">Support Technique</h2>
+                            <p class="text-secondary" style="margin-bottom:15px;">Besoin d'aide avec vos investissements ? Notre équipe est disponible 24/7 pour vous accompagner.</p>
+                            <button class="btn btn-primary">Contacter le support</button>
+                        </div>
+
+                        <div class="investments-card">
+                            <h2 class="card-title" style="margin-bottom:15px;">L'équipe Atlas Capital</h2>
+                            <p class="text-secondary" style="margin-bottom:15px;">Atlas Capital est composé d'experts financiers et d'ingénieurs dévoués à maximiser vos revenus en toute sécurité.</p>
+                            <a href="#" class="view-all">En savoir plus sur notre mission</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation for Mobile -->
+        <nav class="bottom-nav">
+            <a href="#" class="bottom-nav-item active" data-target="dashboard">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Accueil</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="finances">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>Investir</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="portefeuille">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <span>Wallet</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="transactions">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <span>Historique</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="compte">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Compte</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
