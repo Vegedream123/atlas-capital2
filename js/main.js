@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    main.js ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Atlas Capital Landing Page
    Gestion de la navigation, modales, formulaires, animations et interactions
    ========================================================================== */
@@ -157,16 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 5. Boutons tarifs ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ouvrir inscription
-    // =========================================================================
-    document.querySelectorAll('.pricing-card .btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            openModal('register-modal');
-        });
-    });
-
-    // =========================================================================
     // 6. Validation d'email
     // =========================================================================
     const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -271,8 +261,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.disabled = false;
                     } else {
                         showToast('Compte crÃ©Ã© ! Connectez-vous.', 'success');
-                        closeModal('register-modal');
-                        openModal('login-modal');
+                        if (typeof switchAuthTab === 'function') {
+                            switchAuthTab('login');
+                        } else {
+                            closeModal('register-modal');
+                            openModal('login-modal');
+                        }
                         btn.textContent = originalText;
                         btn.disabled = false;
                     }
@@ -436,6 +430,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
-
-
-
