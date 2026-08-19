@@ -105,10 +105,11 @@
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <<!-- JS -->
+    <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/main.js"></script>
+    <script>
         function switchAuthTab(tab) {
             const isLogin = tab === 'login';
             document.getElementById('tab-login').classList.toggle('active', isLogin);
