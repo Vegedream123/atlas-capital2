@@ -444,6 +444,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     margin-bottom: 32px;
+    overflow: hidden;
+    max-width: 100%;
 }
 
 .card-header {
@@ -482,6 +484,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     display: flex;
     height: 300px;
     gap: 16px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .y-axis {
@@ -493,6 +498,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     padding-bottom: 24px; /* Space for x-labels */
     text-align: right;
     min-width: 40px;
+    flex-shrink: 0;
 }
 
 .chart-area {
@@ -503,6 +509,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     padding-bottom: 24px;
     position: relative;
     border-bottom: 1px solid var(--gray-200);
+    min-width: 0;
+    overflow: hidden;
 }
 
 /* Add grid lines */
@@ -524,6 +532,9 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     position: relative;
     z-index: 1;
     width: 30px;
+    max-width: 30px;
+    min-width: 8px;
+    flex: 1 1 0;
 }
 
 .bar {
@@ -536,8 +547,11 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .x-label {
     position: absolute;
     bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 0.75rem;
     color: var(--gray-500);
+    white-space: nowrap;
 }
 
 .chart-summary {
@@ -721,7 +735,20 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
-    .chart-container { height: 250px; }
+    .chart-container { height: 250px; gap: 8px; }
+    .chart-card { padding: 16px; }
+    .y-axis { min-width: 32px; font-size: 0.7rem; }
+}
+
+@media (max-width: 420px) {
+    .chart-container { height: 200px; gap: 4px; }
+    .bar-group { min-width: 6px; }
+    .x-label { font-size: 0.6rem; }
+    .y-axis { min-width: 26px; font-size: 0.65rem; }
+}
+
+@media (max-width: 640px) {
+    .active-invest-split { grid-template-columns: 1fr; }
 }
 
 /* ==========================================================================
@@ -915,6 +942,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     grid-template-columns: 1fr 1fr;
     gap: 24px;
     height: 100%;
+    min-width: 0;
 }
 
 .invest-list, .invest-analysis {
@@ -922,6 +950,8 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     border-radius: var(--radius-sm);
     padding: 20px;
     border: 1px solid var(--gray-200);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .invest-list h4, .invest-analysis h4 {
