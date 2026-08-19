@@ -208,13 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
-                        // RÃ©cupÃ¨re les infos du profil (nom, pays) depuis Supabase pour le dashboard
-                        const meta = (data && data.user && data.user.user_metadata) || {};
-                        localStorage.setItem('isLoggedIn', 'true');
-                        localStorage.setItem('userName', meta.full_name || (data.user ? data.user.email : 'Utilisateur'));
-                        localStorage.setItem('userEmail', data.user ? data.user.email : '');
-                        if (meta.country) localStorage.setItem('userCountry', meta.country);
-
                         showToast('Connexion rÃ©ussie !', 'success');
                         window.location.href = 'dashboard.html';
                     }
@@ -238,17 +231,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const email = document.getElementById('reg-email') || document.getElementById('register-email');
             const password = document.getElementById('reg-password') || document.getElementById('register-password');
             const confirm = document.getElementById('reg-confirm') || document.getElementById('register-confirm');
-            const country = document.getElementById('reg-country') || document.getElementById('register-country');
             const terms = document.getElementById('terms') || document.getElementById('register-cgu');
             let valid = true;
 
-            [name, email, password, confirm, country].forEach(input => { if (input) clearError(input); });
+            [name, email, password, confirm].forEach(input => { if (input) clearError(input); });
 
             if (name && name.value.trim().length < 2) { showError(name, 'Veuillez entrer votre nom.'); valid = false; }
             if (email && !validateEmail(email.value)) { showError(email, 'Email invalide.'); valid = false; }
             if (password && password.value.length < 6) { showError(password, 'Min 6 caractÃ¨res.'); valid = false; }
             if (confirm && password && password.value !== confirm.value) { showError(confirm, 'Non correspondant.'); valid = false; }
-            if (country && !country.value) { showError(country, 'SÃ©lectionnez votre pays.'); valid = false; }
             if (terms && !terms.checked) { showToast('Acceptez les CGU', 'error'); valid = false; }
 
             if (valid) {
@@ -258,21 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.disabled = true;
 
                 try {
-                    const countryCode = country ? country.value : '';
-                    const countryName = (window.AtlasPaymentMethods && countryCode)
-                        ? window.AtlasPaymentMethods.getCountryName(countryCode)
-                        : '';
-
                     const { data, error } = await supabaseClient.auth.signUp({
                         email: email.value,
                         password: password.value,
-                        options: {
-                            data: {
-                                full_name: name ? name.value : 'Utilisateur',
-                                country: countryCode,
-                                country_name: countryName
-                            }
-                        }
+                        options: { data: { full_name: name ? name.value : 'Utilisateur' } }
                     });
 
                     if (error) {
