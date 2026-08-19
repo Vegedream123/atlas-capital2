@@ -1,13 +1,13 @@
-﻿// dashboard.js
+// dashboard.js
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. VÃ©rification de l'authentification
+    // 1. Vérification de l'authentification
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     if (isLoggedIn !== 'true') {
         window.location.href = 'index.html';
         return;
     }
 
-    // Mise Ã  jour des informations de l'utilisateur
+    // Mise à jour des informations de l'utilisateur
     const userName = localStorage.getItem('userName') || 'Utilisateur';
     const userEmail = localStorage.getItem('userEmail') || 'contact@atlascapital.com';
     
@@ -84,12 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. DÃ©connexion
+    // 4. Déconnexion
     document.querySelectorAll('.logout-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             localStorage.removeItem('isLoggedIn');
-            window.showToast('DÃ©connexion en cours...', 'info');
+            window.showToast('Déconnexion en cours...', 'info');
             setTimeout(() => window.location.href = 'index.html', 1000);
         });
     });
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const amount = parseFloat(investAmount.value);
             if (amount >= 5000) {
-                window.showToast(`Investissement de ${formatFCFA(amount)} confirmÃ© !`, 'success');
+                window.showToast(`Investissement de ${formatFCFA(amount)} confirmé !`, 'success');
                 investForm.reset();
                 calculateGains();
             } else {
@@ -231,6 +231,3 @@ document.addEventListener('DOMContentLoaded', () => {
             if (targetView) targetView.classList.add('active');
         });
     });
-
-
-
