@@ -1,1 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Connectez-vous ou créez votre compte Atlas Capital.">
+    <meta name="author" content="Atlas Capital">
+    <title>Connexion | Atlas Capital</title>
 
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233B82F6'/></svg>">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header (logo uniquement) -->
+    <header class="auth-header">
+        <a href="index.html" class="brand">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3v18h18"/>
+                <path d="m19 9-5 5-4-4-3 3"/>
+            </svg>
+            Atlas Capital
+        </a>
+    </header>
+
+    <!-- Contenu Connexion / Inscription -->
+    <main class="auth-page">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
+                <button type="button" class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Inscription</button>
+            </div>
+
+            <!-- Panneau Connexion -->
+            <div class="auth-panel active" id="login-modal">
+                <h2>Content de vous revoir</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Mot de passe</label>
+                        <div class="password-input">
+                            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('login-password')" aria-label="Afficher/Masquer">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="remember-me">
+                            <label for="remember-me">Se souvenir de moi</label>
+                        </div>
+                        <a href="#">Mot de passe oublié ?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Se connecter</button>
+                </form>
+            </div>
+
+            <!-- Panneau Inscription -->
+            <div class="auth-panel" id="register-modal">
+                <h2>Créez votre compte</h2>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-name">Nom complet</label>
+                        <input type="text" id="reg-name" class="form-control" placeholder="Jean Dupont" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" id="reg-email" class="form-control" placeholder="jean.dupont@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Mot de passe</label>
+                        <div class="password-input">
+                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('reg-password')" aria-label="Afficher/Masquer">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-confirm">Confirmer le mot de passe</label>
+                        <input type="password" id="reg-confirm" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-country">Pays de résidence</label>
+                        <select id="reg-country" class="form-control" required>
+                            <option value="" disabled selected>Sélectionnez votre pays</option>
+                        </select>
+                        <small style="display:block; margin-top:6px; color:var(--text-secondary); font-size:0.78rem;">
+                            Détermine les moyens de paiement disponibles pour vos dépôts et retraits.
+                        </small>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">J'accepte les conditions générales d'utilisation et la politique de confidentialité</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Créer mon compte</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- JS -->
+    <script src="js/payment-methods.js"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        function switchAuthTab(tab) {
+            const isLogin = tab === 'login';
+            document.getElementById('tab-login').classList.toggle('active', isLogin);
+            document.getElementById('tab-register').classList.toggle('active', !isLogin);
+            openModal(isLogin ? 'login-modal' : 'register-modal');
+            closeModal(isLogin ? 'register-modal' : 'login-modal');
+            document.body.style.overflow = '';
+        }
+
+        // Remplit la liste des pays (utilisée aussi par le Wallet du dashboard)
+        (function populateCountries() {
+            const select = document.getElementById('reg-country');
+            if (!select || !window.AtlasCountries) return;
+            window.AtlasCountries.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.code;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+            });
+        })();
+
+        // Ouvre directement le bon onglet selon l'URL (?tab=register)
+        const params = new URLSearchParams(window.location.search);
+        switchAuthTab(params.get('tab') === 'register' ? 'register' : 'login');
+    </script>
+</body>
+</html>
