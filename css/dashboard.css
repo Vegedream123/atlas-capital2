@@ -749,9 +749,6 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 
 @media (max-width: 640px) {
     .active-invest-split { grid-template-columns: 1fr; }
-    .finances-subnav { gap: 4px; }
-    .finances-subnav { gap: 8px; }
-    .subnav-btn { padding: 8px 4px; font-size: 0.72rem; }
     .finance-card { padding: 20px !important; }
     .finance-card .btn { white-space: normal; max-width: 100%; }
 }
@@ -1093,4 +1090,27 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 
 .sub-view.active {
     display: block;
+}
+
+/* ==========================================================================
+   Onglets Finances : défilement horizontal sur mobile (une seule ligne,
+   plus propre que le texte compressé sur plusieurs lignes)
+   ========================================================================== */
+@media (max-width: 640px) {
+    .finances-subnav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 4px;
+        padding-bottom: 2px;
+    }
+    .finances-subnav::-webkit-scrollbar { display: none; }
+
+    .subnav-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
 }
