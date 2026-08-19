@@ -50,10 +50,8 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
-    // Animation d'entree
     requestAnimationFrame(() => toast.classList.add('show'));
 
-    // Suppression automatique apres 4 secondes
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
@@ -61,7 +59,7 @@ function showToast(message, type = 'info') {
 }
 
 /**
- * Bascule la visibilite d'un champ mot de passe
+ * Bascule la visibilité d'un champ mot de passe
  */
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
@@ -98,7 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
         });
 
-        // Fermer le menu quand on clique sur un lien
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 burger.classList.remove('active');
@@ -108,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Fermer le menu quand on clique a l'exterieur
         document.addEventListener('click', (e) => {
             if (!burger.contains(e.target) && !navLinks.contains(e.target) && 
                 !(navActions && navActions.contains(e.target)) && navLinks.classList.contains('active')) {
@@ -121,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 3. Defilement fluide (smooth scroll)
+    // 3. Défilement fluide (smooth scroll)
     // =========================================================================
     document.querySelectorAll('a[href^="#"]').forEach(link => {
         link.addEventListener('click', function (e) {
@@ -138,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 4. Fermeture des modales (overlay + Echap)
+    // 4. Fermeture des modales (overlay + échap)
     // =========================================================================
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
@@ -189,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let valid = true;
 
             if (!validateEmail(email.value)) { showError(email, 'Email invalide.'); valid = false; } else clearError(email);
-            if (password.value.length < 6) { showError(password, 'Le mot de passe doit faire au moins 6 caracteres.'); valid = false; } else clearError(password);
+            if (password.value.length < 6) { showError(password, 'Le mot de passe doit faire au moins 6 caractères.'); valid = false; } else clearError(password);
 
             if (valid) {
                 const btn = loginForm.querySelector('button[type="submit"]');
@@ -208,7 +204,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
-                        showToast('Connexion reussie !', 'success');
+                        localStorage.setItem('isLoggedIn', 'true');
+                        localStorage.setItem('userEmail', data.user.email);
+                        localStorage.setItem('userName', (data.user.user_metadata && data.user.user_metadata.full_name) || data.user.email);
+                        showToast('Connexion réussie !', 'success');
                         window.location.href = 'dashboard.html';
                     }
                 } catch (err) {
@@ -238,14 +237,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (name && name.value.trim().length < 2) { showError(name, 'Veuillez entrer votre nom.'); valid = false; }
             if (email && !validateEmail(email.value)) { showError(email, 'Email invalide.'); valid = false; }
-            if (password && password.value.length < 6) { showError(password, 'Min 6 caracteres.'); valid = false; }
+            if (password && password.value.length < 6) { showError(password, 'Min 6 caractères.'); valid = false; }
             if (confirm && password && password.value !== confirm.value) { showError(confirm, 'Non correspondant.'); valid = false; }
             if (terms && !terms.checked) { showToast('Acceptez les CGU', 'error'); valid = false; }
 
             if (valid) {
                 const btn = registerForm.querySelector('button[type="submit"]');
                 const originalText = btn.textContent;
-                btn.textContent = 'Creation en cours...';
+                btn.textContent = 'Création en cours...';
                 btn.disabled = true;
 
                 try {
@@ -260,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
-                        showToast('Compte cree ! Connectez-vous.', 'success');
+                        showToast('Compte créé ! Connectez-vous.', 'success');
                         if (typeof switchAuthTab === 'function') {
                             switchAuthTab('login');
                         } else {
@@ -279,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Validation en temps reel (sur blur)
+    // Validation en temps réel (sur blur)
     document.querySelectorAll('.modal-overlay input[type="email"]').forEach(input => {
         input.addEventListener('blur', () => {
             if (input.value && !validateEmail(input.value)) {
@@ -291,7 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 9. FAQ Accordeon
+    // 9. FAQ Accordéon
     // =========================================================================
     const faqItems = document.querySelectorAll('.faq-item');
     faqItems.forEach(item => {
@@ -302,14 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = item.classList.contains('active');
             const answer = item.querySelector('.faq-answer');
 
-            // Fermer tous les autres elements
             faqItems.forEach(other => {
                 other.classList.remove('active');
                 const otherAnswer = other.querySelector('.faq-answer');
                 if (otherAnswer) otherAnswer.style.maxHeight = null;
             });
 
-            // Ouvrir l'element clique s'il n'etait pas deja ouvert
             if (!isActive && answer) {
                 item.classList.add('active');
                 answer.style.maxHeight = answer.scrollHeight + 'px';
@@ -326,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const emailInput = newsletterForm.querySelector('input[type="email"]');
             if (emailInput && validateEmail(emailInput.value)) {
-                showToast('Inscription a la newsletter reussie !', 'success');
+                showToast('Inscription à la newsletter réussie !', 'success');
                 emailInput.value = '';
             } else {
                 showToast('Veuillez entrer une adresse email valide.', 'error');
@@ -335,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // 11. Animations au defilement (Intersection Observer)
+    // 11. Animations au défilement (Intersection Observer)
     // =========================================================================
     const scrollObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -351,7 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 12. Compteurs animes
+    // 12. Compteurs animés
     // =========================================================================
     const animateCounter = (counter) => {
         const target = parseFloat(counter.getAttribute('data-target'));
