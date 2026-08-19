@@ -438,7 +438,6 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--gray-200);
     margin-bottom: 32px;
-    overflow: hidden;
 }
 
 .card-header {
@@ -666,6 +665,93 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .transaction-amount { font-weight: 600; margin-top: 2px; }
 .transaction-date { font-size: 0.8125rem; color: var(--text-secondary); }
 
+/* Account menu list (Compte view) */
+.menu-list { display: flex; flex-direction: column; gap: 12px; }
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: var(--radius);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition);
+    cursor: pointer;
+    text-decoration: none;
+}
+.menu-item:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.menu-item.disabled { cursor: not-allowed; opacity: 0.6; }
+.menu-item.disabled:hover { border-color: var(--gray-200); box-shadow: none; }
+.menu-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+.menu-item-info { flex: 1; min-width: 0; }
+.menu-item-title { font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.menu-item-desc { font-size: 0.8125rem; color: var(--text-secondary); }
+.menu-chevron { color: var(--gray-300); flex-shrink: 0; margin-left: 12px; }
+
+/* Referral / parrainage box */
+.referral-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--gray-50);
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 12px;
+}
+.referral-code { flex: 1; font-weight: 600; color: var(--primary); letter-spacing: 0.5px; word-break: break-all; }
+.copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--white);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+.copy-btn:hover { background: var(--accent-hover); }
+
+/* Status pill (PIN configured / not configured) */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+.status-pill.pending { background: var(--danger-light); color: var(--danger); }
+.status-pill.ok { background: var(--success-light); color: var(--success); }
+
+/* "Bientôt disponible" tag */
+.tag-soon {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    background: var(--gray-100);
+    color: var(--gray-500);
+    margin-left: 8px;
+}
+
 /* Bottom Navigation (Mobile Only) */
 .bottom-nav {
     display: none;
@@ -716,48 +802,7 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     
     .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
     .kpi-grid { grid-template-columns: 1fr; }
-    .chart-container { height: 220px; gap: 8px; }
-
-    /* Graphique "Évolution des Cumuls" : s'adapte à la largeur de l'écran au lieu de déborder */
-    .y-axis {
-        min-width: 30px;
-        font-size: 0.65rem;
-    }
-    .chart-area {
-        gap: 4px;
-    }
-    .bar-group {
-        width: auto;
-        flex: 1;
-        min-width: 0;
-    }
-    .x-label {
-        font-size: 0.6rem;
-        bottom: -20px;
-    }
-
-    /* Sous-onglets Finances : tous visibles sans scroll horizontal */
-    .finances-subnav {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    .subnav-btn {
-        padding: 10px 14px;
-        font-size: 0.9rem;
-    }
-
-    /* "Investissements Actifs" : empiler au lieu d'écraser sur 2 colonnes */
-    .active-invest-split {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-    .invest-list, .invest-analysis {
-        min-width: 0;
-    }
-    .mini-chart-placeholder {
-        width: 100%;
-        overflow: hidden;
-    }
+    .chart-container { height: 250px; }
 }
 
 /* ==========================================================================
