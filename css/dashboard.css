@@ -682,6 +682,12 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
     border-top: 1px solid var(--gray-200);
     z-index: 1000;
     padding-bottom: env(safe-area-inset-bottom);
+    /* Force sa propre couche GPU pour Ã©viter qu'elle ne disparaisse/clignote
+       pendant l'animation de la barre d'adresse sur Chrome Android */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
 }
 
 .bottom-nav-item {
