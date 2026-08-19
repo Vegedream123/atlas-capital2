@@ -18,6 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const initials = userName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
     document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
 
+    // 1bis. Copier le lien de parrainage
+    const copyReferralBtn = document.getElementById('copy-referral-btn');
+    const referralCodeEl = document.getElementById('referral-code');
+    if (copyReferralBtn && referralCodeEl) {
+        copyReferralBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(referralCodeEl.textContent.trim());
+                window.showToast('Lien de parrainage copié !', 'success');
+            } catch (err) {
+                window.showToast('Impossible de copier le lien.', 'error');
+            }
+        });
+    }
+
     // Fonction Toast (globale pour pouvoir l'utiliser dans le HTML)
     window.showToast = (message, type = 'info') => {
         const container = document.getElementById('toast-container');
