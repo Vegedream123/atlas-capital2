@@ -1,5 +1,5 @@
 /* ==========================================================================
-   main.js — Atlas Capital Landing Page
+   main.js — Atlas Capital Landing Page
    Gestion de la navigation, modales, formulaires, animations et interactions
    ========================================================================== */
 
@@ -50,8 +50,10 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
+    // Animation d'entrée
     requestAnimationFrame(() => toast.classList.add('show'));
 
+    // Suppression automatique après 4 secondes
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
@@ -96,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
         });
 
+        // Fermer le menu quand on clique sur un lien
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
                 burger.classList.remove('active');
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        // Fermer le menu quand on clique à l'extérieur
         document.addEventListener('click', (e) => {
             if (!burger.contains(e.target) && !navLinks.contains(e.target) && 
                 !(navActions && navActions.contains(e.target)) && navLinks.classList.contains('active')) {
@@ -134,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // =========================================================================
-    // 4. Fermeture des modales (overlay + échap)
+    // 4. Fermeture des modales (overlay + Échap)
     // =========================================================================
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-overlay')) {
@@ -204,9 +208,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.textContent = originalText;
                         btn.disabled = false;
                     } else {
-                        localStorage.setItem('isLoggedIn', 'true');
-                        localStorage.setItem('userEmail', data.user.email);
-                        localStorage.setItem('userName', (data.user.user_metadata && data.user.user_metadata.full_name) || data.user.email);
                         showToast('Connexion réussie !', 'success');
                         window.location.href = 'dashboard.html';
                     }
@@ -301,12 +302,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = item.classList.contains('active');
             const answer = item.querySelector('.faq-answer');
 
+            // Fermer tous les autres éléments
             faqItems.forEach(other => {
                 other.classList.remove('active');
                 const otherAnswer = other.querySelector('.faq-answer');
                 if (otherAnswer) otherAnswer.style.maxHeight = null;
             });
 
+            // Ouvrir l'élément cliqué s'il n'était pas déjà ouvert
             if (!isActive && answer) {
                 item.classList.add('active');
                 answer.style.maxHeight = answer.scrollHeight + 'px';
