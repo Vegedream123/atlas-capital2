@@ -50,12 +50,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Chargement des données réelles : profil, portefeuille, produits,
     //    investissements en cours, transactions
     // ------------------------------------------------------------------
-    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes] = await Promise.all([
+    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes] = await Promise.all([
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
         window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
-        window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
+        window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
+        window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30)
     ]);
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
@@ -63,6 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let products = productsRes.data || [];
     let investments = investmentsRes.data || [];
     let transactions = transactionsRes.data || [];
+    let notifications = notificationsRes.data || [];
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
@@ -319,6 +321,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     showPurchaseConfirmation(btn);
                     await refreshDashboardData();
+                    await refreshNotifications();
                 }
             } catch (err) {
                 window.showToast('Erreur : ' + err.message, 'error');
@@ -374,10 +377,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ------------------------------------------------------------------
-    // 10. Notifications Toggle
+    // 10. Centre de notifications — données réelles, générées automatiquement
+    //     côté serveur à chaque transaction (dépôt, retrait, achat, revenu,
+    //     commission de parrainage, quête...). Un nouveau compte démarre à zéro.
     // ------------------------------------------------------------------
     const notifBtn = document.getElementById('notif-btn');
     const notifPanel = document.getElementById('notif-panel');
+    const notifBadge = document.getElementById('notif-badge');
+    const notifListEl = document.getElementById('notif-list');
+    const notifMarkAllBtn = document.getElementById('notif-mark-all');
+
+    const notifIconFor = (type) => ({
+        deposit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
+        withdrawal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
+        investment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
+        gain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>',
+        referral_commission: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
+        quest: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>'
+    }[type] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>');
+
+    const timeAgo = (dateStr) => {
+        const diffMs = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 1) return "à l'instant";
+        if (mins < 60) return `il y a ${mins} min`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `il y a ${hrs} h`;
+        const days = Math.floor(hrs / 24);
+        return `il y a ${days} j`;
+    };
+
+    const renderNotifications = () => {
+        const unreadCount = notifications.filter(n => !n.is_read).length;
+        if (notifBadge) {
+            if (unreadCount > 0) {
+                notifBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                notifBadge.style.display = '';
+            } else {
+                notifBadge.style.display = 'none';
+            }
+        }
+        if (!notifListEl) return;
+        notifListEl.innerHTML = notifications.length ? notifications.map(n => `
+            <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}">
+                <div class="notif-icon">${notifIconFor(n.type)}</div>
+                <div class="notif-body">
+                    <div class="notif-title">${n.title}</div>
+                    <div class="notif-desc">${n.body}</div>
+                    <div class="notif-time">${timeAgo(n.created_at)}</div>
+                </div>
+            </div>`).join('') : `
+            <div class="notif-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <p>Aucune notification pour le moment.</p>
+                <span>Vos dépôts, retraits, achats et revenus apparaîtront ici.</span>
+            </div>`;
+    };
+    renderNotifications();
+
+    const refreshNotifications = async () => {
+        const { data } = await window.supabaseClient
+            .from('notifications')
+            .select('*')
+            .eq('user_id', authUser.id)
+            .order('created_at', { ascending: false })
+            .limit(30);
+        notifications = data || notifications;
+        renderNotifications();
+    };
+
     if (notifBtn && notifPanel) {
         notifBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -385,6 +453,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
         document.addEventListener('click', (e) => {
             if (!notifPanel.contains(e.target)) notifPanel.classList.remove('active');
+        });
+    }
+
+    if (notifListEl) {
+        notifListEl.addEventListener('click', async (e) => {
+            const item = e.target.closest('.notif-item.unread');
+            if (!item) return;
+            const id = item.getAttribute('data-notif-id');
+            item.classList.remove('unread');
+            const notif = notifications.find(n => n.id === id);
+            if (notif) notif.is_read = true;
+            renderNotifications();
+            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('id', id);
+        });
+    }
+
+    if (notifMarkAllBtn) {
+        notifMarkAllBtn.addEventListener('click', async () => {
+            const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+            if (!unreadIds.length) return;
+            notifications.forEach(n => n.is_read = true);
+            renderNotifications();
+            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', authUser.id).in('id', unreadIds);
         });
     }
 
