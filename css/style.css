@@ -54,32 +54,32 @@ button {
    Root Variables
    ========================================================================== */
 :root {
-    --primary: #0B1D3A;
-    --primary-light: #1E3A5F;
-    --primary-hover: #2A5082;
-    --accent: #C9A227;
-    --accent-hover: #97761B;
-    --gold: #C9A227;
-    --gold-light: #F1D888;
-    --gold-dark: #97761B;
-    --gold-gradient: linear-gradient(135deg, #E9CE7C 0%, #C9A227 45%, #97761B 100%);
+    --primary: #9A3412;
+    --primary-light: #C2410C;
+    --primary-hover: #EA580C;
+    --accent: #F97316;
+    --accent-hover: #C2410C;
+    --gold: #F97316;
+    --gold-light: #FDBA74;
+    --gold-dark: #C2410C;
+    --gold-gradient: linear-gradient(135deg, #FDBA74 0%, #F97316 45%, #C2410C 100%);
     --success: #10B981;
     --warning: #F59E0B;
     --danger: #EF4444;
     --white: #FFFFFF;
-    --gray-50: #F8FAFC;
-    --gray-100: #F1F5F9;
-    --gray-200: #E2E8F0;
-    --gray-300: #CBD5E1;
-    --gray-500: #64748B;
-    --gray-700: #334155;
-    --text-primary: #0B1D3A;
-    --text-secondary: #5A6A7E;
+    --gray-50: #FAFAF9;
+    --gray-100: #F5F5F4;
+    --gray-200: #E7E5E4;
+    --gray-300: #D6D3D1;
+    --gray-500: #78716C;
+    --gray-700: #44403C;
+    --text-primary: #9A3412;
+    --text-secondary: #57534E;
     
-    --shadow-sm: 0 1px 2px rgba(11,29,58,0.05);
-    --shadow: 0 4px 6px -1px rgba(11,29,58,0.07), 0 2px 4px -2px rgba(11,29,58,0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(11,29,58,0.08), 0 4px 6px -4px rgba(11,29,58,0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(11,29,58,0.1), 0 8px 10px -6px rgba(11,29,58,0.05);
+    --shadow-sm: 0 1px 2px rgba(67,20,7,0.05);
+    --shadow: 0 4px 6px -1px rgba(67,20,7,0.07), 0 2px 4px -2px rgba(67,20,7,0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(67,20,7,0.08), 0 4px 6px -4px rgba(67,20,7,0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(67,20,7,0.1), 0 8px 10px -6px rgba(67,20,7,0.05);
     
     --radius-sm: 8px;
     --radius: 12px;
@@ -537,7 +537,7 @@ h3 {
 .feature-icon {
     width: 56px;
     height: 56px;
-    background: rgba(201, 162, 39, 0.12);
+    background: rgba(249,115,22, 0.12);
     color: var(--accent);
     border-radius: 50%;
     display: flex;
@@ -643,7 +643,7 @@ h3 {
     right: 0;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba(201,162,39,0.3) 0%, rgba(255,255,255,0) 70%);
+    background: radial-gradient(circle, rgba(249,115,22,0.3) 0%, rgba(255,255,255,0) 70%);
 }
 
 .security-badges {
@@ -834,7 +834,7 @@ h3 {
 
 .newsletter-form input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
+    box-shadow: 0 0 0 3px rgba(249,115,22, 0.12);
 }
 
 /* ==========================================================================
@@ -959,7 +959,7 @@ h3 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(11, 29, 58, 0.8);
+    background: rgba(67,20,7, 0.8);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -1030,7 +1030,7 @@ h3 {
 
 .form-control:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
+    box-shadow: 0 0 0 3px rgba(249,115,22, 0.12);
 }
 
 .password-input {
