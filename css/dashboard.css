@@ -172,6 +172,9 @@ svg { flex-shrink: 0; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
 .amount { font-size: 2rem; font-weight: 700; }
 
+.vip-section { margin-bottom: 24px; }
+.vip-section:last-child { margin-bottom: 0; }
+.vip-section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
 .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .vip-card-header { display: flex; align-items: center; gap: 8px; }
