@@ -85,9 +85,9 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" data-target="254350" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-balance" data-target="0" data-suffix=" FCFA">0 FCFA</div>
                         <div class="kpi-footer">
-                            <span class="kpi-change positive">+8.2%</span>
+                            <span class="kpi-change positive" id="kpi-balance-change">—</span>
                             <span class="kpi-period">cumul des revenus</span>
                         </div>
                     </div>
@@ -99,10 +99,10 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" data-target="12.5" data-suffix="%">0%</div>
+                        <div class="kpi-value stat-number" id="kpi-annual-rate" data-target="0" data-suffix="%">0%</div>
                         <div class="kpi-footer">
-                            <span class="kpi-change positive">+2.1%</span>
-                            <span class="kpi-period">vs mois dernier</span>
+                            <span class="kpi-change positive" id="kpi-rate-change">—</span>
+                            <span class="kpi-period">taux moyen pondéré</span>
                         </div>
                     </div>
 
@@ -113,10 +113,10 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" data-target="3" data-suffix="">0</div>
+                        <div class="kpi-value stat-number" id="kpi-active-investments" data-target="0" data-suffix="">0</div>
                         <div class="kpi-footer">
-                            <span class="kpi-change positive">+1</span>
-                            <span class="kpi-period">ce mois</span>
+                            <span class="kpi-change positive" id="kpi-active-change">—</span>
+                            <span class="kpi-period">en cours</span>
                         </div>
                     </div>
 
@@ -127,10 +127,10 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" data-target="1280" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-daily-quest" data-target="0" data-suffix=" FCFA">0 FCFA</div>
                         <div class="kpi-footer">
-                            <span class="kpi-change positive">+15%</span>
-                            <span class="kpi-period">vs semaine dernière</span>
+                            <span class="kpi-change positive" id="kpi-quest-change">—</span>
+                            <span class="kpi-period">gagné aujourd'hui</span>
                         </div>
                     </div>
                 </div>
@@ -196,82 +196,8 @@
                     <div id="sub-revenu" class="sub-view active">
                         <div class="vip-section">
                             <h4 class="vip-section-title">Atlas</h4>
-                            <div class="vip-grid">
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">Atlas 1</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">Atlas 2</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">Atlas 3</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">Atlas 4</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
+                            <div class="vip-grid" id="vip-grid-atlas">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
                             </div>
                         </div>
                     </div>
@@ -280,158 +206,16 @@
                     <div id="sub-actifs" class="sub-view">
                         <div class="vip-section">
                             <h4 class="vip-section-title">Constant</h4>
-                        <div class="vip-grid">
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 1</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
+                            <div class="vip-grid" id="vip-grid-constant">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
                             </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 2</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 3</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 4</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                        </div>
                         </div>
 
                         <div class="vip-section">
                             <h4 class="vip-section-title">Analyse</h4>
-                        <div class="vip-grid">
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 1</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
+                            <div class="vip-grid" id="vip-grid-analyse">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
                             </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 2</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 3</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                            <div class="vip-card">
-                                <div class="vip-card-header">
-                                    <div class="vip-icon">★</div>
-                                    <span class="vip-name">VIP 4</span>
-                                </div>
-                                <div class="vip-price">— FCFA</div>
-                                <div class="vip-stats">
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Gain / jour</span>
-                                        <span class="vip-stat-value">— FCFA</span>
-                                    </div>
-                                    <div class="vip-stat">
-                                        <span class="vip-stat-label">Échéance</span>
-                                        <span class="vip-stat-value">— j</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary btn-full">Acheter</button>
-                            </div>
-                        </div>
                         </div>
                     </div>
 
@@ -439,82 +223,8 @@
                     <div id="sub-quetes" class="sub-view">
                         <div class="vip-section">
                             <h4 class="vip-section-title">VIP 0</h4>
-                            <div class="vip-grid">
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">VIP 0</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">VIP 0</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">VIP 0</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
-
-                                <div class="vip-card">
-                                    <div class="vip-card-header">
-                                        <div class="vip-icon">★</div>
-                                        <span class="vip-name">VIP 0</span>
-                                    </div>
-                                    <div class="vip-price">— FCFA</div>
-                                    <div class="vip-stats">
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Gain / jour</span>
-                                            <span class="vip-stat-value">— FCFA</span>
-                                        </div>
-                                        <div class="vip-stat">
-                                            <span class="vip-stat-label">Échéance</span>
-                                            <span class="vip-stat-value">— j</span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-primary btn-full">Acheter</button>
-                                </div>
+                            <div class="vip-grid" id="vip-grid-quete">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
                             </div>
                         </div>
                     </div>
@@ -534,10 +244,10 @@
                 <div class="wallet-overview">
                     <div class="wallet-balance-card">
                         <div class="wallet-label">Solde Disponible</div>
-                        <div class="wallet-amount">125 000 FCFA</div>
+                        <div class="wallet-amount" id="wallet-balance-amount">0 FCFA</div>
                         <div class="wallet-actions">
-                            <button class="btn btn-primary" onclick="showToast('Connexion à Supabase requise pour les dépôts.', 'info')">Faire un dépôt</button>
-                            <button class="btn btn-outline" onclick="showToast('Connexion à Supabase requise pour les retraits.', 'info')">Retirer des fonds</button>
+                            <button class="btn btn-primary" id="wallet-deposit-btn">Faire un dépôt</button>
+                            <button class="btn btn-outline" id="wallet-withdraw-btn">Retirer des fonds</button>
                         </div>
                     </div>
                     
@@ -560,62 +270,8 @@
                 </div>
                 
                 <div class="transactions-card full-width">
-                    <div class="transactions-list">
-                        <div class="transaction-item">
-                            <div class="transaction-icon bg-success-light text-success">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-                            </div>
-                            <div class="transaction-info">
-                                <div class="transaction-title">Dépôt Mobile Money</div>
-                                <div class="transaction-desc">ID: TR-9847291</div>
-                            </div>
-                            <div class="transaction-meta">
-                                <div class="transaction-date">18/08/2024 - 14:30</div>
-                                <div class="transaction-amount positive">+50 000 FCFA</div>
-                            </div>
-                        </div>
-                        
-                        <div class="transaction-item">
-                            <div class="transaction-icon bg-primary-light text-primary">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                            </div>
-                            <div class="transaction-info">
-                                <div class="transaction-title">Investissement Plan Pro</div>
-                                <div class="transaction-desc">Durée : 12 mois</div>
-                            </div>
-                            <div class="transaction-meta">
-                                <div class="transaction-date">18/08/2024 - 14:35</div>
-                                <div class="transaction-amount">-50 000 FCFA</div>
-                            </div>
-                        </div>
-                        
-                        <div class="transaction-item">
-                            <div class="transaction-icon bg-warning-light text-warning">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                            </div>
-                            <div class="transaction-info">
-                                <div class="transaction-title">Quête Journalière Validée</div>
-                                <div class="transaction-desc">Bonus de connexion</div>
-                            </div>
-                            <div class="transaction-meta">
-                                <div class="transaction-date">18/08/2024 - 08:00</div>
-                                <div class="transaction-amount positive">+500 FCFA</div>
-                            </div>
-                        </div>
-                        
-                        <div class="transaction-item">
-                            <div class="transaction-icon bg-danger-light text-danger">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-                            </div>
-                            <div class="transaction-info">
-                                <div class="transaction-title">Retrait vers Banque</div>
-                                <div class="transaction-desc">Compte terminant par ****4589</div>
-                            </div>
-                            <div class="transaction-meta">
-                                <div class="transaction-date">25/07/2024 - 10:15</div>
-                                <div class="transaction-amount negative">-25 000 FCFA</div>
-                            </div>
-                        </div>
+                    <div class="transactions-list" id="transactions-list">
+                        <p class="text-secondary" style="padding:12px 2px;">Chargement des transactions…</p>
                     </div>
                 </div>
             </div>
@@ -655,7 +311,7 @@
                         <div class="account-profile-info">
                             <div class="account-profile-name user-name">Jean Dupont</div>
                             <div class="account-profile-email user-email">jean@email.com</div>
-                            <span class="account-verified-badge">
+                            <span class="account-verified-badge" id="account-verified-badge" style="display:none;">
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                                 Compte vérifié
                             </span>
