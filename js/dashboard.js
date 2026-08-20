@@ -68,6 +68,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
+    // Injecte l'adresse USDT (TRC-20) définie dans l'admin (site_settings)
+    // dans le module des moyens de paiement, avant tout rendu des modals
+    // de dépôt/retrait.
+    if (window.AtlasPaymentMethods) {
+        window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address);
+    }
+
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
@@ -557,13 +564,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('selected');
                 const method = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 selectedDepositMethod = method;
-                depositModalOverlay.querySelector('#deposit-method-details').innerHTML = method ? `
+                depositModalOverlay.querySelector('#deposit-method-details').innerHTML = method ? (
+                    method.type === 'usdt' ? `
+                    <div class="deposit-method-details-box">
+                        <p><strong>${method.name}</strong></p>
+                        <p>Adresse de réception : <strong style="word-break:break-all;">${method.number}</strong></p>
+                        <p class="text-secondary" style="font-size:0.82rem;">${method.note}</p>
+                    </div>` : `
                     <div class="deposit-method-details-box">
                         <p><strong>${method.name}</strong></p>
                         <p>Numéro / Référence : <strong>${method.number}</strong></p>
                         <p>Bénéficiaire : ${method.holder}</p>
                         <p class="text-secondary" style="font-size:0.82rem;">${method.note}</p>
-                    </div>` : '';
+                    </div>`
+                ) : '';
                 depositModalOverlay.querySelector('#deposit-submit-btn').disabled = false;
             });
         });
@@ -723,6 +737,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('selected');
                 selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
+
+                const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
+                const destinationLabel = withdrawModalOverlay.querySelector('#withdraw-destination-label');
+                if (destinationInput && selectedWithdrawMethod && selectedWithdrawMethod.type === 'usdt') {
+                    if (destinationLabel) destinationLabel.textContent = 'Votre adresse USDT (réseau TRC-20)';
+                    destinationInput.placeholder = 'Ex : TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+                } else {
+                    if (destinationLabel) destinationLabel.textContent = 'Numéro / compte de réception';
+                    destinationInput.placeholder = 'Ex : +237 6XX XXX XXX';
+                }
             });
         });
     };
@@ -750,13 +774,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
             <div class="form-group">
-                <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
+                <label class="form-label" id="withdraw-destination-label" for="withdraw-destination-input">Numéro / compte de réception</label>
                 <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="withdraw-recipient-name-input">Nom du destinataire</label>
-                <input type="text" id="withdraw-recipient-name-input" class="form-control" placeholder="Nom complet associé au compte">
             </div>
 
             <div class="form-group">
@@ -773,16 +792,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', async () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
             const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
-            const recipientNameInput = withdrawModalOverlay.querySelector('#withdraw-recipient-name-input');
             const amountInput = withdrawModalOverlay.querySelector('#withdraw-amount-input');
             const submitBtn = withdrawModalOverlay.querySelector('#withdraw-submit-btn');
             const amount = Number(amountInput.value);
             const destination = destinationInput.value.trim();
-            const recipientName = recipientNameInput.value.trim();
 
             if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom du destinataire.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
 
@@ -796,7 +812,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     amount,
                     method_name: selectedWithdrawMethod.name,
                     destination,
-                    recipient_name: recipientName,
                     status: 'pending'
                 });
                 if (insertError) throw insertError;
