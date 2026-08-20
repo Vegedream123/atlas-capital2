@@ -210,6 +210,210 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lancer l'animation
     animateCounters();
+
+    // 10. Programme de Parrainage
+    const referralLinkInput = document.getElementById('referral-link');
+    const referralCopyBtn = document.getElementById('referral-copy-btn');
+    const referralShareBtn = document.getElementById('referral-share-btn');
+    const referralWhatsappBtn = document.getElementById('referral-whatsapp-btn');
+    const referralCountEl = document.getElementById('referral-count');
+    const referralEarningsEl = document.getElementById('referral-earnings');
+
+    if (referralLinkInput) {
+        // Génère (ou récupère) un code de parrainage unique et stable pour l'utilisateur
+        const getReferralCode = () => {
+            let code = localStorage.getItem('referralCode');
+            if (code) return code;
+
+            const base = (userEmail || userName || 'atlas').toLowerCase();
+            let hash = 0;
+            for (let i = 0; i < base.length; i++) {
+                hash = (hash << 5) - hash + base.charCodeAt(i);
+                hash |= 0;
+            }
+            code = 'AC-' + Math.abs(hash).toString(36).toUpperCase().substring(0, 6);
+            localStorage.setItem('referralCode', code);
+            return code;
+        };
+
+        const referralCode = getReferralCode();
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        referralLinkInput.value = referralLink;
+
+        // Statistiques de parrainage (lues depuis le stockage local en attendant le backend)
+        const referredUsers = JSON.parse(localStorage.getItem('referredUsers') || '[]');
+        const referralEarnings = parseFloat(localStorage.getItem('referralEarnings') || '0');
+        if (referralCountEl) referralCountEl.textContent = referredUsers.length;
+        if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(referralEarnings);
+
+        // Bouton Copier
+        if (referralCopyBtn) {
+            referralCopyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(referralLink);
+                } catch (err) {
+                    referralLinkInput.select();
+                    document.execCommand('copy');
+                }
+                window.showToast('Lien de parrainage copié !', 'success');
+            });
+        }
+
+        // Bouton Partager (Web Share API avec repli sur la copie)
+        if (referralShareBtn) {
+            referralShareBtn.addEventListener('click', async () => {
+                const shareData = {
+                    title: 'Atlas Capital',
+                    text: 'Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀',
+                    url: referralLink
+                };
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                    } catch (err) {
+                        // Partage annulé par l'utilisateur, rien à faire
+                    }
+                } else {
+                    try {
+                        await navigator.clipboard.writeText(referralLink);
+                        window.showToast('Lien copié, prêt à être partagé !', 'success');
+                    } catch (err) {
+                        window.showToast('Impossible de partager automatiquement.', 'error');
+                    }
+                }
+            });
+        }
+
+        // Lien direct WhatsApp
+        if (referralWhatsappBtn) {
+            const message = encodeURIComponent(`Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀 ${referralLink}`);
+            referralWhatsappBtn.href = `https://wa.me/?text=${message}`;
+        }
+    }
+
+    // 11. Menu "Mon Compte" (navigation interne, code PIN, profil, code de parrainage reçu)
+    const accountMenuRoot = document.getElementById('account-menu-root');
+    const redeemCard = document.querySelector('.redeem-card');
+    const accountSubviews = document.querySelectorAll('.account-subview');
+
+    const showAccountMenu = () => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        if (accountMenuRoot) accountMenuRoot.style.display = '';
+        if (redeemCard) redeemCard.style.display = '';
+    };
+
+    const openAccountSubview = (target) => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        const view = document.getElementById('account-sub-' + target);
+        if (view) {
+            view.classList.add('active');
+            if (accountMenuRoot) accountMenuRoot.style.display = 'none';
+            if (redeemCard) redeemCard.style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+    };
+
+    document.querySelectorAll('.account-menu-item[data-account-target]').forEach(item => {
+        item.addEventListener('click', () => openAccountSubview(item.getAttribute('data-account-target')));
+    });
+
+    // Renvoie vers un autre onglet principal (ex: Historique des transactions)
+    document.querySelectorAll('.account-menu-item[data-nav-target]').forEach(item => {
+        item.addEventListener('click', () => {
+            const target = item.getAttribute('data-nav-target');
+            const link = document.querySelector(`.nav-link[data-target="${target}"], .bottom-nav-item[data-target="${target}"]`);
+            if (link) link.click();
+        });
+    });
+
+    document.querySelectorAll('[data-account-back]').forEach(btn => {
+        btn.addEventListener('click', showAccountMenu);
+    });
+
+    // Pré-remplissage du formulaire "Mes informations"
+    const profileNameInput = document.getElementById('profile-name-input');
+    const profilePhoneInput = document.getElementById('profile-phone-input');
+    const profileEmailInput = document.getElementById('profile-email-input');
+    if (profileNameInput) profileNameInput.value = userName;
+    if (profileEmailInput) profileEmailInput.value = userEmail;
+    if (profilePhoneInput) profilePhoneInput.value = localStorage.getItem('userPhone') || '';
+
+    const profileSaveBtn = document.getElementById('profile-save-btn');
+    if (profileSaveBtn) {
+        profileSaveBtn.addEventListener('click', () => {
+            const newName = profileNameInput.value.trim();
+            if (newName.length < 2) {
+                window.showToast('Veuillez entrer un nom valide.', 'error');
+                return;
+            }
+            localStorage.setItem('userName', newName);
+            localStorage.setItem('userPhone', profilePhoneInput.value.trim());
+            document.querySelectorAll('.user-name').forEach(el => el.textContent = newName);
+            const newInitials = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.querySelectorAll('.avatar').forEach(el => el.textContent = newInitials);
+            window.showToast('Profil mis à jour !', 'success');
+        });
+    }
+
+    // Code PIN de retrait (stocké côté client — un vrai contrôle doit être fait côté serveur)
+    const pinInput = document.getElementById('pin-input');
+    const pinConfirmInput = document.getElementById('pin-confirm-input');
+    const pinSaveBtn = document.getElementById('pin-save-btn');
+    if (pinSaveBtn) {
+        pinSaveBtn.addEventListener('click', () => {
+            const pin = pinInput.value.trim();
+            if (!/^\d{5}$/.test(pin)) {
+                window.showToast('Le code PIN doit contenir 5 chiffres.', 'error');
+                return;
+            }
+            if (pin !== pinConfirmInput.value.trim()) {
+                window.showToast('Les deux codes PIN ne correspondent pas.', 'error');
+                return;
+            }
+            localStorage.setItem('withdrawPin', pin);
+            pinInput.value = '';
+            pinConfirmInput.value = '';
+            window.showToast('Code PIN enregistré !', 'success');
+            showAccountMenu();
+        });
+    }
+
+    // Saisie d'un code de parrainage reçu (pour un utilisateur déjà inscrit)
+    const redeemInput = document.getElementById('redeem-code-input');
+    const redeemBtn = document.getElementById('redeem-code-btn');
+    if (redeemBtn) {
+        redeemBtn.addEventListener('click', async () => {
+            const code = redeemInput.value.trim().toUpperCase();
+            if (!code) {
+                window.showToast('Veuillez entrer un code.', 'error');
+                return;
+            }
+            if (localStorage.getItem('referralCode') === code) {
+                window.showToast('Vous ne pouvez pas utiliser votre propre code.', 'error');
+                return;
+            }
+            if (localStorage.getItem('referredBy')) {
+                window.showToast('Un code de parrainage est déjà associé à votre compte.', 'error');
+                return;
+            }
+            try {
+                if (window.supabaseClient) {
+                    await window.supabaseClient.auth.updateUser({ data: { referred_by: code } });
+                }
+                localStorage.setItem('referredBy', code);
+                redeemInput.value = '';
+                window.showToast('Code de parrainage validé !', 'success');
+            } catch (err) {
+                window.showToast("Impossible d'enregistrer ce code pour le moment.", 'error');
+            }
+        });
+    }
+
+    // Accès admin : n'affiche l'entrée de menu que pour les comptes marqués administrateurs
+    const adminMenuItem = document.getElementById('admin-menu-item');
+    if (adminMenuItem && localStorage.getItem('isAdmin') === 'true') {
+        adminMenuItem.style.display = '';
+    }
 });
 
     // 9. Sub-Navigation pour l'onglet Finances
