@@ -247,14 +247,14 @@
                         <div class="wallet-label">Solde Disponible</div>
                         <div class="wallet-amount" id="wallet-balance-amount">0 FCFA</div>
                         <div class="wallet-actions">
-                            <button class="btn btn-primary" id="wallet-deposit-btn" type="button">Faire un dépôt</button>
+                            <button class="btn btn-primary" id="atlas-deposit-btn" type="button">Faire un dépôt</button>
                             <button class="btn btn-outline" id="wallet-withdraw-btn" type="button">Retirer des fonds</button>
                         </div>
                     </div>
                     
                     <div class="wallet-info-card">
                         <h3>Moyens de paiement</h3>
-                        <p class="text-secondary mb-4">Choisissez un moyen de paiement, effectuez le transfert puis envoyez votre demande. Votre solde sera crédité uniquement après validation.</p>
+                        <p class="text-secondary mb-4">Choisissez un moyen de paiement, effectuez le transfert puis envoyez votre demande. Votre solde sera crédité après validation de votre paiement.</p>
                         <button class="btn btn-outline" id="wallet-payment-info-btn" type="button" style="width:100%">+ Voir les moyens de paiement</button>
                     </div>
                 </div>
@@ -604,7 +604,7 @@
     <script>
     (function(){
         const modal=document.getElementById('deposit-modal');
-        const openBtn=document.getElementById('wallet-deposit-btn');
+        const openBtn=document.getElementById('atlas-deposit-btn');
         const infoBtn=document.getElementById('wallet-payment-info-btn');
         const form=document.getElementById('deposit-form');
         const methodEl=document.getElementById('deposit-method');
@@ -644,8 +644,9 @@
         document.querySelectorAll('[data-deposit-close]').forEach(el=>el.addEventListener('click',closeModal));
         document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('is-open'))closeModal()});
 
-        // Capture=true bloque l'ancien bouton "dépôt bientôt" du dashboard.js.
-        [openBtn,infoBtn].forEach(btn=>{if(btn)btn.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();openModal()},true)});
+        // Le bouton utilise un ID dédié pour ne pas être repris par l'ancien gestionnaire de dashboard.js.
+        if(openBtn) openBtn.addEventListener('click',e=>{e.preventDefault();openModal()});
+        if(infoBtn) infoBtn.addEventListener('click',e=>{e.preventDefault();openModal()});
 
         form.addEventListener('submit',async e=>{
             e.preventDefault();
