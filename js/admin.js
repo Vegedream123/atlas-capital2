@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
-            if (target === 'parametres') { loadSettings(); loadPaymentLinks(); }
+            if (target === 'parametres') { loadSettings(); loadPaymentSettings(); }
         });
     });
 
@@ -461,83 +461,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
-    // 7bis. Liens de paiement par pays
+    // 7bis. Moyens de paiement (retraits + dépôts)
     // ----------------------------------------------------------------
-    const paymentLinksList = document.getElementById('payment-links-list');
-    const countryBlockTemplate = document.getElementById('country-block-template');
-    const numberBlockTemplate = document.getElementById('number-block-template');
-    const addCountryBtn = document.getElementById('add-country-btn');
-    const paymentLinksSaveBtn = document.getElementById('payment-links-save-btn');
+    const paymentSettingsForm = document.getElementById('payment-settings-form');
+    const paymentSettingsSubmitBtn = document.getElementById('payment-settings-submit-btn');
 
-    function updateAddNumberBtnState(numbersContainer) {
-        const addBtn = numbersContainer.parentElement.querySelector('[data-add-number]');
-        if (!addBtn) return;
-        const count = numbersContainer.querySelectorAll('[data-number-block]').length;
-        addBtn.disabled = count >= 2;
-        addBtn.textContent = count >= 2 ? 'Maximum 2 numéros atteint' : '+ Ajouter un numéro';
+    // Convertit une valeur texte multi-lignes (venant de la BDD, tableau ou chaîne
+    // séparée par des virgules/retours à la ligne) en texte "une valeur par ligne".
+    function linesFromValue(value) {
+        if (Array.isArray(value)) return value.join('\n');
+        if (typeof value === 'string') {
+            try {
+                const parsed = JSON.parse(value);
+                if (Array.isArray(parsed)) return parsed.join('\n');
+            } catch (e) { /* pas du JSON, on garde la chaîne telle quelle */ }
+            return value;
+        }
+        return '';
     }
 
-    function addNumberBlock(numbersContainer, data = {}) {
-        if (numbersContainer.querySelectorAll('[data-number-block]').length >= 2) return;
-        const node = numberBlockTemplate.content.firstElementChild.cloneNode(true);
-        node.querySelector('[data-field="number"]').value = data.number || '';
-        node.querySelector('[data-field="holder"]').value = data.holder || '';
-        node.querySelector('[data-field="network"]').value = data.network || '';
-        node.querySelector('[data-remove-number]').addEventListener('click', () => {
-            node.remove();
-            updateAddNumberBtnState(numbersContainer);
-        });
-        numbersContainer.appendChild(node);
-        updateAddNumberBtnState(numbersContainer);
+    // Convertit un textarea "une valeur par ligne" en tableau de chaînes nettoyées.
+    function linesToArray(text) {
+        return text.split('\n').map(l => l.trim()).filter(Boolean);
     }
 
-    function addCountryBlock(data = {}) {
-        const node = countryBlockTemplate.content.firstElementChild.cloneNode(true);
-        node.querySelector('[data-field="country"]').value = data.country || '';
-        node.querySelector('[data-field="link"]').value = data.link || '';
-        const numbersContainer = node.querySelector('[data-numbers-list]');
-        (data.numbers || []).slice(0, 2).forEach(n => addNumberBlock(numbersContainer, n));
-        node.querySelector('[data-add-number]').addEventListener('click', () => addNumberBlock(numbersContainer));
-        node.querySelector('[data-remove-country]').addEventListener('click', () => {
-            if (confirm('Supprimer ce pays et ses liens de paiement ?')) node.remove();
-        });
-        updateAddNumberBtnState(numbersContainer);
-        paymentLinksList.appendChild(node);
-    }
-
-    addCountryBtn.addEventListener('click', () => addCountryBlock());
-
-    function collectPaymentLinksData() {
-        return Array.from(paymentLinksList.querySelectorAll('[data-country-block]')).map(block => ({
-            country: block.querySelector('[data-field="country"]').value.trim(),
-            link: block.querySelector('[data-field="link"]').value.trim(),
-            numbers: Array.from(block.querySelectorAll('[data-number-block]')).map(nb => ({
-                number: nb.querySelector('[data-field="number"]').value.trim(),
-                holder: nb.querySelector('[data-field="holder"]').value.trim(),
-                network: nb.querySelector('[data-field="network"]').value.trim()
-            })).filter(n => n.number || n.holder || n.network)
-        })).filter(c => c.country || c.link);
-    }
-
-    async function loadPaymentLinks() {
-        paymentLinksList.innerHTML = '';
+    async function loadPaymentSettings() {
+        paymentSettingsSubmitBtn.disabled = true;
         const { data, error } = await window.supabaseClient
-            .from('site_settings').select('payment_links').eq('id', 1).single();
-        if (error) { window.showToast("Impossible de charger les liens de paiement.", 'error'); return; }
-        const links = (data && data.payment_links) || [];
-        links.forEach(c => addCountryBlock(c));
+            .from('site_settings').select('*').eq('id', 1).single();
+
+        if (error) {
+            window.showToast("Impossible de charger les moyens de paiement.", 'error');
+            paymentSettingsSubmitBtn.disabled = false;
+            return;
+        }
+
+        document.getElementById('setting-withdrawal-methods').value = linesFromValue(data.withdrawal_methods);
+        document.getElementById('setting-deposit-usdt-address').value = data.deposit_usdt_address || '';
+        document.getElementById('setting-deposit-amounts').value = linesFromValue(data.deposit_amounts);
+        paymentSettingsSubmitBtn.disabled = false;
     }
 
-    paymentLinksSaveBtn.addEventListener('click', async () => {
-        paymentLinksSaveBtn.disabled = true;
-        const originalText = paymentLinksSaveBtn.textContent;
-        paymentLinksSaveBtn.textContent = 'Enregistrement…';
-        const payload = { id: 1, payment_links: collectPaymentLinksData() };
+    paymentSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        paymentSettingsSubmitBtn.disabled = true;
+        paymentSettingsSubmitBtn.textContent = 'Enregistrement…';
+
+        const payload = {
+            id: 1,
+            withdrawal_methods: linesToArray(document.getElementById('setting-withdrawal-methods').value),
+            deposit_usdt_address: document.getElementById('setting-deposit-usdt-address').value.trim(),
+            deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n))
+        };
+
         const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
-        paymentLinksSaveBtn.disabled = false;
-        paymentLinksSaveBtn.textContent = originalText;
+
+        paymentSettingsSubmitBtn.disabled = false;
+        paymentSettingsSubmitBtn.textContent = 'Enregistrer les moyens de paiement';
+
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
-        window.showToast('Liens de paiement enregistrés.', 'success');
+        window.showToast('Moyens de paiement enregistrés.', 'success');
     });
 
     // ----------------------------------------------------------------
