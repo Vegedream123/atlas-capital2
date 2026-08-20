@@ -4,13 +4,20 @@
 // Ce fichier centralise :
 //   1) La liste des pays proposés à l'inscription (COUNTRIES)
 //   2) Les moyens de paiement disponibles pour le dépôt/retrait, par pays
-//      (PAYMENT_METHODS_BY_COUNTRY)
+//      (PAYMENT_METHODS_BY_COUNTRY) : uniquement la monnaie mobile locale
+//      de chaque pays, plus l'USDT (TRC-20), qui est universel.
 //
 // ⚠️ IMPORTANT AVANT MISE EN PRODUCTION :
-// Les numéros / IBAN ci-dessous sont des VALEURS D'EXEMPLE (placeholders).
-// Remplacez "number" et "holder" par les vrais comptes Atlas Capital
-// (numéros Mobile Money officiels, RIB/IBAN bancaire réel) avant d'ouvrir
-// les dépôts aux utilisateurs réels.
+// Les numéros ci-dessous sont des VALEURS D'EXEMPLE (placeholders).
+// Remplacez "number" par les vrais comptes Atlas Capital (numéros Mobile
+// Money officiels) avant d'ouvrir les dépôts aux utilisateurs réels.
+//
+// L'adresse USDT (TRC-20), elle, n'est PAS codée en dur ici : elle est
+// définie depuis le panneau admin (page admin.html → "Moyens de paiement"
+// → "Adresse USDT-TRC-20", champ site_settings.deposit_usdt_address) puis
+// injectée à l'exécution via AtlasPaymentMethods.setUsdtAddress(). Voir
+// dashboard.js, qui appelle ce setter juste après avoir chargé
+// site_settings.
 // ==========================================================================
 
 (function (global) {
@@ -50,31 +57,33 @@
         wave: '🌊',
         airtel: '🔴',
         mpesa: '🟢',
-        card: '💳',
-        bank: '🏦'
+        usdt: '💵'
     };
 
-    // Moyens de paiement universels ajoutés à TOUS les pays
-    const UNIVERSAL_METHODS = [
-        {
-            id: 'bank_transfer',
-            type: 'bank',
-            name: 'Virement bancaire',
-            icon: ICONS.bank,
-            number: 'CM21 10005 00025 01234567890 25',
-            holder: 'ATLAS CAPITAL SARL',
-            note: 'Virement national ou international (SWIFT). Traitement sous 24 à 48h ouvrées.'
-        },
-        {
-            id: 'card',
-            type: 'card',
-            name: 'Carte bancaire (Visa / Mastercard)',
-            icon: ICONS.card,
-            number: 'Paiement sécurisé via notre prestataire',
-            holder: 'ATLAS CAPITAL SARL',
-            note: 'Vous serez redirigé vers une page de paiement sécurisée après soumission.'
-        }
-    ];
+    // Adresse USDT (TRC-20) courante, définie depuis l'admin via
+    // setUsdtAddress(). Tant qu'elle n'a pas été chargée, le moyen de
+    // paiement USDT reste masqué (on ne veut pas afficher une adresse
+    // vide/placeholder aux utilisateurs).
+    let usdtAddress = '';
+
+    function setUsdtAddress(address) {
+        usdtAddress = (address || '').trim();
+    }
+
+    // Moyen de paiement universel ajouté à TOUS les pays : l'USDT (réseau
+    // TRC-20). L'adresse vient uniquement du panneau admin.
+    function getUsdtMethod() {
+        if (!usdtAddress) return null;
+        return {
+            id: 'usdt_trc20',
+            type: 'usdt',
+            name: 'USDT (TRC-20)',
+            icon: ICONS.usdt,
+            number: usdtAddress,
+            holder: 'Réseau TRON (TRC-20) uniquement',
+            note: "N'envoyez que de l'USDT sur le réseau TRC-20 à cette adresse. Tout envoi sur un autre réseau sera perdu."
+        };
+    }
 
     const mobileMoney = (id, name, icon, number, holder) => ({
         id, type: 'mobile_money', name, icon,
@@ -160,13 +169,15 @@
 
     function getPaymentMethods(countryCode) {
         const specific = PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
-        return [...specific, ...UNIVERSAL_METHODS];
+        const usdt = getUsdtMethod();
+        return usdt ? [...specific, usdt] : [...specific];
     }
 
     global.AtlasCountries = COUNTRIES;
     global.AtlasPaymentMethods = {
         getCountryName,
-        getPaymentMethods
+        getPaymentMethods,
+        setUsdtAddress
     };
 
 })(window);
