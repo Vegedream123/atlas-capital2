@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     const navItems = document.querySelectorAll('.admin-nav-item');
     const views = document.querySelectorAll('.admin-view');
-    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs' };
+    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', parametres: 'Paramètres' };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
+            if (target === 'parametres') loadSettings();
         });
     });
 
@@ -408,7 +409,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ----------------------------------------------------------------
-    // 7. Chargement initial
+    // 7. Paramètres généraux
+    // ----------------------------------------------------------------
+    const settingsForm = document.getElementById('settings-form');
+    const settingsSubmitBtn = document.getElementById('settings-submit-btn');
+
+    async function loadSettings() {
+        settingsSubmitBtn.disabled = true;
+        const { data, error } = await window.supabaseClient
+            .from('site_settings').select('*').eq('id', 1).single();
+
+        if (error) {
+            window.showToast("Impossible de charger les paramètres.", 'error');
+            settingsSubmitBtn.disabled = false;
+            return;
+        }
+
+        document.getElementById('setting-site-name').value = data.site_name || '';
+        document.getElementById('setting-support-email').value = data.support_email || '';
+        document.getElementById('setting-support-whatsapp').value = data.support_whatsapp || '';
+        document.getElementById('setting-referral-rate').value = data.referral_rate ?? '';
+        document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
+        document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
+        document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
+        settingsSubmitBtn.disabled = false;
+    }
+
+    settingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        settingsSubmitBtn.disabled = true;
+        settingsSubmitBtn.textContent = 'Enregistrement…';
+
+        const payload = {
+            id: 1,
+            site_name: document.getElementById('setting-site-name').value.trim(),
+            support_email: document.getElementById('setting-support-email').value.trim(),
+            support_whatsapp: document.getElementById('setting-support-whatsapp').value.trim(),
+            referral_rate: Number(document.getElementById('setting-referral-rate').value) || 0,
+            min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
+            min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
+            maintenance_mode: document.getElementById('setting-maintenance-mode').checked
+        };
+
+        const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
+
+        settingsSubmitBtn.disabled = false;
+        settingsSubmitBtn.textContent = 'Enregistrer les paramètres';
+
+        if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+        window.showToast('Paramètres enregistrés.', 'success');
+    });
+
+    // ----------------------------------------------------------------
+    // 8. Chargement initial
     // ----------------------------------------------------------------
     loadStats();
 });
