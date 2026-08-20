@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
-            if (target === 'parametres') loadSettings();
+            if (target === 'parametres') { loadSettings(); loadPaymentLinks(); }
         });
     });
 
@@ -458,6 +458,86 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
         window.showToast('Paramètres enregistrés.', 'success');
+    });
+
+    // ----------------------------------------------------------------
+    // 7bis. Liens de paiement par pays
+    // ----------------------------------------------------------------
+    const paymentLinksList = document.getElementById('payment-links-list');
+    const countryBlockTemplate = document.getElementById('country-block-template');
+    const numberBlockTemplate = document.getElementById('number-block-template');
+    const addCountryBtn = document.getElementById('add-country-btn');
+    const paymentLinksSaveBtn = document.getElementById('payment-links-save-btn');
+
+    function updateAddNumberBtnState(numbersContainer) {
+        const addBtn = numbersContainer.parentElement.querySelector('[data-add-number]');
+        if (!addBtn) return;
+        const count = numbersContainer.querySelectorAll('[data-number-block]').length;
+        addBtn.disabled = count >= 2;
+        addBtn.textContent = count >= 2 ? 'Maximum 2 numéros atteint' : '+ Ajouter un numéro';
+    }
+
+    function addNumberBlock(numbersContainer, data = {}) {
+        if (numbersContainer.querySelectorAll('[data-number-block]').length >= 2) return;
+        const node = numberBlockTemplate.content.firstElementChild.cloneNode(true);
+        node.querySelector('[data-field="number"]').value = data.number || '';
+        node.querySelector('[data-field="holder"]').value = data.holder || '';
+        node.querySelector('[data-field="network"]').value = data.network || '';
+        node.querySelector('[data-remove-number]').addEventListener('click', () => {
+            node.remove();
+            updateAddNumberBtnState(numbersContainer);
+        });
+        numbersContainer.appendChild(node);
+        updateAddNumberBtnState(numbersContainer);
+    }
+
+    function addCountryBlock(data = {}) {
+        const node = countryBlockTemplate.content.firstElementChild.cloneNode(true);
+        node.querySelector('[data-field="country"]').value = data.country || '';
+        node.querySelector('[data-field="link"]').value = data.link || '';
+        const numbersContainer = node.querySelector('[data-numbers-list]');
+        (data.numbers || []).slice(0, 2).forEach(n => addNumberBlock(numbersContainer, n));
+        node.querySelector('[data-add-number]').addEventListener('click', () => addNumberBlock(numbersContainer));
+        node.querySelector('[data-remove-country]').addEventListener('click', () => {
+            if (confirm('Supprimer ce pays et ses liens de paiement ?')) node.remove();
+        });
+        updateAddNumberBtnState(numbersContainer);
+        paymentLinksList.appendChild(node);
+    }
+
+    addCountryBtn.addEventListener('click', () => addCountryBlock());
+
+    function collectPaymentLinksData() {
+        return Array.from(paymentLinksList.querySelectorAll('[data-country-block]')).map(block => ({
+            country: block.querySelector('[data-field="country"]').value.trim(),
+            link: block.querySelector('[data-field="link"]').value.trim(),
+            numbers: Array.from(block.querySelectorAll('[data-number-block]')).map(nb => ({
+                number: nb.querySelector('[data-field="number"]').value.trim(),
+                holder: nb.querySelector('[data-field="holder"]').value.trim(),
+                network: nb.querySelector('[data-field="network"]').value.trim()
+            })).filter(n => n.number || n.holder || n.network)
+        })).filter(c => c.country || c.link);
+    }
+
+    async function loadPaymentLinks() {
+        paymentLinksList.innerHTML = '';
+        const { data, error } = await window.supabaseClient
+            .from('site_settings').select('payment_links').eq('id', 1).single();
+        if (error) { window.showToast("Impossible de charger les liens de paiement.", 'error'); return; }
+        const links = (data && data.payment_links) || [];
+        links.forEach(c => addCountryBlock(c));
+    }
+
+    paymentLinksSaveBtn.addEventListener('click', async () => {
+        paymentLinksSaveBtn.disabled = true;
+        const originalText = paymentLinksSaveBtn.textContent;
+        paymentLinksSaveBtn.textContent = 'Enregistrement…';
+        const payload = { id: 1, payment_links: collectPaymentLinksData() };
+        const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
+        paymentLinksSaveBtn.disabled = false;
+        paymentLinksSaveBtn.textContent = originalText;
+        if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+        window.showToast('Liens de paiement enregistrés.', 'success');
     });
 
     // ----------------------------------------------------------------
