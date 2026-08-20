@@ -172,16 +172,21 @@ svg { flex-shrink: 0; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
 .amount { font-size: 2rem; font-weight: 700; }
 
-.active-invest-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
-.invest-list, .invest-analysis { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; min-width: 0; }
-.invest-list h4, .invest-analysis h4 { margin-bottom: 10px; color: var(--primary); font-size: 0.95rem; }
-.invest-list ul { display: flex; flex-direction: column; gap: 8px; }
-.invest-list li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-size: 0.8rem; }
-.invest-list li:last-child { border-bottom: none; }
+.vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.vip-card-header { display: flex; align-items: center; gap: 8px; }
+.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.vip-name { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
+.vip-price { font-size: 0.85rem; color: var(--text-secondary); }
+.vip-stats { display: flex; flex-direction: column; gap: 6px; }
+.vip-stat { background: var(--gray-50); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
+.vip-stat-label { display: block; font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 2px; }
+.vip-stat-value { display: block; font-size: 0.85rem; font-weight: 700; color: var(--accent); }
 @media (min-width: 480px) {
-    .active-invest-split { gap: 16px; }
-    .invest-list, .invest-analysis { padding: 20px; }
-    .invest-list li { flex-direction: row; justify-content: space-between; font-size: 0.9rem; }
+    .vip-grid { gap: 16px; }
+    .vip-card { padding: 20px; }
+    .vip-name { font-size: 0.95rem; }
+    .vip-price { font-size: 0.95rem; }
 }
 .mini-chart-placeholder { display: flex; align-items: flex-end; gap: 4px; height: 100px; margin-bottom: 12px; }
 .mc-bar { flex: 1; min-width: 0; background: linear-gradient(180deg, var(--success), var(--accent)); border-radius: 3px 3px 0 0; }
