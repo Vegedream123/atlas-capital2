@@ -263,14 +263,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const table = kind === 'deposits' ? 'deposit_requests' : 'withdrawal_requests';
         const tbodyId = kind === 'deposits' ? 'deposits-tbody' : 'withdrawals-tbody';
         const tbody = document.getElementById(tbodyId);
-        tbody.innerHTML = `<tr><td colspan="7">Chargement…</td></tr>`;
+        const colspan = kind === 'deposits' ? 7 : 8;
+        tbody.innerHTML = `<tr><td colspan="${colspan}">Chargement…</td></tr>`;
 
         const [{ data, error }, usersMap] = await Promise.all([
             window.supabaseClient.from(table).select('*').eq('status', status).order('created_at', { ascending: false }),
             getUsersMap()
         ]);
-        if (error) { tbody.innerHTML = `<tr><td colspan="7">Erreur de chargement.</td></tr>`; return; }
-        if (!data.length) { tbody.innerHTML = `<tr><td colspan="7">Aucune demande.</td></tr>`; return; }
+        if (error) { tbody.innerHTML = `<tr><td colspan="${colspan}">Erreur de chargement.</td></tr>`; return; }
+        if (!data.length) { tbody.innerHTML = `<tr><td colspan="${colspan}">Aucune demande.</td></tr>`; return; }
 
         tbody.innerHTML = data.map(r => {
             const u = usersMap[r.user_id] || {};
@@ -294,6 +295,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${formatFCFA(r.amount)}</td>
                 <td>${r.method_name || '—'}</td>
                 <td>${r.destination || '—'}</td>
+                <td>${r.recipient_name || '—'}</td>
                 <td><span class="admin-badge ${status}">${status}</span></td>
                 <td>${actions}</td>
             </tr>`;
@@ -402,7 +404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const withdrawalsBody = document.getElementById('user-detail-withdrawals');
         withdrawalsBody.innerHTML = (withdrawals && withdrawals.length) ? withdrawals.map(w => `
-            <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
+            <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun retrait.</td></tr>`;
 
         openModal('user-detail-modal');
