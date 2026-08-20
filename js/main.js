@@ -74,6 +74,14 @@ function togglePassword(inputId) {
 document.addEventListener('DOMContentLoaded', () => {
 
     // =========================================================================
+    // 0. Capture du code de parrainage (?ref=CODE dans l'URL)
+    // =========================================================================
+    const refParam = new URLSearchParams(window.location.search).get('ref');
+    if (refParam) {
+        localStorage.setItem('referredBy', refParam);
+    }
+
+    // =========================================================================
     // 1. Effet de la navbar au scroll
     // =========================================================================
     const navbar = document.getElementById('navbar');
@@ -254,10 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 btn.disabled = true;
 
                 try {
+                    const referredBy = localStorage.getItem('referredBy') || null;
+
                     const { data, error } = await supabaseClient.auth.signUp({
                         email: email.value,
                         password: password.value,
-                        options: { data: { full_name: name ? name.value : 'Utilisateur' } }
+                        options: { data: { full_name: name ? name.value : 'Utilisateur', referred_by: referredBy } }
                     });
 
                     if (error) {
@@ -266,6 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.disabled = false;
                     } else {
                         showToast('Compte créé ! Connectez-vous.', 'success');
+                        localStorage.removeItem('referredBy');
                         if (typeof switchAuthTab === 'function') {
                             switchAuthTab('login');
                         } else {
