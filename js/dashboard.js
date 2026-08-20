@@ -889,5 +889,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const adminMenuItem = document.getElementById('admin-menu-item');
     if (adminMenuItem && profile.is_admin) {
         adminMenuItem.style.display = '';
+        adminMenuItem.addEventListener('click', () => {
+            window.location.href = 'admin.html';
+        });
     }
 });
