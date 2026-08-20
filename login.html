@@ -1,130 +1,1369 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Connectez-vous ou créez votre compte Atlas Capital.">
-    <meta name="author" content="Atlas Capital">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Connexion et inscription - Atlas Capital"
+    >
+
     <title>Connexion | Atlas Capital</title>
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233B82F6'/></svg>">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- =========================================================
+         POLICE
+         ========================================================= -->
 
-    <link rel="stylesheet" href="css/style.css">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+
+    <!-- =========================================================
+         STYLE
+         ========================================================= -->
 
     <style>
-        .auth-methods {
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        :root {
+
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+
+            --text: #101828;
+            --secondary: #667085;
+
+            --border: #dbe3ef;
+
+            --background: #f7faff;
+
+            --white: #ffffff;
+
+            --danger: #ef4444;
+
+            --success: #10b981;
+
+        }
+
+
+        html,
+        body {
+
+            margin: 0;
+            padding: 0;
+
+            min-height: 100%;
+
+            font-family: Inter, Arial, sans-serif;
+
+            color: var(--text);
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #f8fbff 0%,
+                    #f4f8ff 100%
+                );
+
+        }
+
+
+        body {
+
+            min-height: 100vh;
+
+        }
+
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        .auth-header {
+
+            width: 100%;
+
+            padding: 30px 42px;
+
             display: flex;
-            gap: 8px;
-            margin-bottom: 18px;
-            padding: 4px;
-            background: #f1f5f9;
-            border-radius: 10px;
+
+            align-items: center;
+
         }
 
-        .auth-method-btn {
+
+        .brand {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            text-decoration: none;
+
+            color: #102544;
+
+            font-size: 25px;
+
+            font-weight: 700;
+
+        }
+
+
+        .brand svg {
+
+            width: 30px;
+
+            height: 30px;
+
+        }
+
+
+        /* =====================================================
+           PAGE
+           ===================================================== */
+
+        .auth-page {
+
+            width: 100%;
+
+            min-height: calc(100vh - 90px);
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: flex-start;
+
+            padding: 45px 20px 70px;
+
+        }
+
+
+        /* =====================================================
+           CARTE
+           ===================================================== */
+
+        .auth-card {
+
+            width: 100%;
+
+            max-width: 740px;
+
+            background: rgba(255,255,255,0.96);
+
+            border-radius: 26px;
+
+            padding: 30px 42px 45px;
+
+            box-shadow:
+                0 20px 60px rgba(32, 64, 110, 0.10);
+
+        }
+
+
+        /* =====================================================
+           ONGLETS
+           ===================================================== */
+
+        .auth-tabs {
+
+            width: 100%;
+
+            display: flex;
+
+            padding: 5px;
+
+            background: #eef3f9;
+
+            border-radius: 13px;
+
+            margin-bottom: 42px;
+
+        }
+
+
+        .auth-tab {
+
             flex: 1;
+
             border: 0;
+
             background: transparent;
-            padding: 10px 12px;
-            border-radius: 8px;
-            font: inherit;
+
+            padding: 16px 12px;
+
+            border-radius: 10px;
+
+            font-family: inherit;
+
+            font-size: 19px;
+
             font-weight: 600;
-            color: #64748b;
+
+            color: #607087;
+
             cursor: pointer;
+
+            transition: 0.2s ease;
+
         }
 
-        .auth-method-btn.active {
-            background: #fff;
+
+        .auth-tab.active {
+
+            background: #ffffff;
+
             color: #0f2344;
-            box-shadow: 0 2px 8px rgba(15, 35, 68, 0.08);
+
+            box-shadow:
+                0 3px 10px rgba(15,35,68,0.08);
+
         }
+
+
+        /* =====================================================
+           PANNEAUX
+           ===================================================== */
+
+        .auth-panel {
+
+            display: none;
+
+        }
+
+
+        .auth-panel.active {
+
+            display: block;
+
+        }
+
+
+        .auth-panel h2 {
+
+            margin: 0 0 36px;
+
+            font-size: 42px;
+
+            line-height: 1.15;
+
+            font-weight: 700;
+
+            letter-spacing: -1px;
+
+            color: #0f2344;
+
+        }
+
+
+        /* =====================================================
+           FORMULAIRE
+           ===================================================== */
+
+        .form-group {
+
+            margin-bottom: 24px;
+
+        }
+
+
+        label {
+
+            display: block;
+
+            margin-bottom: 10px;
+
+            color: #102544;
+
+            font-size: 18px;
+
+            font-weight: 600;
+
+        }
+
+
+        .form-control {
+
+            width: 100%;
+
+            height: 64px;
+
+            border: 1.5px solid #cad6e5;
+
+            border-radius: 13px;
+
+            background: #ffffff;
+
+            padding: 0 18px;
+
+            font-family: inherit;
+
+            font-size: 17px;
+
+            color: #172b4d;
+
+            outline: none;
+
+            transition: 0.2s ease;
+
+        }
+
+
+        .form-control::placeholder {
+
+            color: #a6aeb9;
+
+        }
+
+
+        .form-control:focus {
+
+            border-color: #6f9de8;
+
+            box-shadow:
+                0 0 0 3px rgba(59,130,246,0.08);
+
+        }
+
+
+        /* =====================================================
+           TELEPHONE
+           ===================================================== */
+
+        .phone-label {
+
+            margin-bottom: 11px;
+
+        }
+
+
+        .phone-wrapper {
+
+            position: relative;
+
+            width: 100%;
+
+        }
+
 
         .phone-row {
+
             display: grid;
-            grid-template-columns: 145px 1fr;
+
+            grid-template-columns: 235px 1fr;
+
             gap: 10px;
+
+            width: 100%;
+
         }
 
-        .phone-country {
+
+        /* =====================================================
+           SELECTEUR PAYS
+           ===================================================== */
+
+        .country-selector {
+
+            position: relative;
+
+            width: 100%;
+
+        }
+
+
+        .country-button {
+
+            width: 100%;
+
+            height: 64px;
+
+            border: 1.5px solid #dbe3ed;
+
+            background: #ffffff;
+
+            border-radius: 15px;
+
+            padding: 0 17px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            cursor: pointer;
+
+            font-family: inherit;
+
+            color: #172033;
+
+        }
+
+
+        .country-button-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
             min-width: 0;
+
         }
 
-        @media (max-width: 480px) {
-            .phone-row {
-                grid-template-columns: 125px 1fr;
-                gap: 7px;
-            }
+
+        .country-flag {
+
+            font-size: 27px;
+
+            line-height: 1;
+
         }
+
+
+        .country-dial {
+
+            font-size: 20px;
+
+            font-weight: 600;
+
+            white-space: nowrap;
+
+        }
+
+
+        .country-arrow {
+
+            width: 10px;
+
+            height: 10px;
+
+            border-right: 2px solid #7a8493;
+
+            border-bottom: 2px solid #7a8493;
+
+            transform: rotate(45deg);
+
+            margin-top: -5px;
+
+            transition: 0.2s ease;
+
+        }
+
+
+        .country-selector.open
+        .country-arrow {
+
+            transform: rotate(225deg);
+
+            margin-top: 5px;
+
+        }
+
+
+        /* =====================================================
+           LISTE DES PAYS
+           ===================================================== */
+
+        .country-menu {
+
+            position: absolute;
+
+            z-index: 1000;
+
+            top: calc(100% + 9px);
+
+            left: 0;
+
+            width: 100%;
+
+            max-height: 390px;
+
+            overflow-y: auto;
+
+            background: #ffffff;
+
+            border: 1px solid #e1e7ef;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 18px 45px rgba(15,35,68,0.16);
+
+            padding: 7px;
+
+            display: none;
+
+        }
+
+
+        .country-selector.open
+        .country-menu {
+
+            display: block;
+
+        }
+
+
+        .country-search {
+
+            width: calc(100% - 12px);
+
+            height: 45px;
+
+            margin: 6px;
+
+            padding: 0 13px;
+
+            border: 1px solid #dbe3ed;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+        }
+
+
+        .country-search:focus {
+
+            border-color: #7ba4e9;
+
+        }
+
+
+        .country-option {
+
+            width: 100%;
+
+            min-height: 59px;
+
+            border: 0;
+
+            background: transparent;
+
+            border-radius: 12px;
+
+            padding: 9px 13px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            cursor: pointer;
+
+            font-family: inherit;
+
+            transition: 0.15s ease;
+
+        }
+
+
+        .country-option:hover {
+
+            background: #f2f6fb;
+
+        }
+
+
+        .country-option-left {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 13px;
+
+            min-width: 0;
+
+        }
+
+
+        .country-option-flag {
+
+            font-size: 25px;
+
+            width: 32px;
+
+            text-align: center;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .country-option-name {
+
+            font-size: 16px;
+
+            font-weight: 500;
+
+            color: #182033;
+
+            text-align: left;
+
+        }
+
+
+        .country-option-dial {
+
+            color: #68758a;
+
+            font-size: 16px;
+
+            font-weight: 500;
+
+            white-space: nowrap;
+
+        }
+
+
+        .country-no-result {
+
+            padding: 20px;
+
+            text-align: center;
+
+            color: #7b8798;
+
+            font-size: 14px;
+
+        }
+
+
+        /* =====================================================
+           NUMERO TELEPHONE
+           ===================================================== */
+
+        .phone-input {
+
+            background: #f0f4fa;
+
+            border-color: #e0e7f0;
+
+            font-size: 21px;
+
+            letter-spacing: 0.5px;
+
+        }
+
+
+        .phone-input::placeholder {
+
+            color: #6d788a;
+
+            opacity: 1;
+
+        }
+
+
+        /* =====================================================
+           PASSWORD
+           ===================================================== */
+
+        .password-input {
+
+            position: relative;
+
+        }
+
+
+        .password-input .form-control {
+
+            padding-right: 58px;
+
+        }
+
+
+        .password-toggle {
+
+            position: absolute;
+
+            right: 15px;
+
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 40px;
+
+            height: 40px;
+
+            border: 0;
+
+            background: transparent;
+
+            color: #667a96;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        /* =====================================================
+           EMAIL / TELEPHONE SWITCH
+           ===================================================== */
+
+        .alternative-login {
+
+            margin-top: -9px;
+
+            margin-bottom: 24px;
+
+            text-align: right;
+
+        }
+
+
+        .alternative-login button {
+
+            border: 0;
+
+            background: transparent;
+
+            color: #3577d4;
+
+            font-family: inherit;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            padding: 4px 0;
+
+        }
+
+
+        .alternative-login button:hover {
+
+            text-decoration: underline;
+
+        }
+
+
+        /* =====================================================
+           ACTIONS
+           ===================================================== */
+
+        .modal-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin: 4px 0 28px;
+
+        }
+
+
+        .modal-actions a {
+
+            color: #55708f;
+
+            text-decoration: none;
+
+            font-size: 14px;
+
+            font-weight: 500;
+
+        }
+
+
+        .modal-actions a:hover {
+
+            text-decoration: underline;
+
+        }
+
+
+        .checkbox-group {
+
+            display: flex;
+
+            align-items: flex-start;
+
+            gap: 10px;
+
+            margin: 0 0 27px;
+
+        }
+
+
+        .modal-actions .checkbox-group {
+
+            margin: 0;
+
+        }
+
+
+        .checkbox-group input {
+
+            width: 18px;
+
+            height: 18px;
+
+            margin: 2px 0 0;
+
+            accent-color: #3b82f6;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .checkbox-group label {
+
+            margin: 0;
+
+            font-size: 15px;
+
+            line-height: 1.55;
+
+            color: #66758a;
+
+            font-weight: 400;
+
+        }
+
+
+        /* =====================================================
+           BOUTON
+           ===================================================== */
+
+        .btn {
+
+            width: 100%;
+
+            height: 64px;
+
+            border: 0;
+
+            border-radius: 13px;
+
+            font-family: inherit;
+
+            font-size: 19px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition: 0.2s ease;
+
+        }
+
+
+        .btn-primary {
+
+            background: #367fe9;
+
+            color: #ffffff;
+
+            box-shadow:
+                0 8px 18px rgba(59,130,246,0.18);
+
+        }
+
+
+        .btn-primary:hover {
+
+            background: #286fda;
+
+            transform: translateY(-1px);
+
+        }
+
+
+        .btn:disabled {
+
+            opacity: 0.65;
+
+            cursor: not-allowed;
+
+            transform: none;
+
+        }
+
+
+        /* =====================================================
+           ERREUR
+           ===================================================== */
+
+        .error-message {
+
+            color: #ef4444;
+
+            font-size: 13px;
+
+            margin-top: 6px;
+
+        }
+
+
+        /* =====================================================
+           TOAST
+           ===================================================== */
+
+        .toast-container {
+
+            position: fixed;
+
+            right: 20px;
+
+            bottom: 20px;
+
+            z-index: 5000;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 10px;
+
+            max-width: calc(100vw - 40px);
+
+        }
+
+
+        .toast {
+
+            background: #ffffff;
+
+            border: 1px solid #dce5ef;
+
+            border-radius: 12px;
+
+            padding: 14px 17px;
+
+            min-width: 260px;
+
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.12);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            transform: translateY(20px);
+
+            opacity: 0;
+
+            transition: 0.25s ease;
+
+        }
+
+
+        .toast.show {
+
+            transform: translateY(0);
+
+            opacity: 1;
+
+        }
+
+
+        .toast-message {
+
+            font-size: 14px;
+
+            line-height: 1.4;
+
+        }
+
+
+        /* =====================================================
+           RESPONSIVE
+           ===================================================== */
+
+        @media (max-width: 700px) {
+
+            .auth-header {
+
+                padding: 22px 22px;
+
+            }
+
+
+            .brand {
+
+                font-size: 22px;
+
+            }
+
+
+            .auth-page {
+
+                padding: 20px 12px 40px;
+
+            }
+
+
+            .auth-card {
+
+                max-width: 100%;
+
+                border-radius: 24px;
+
+                padding: 22px 22px 34px;
+
+            }
+
+
+            .auth-panel h2 {
+
+                font-size: 34px;
+
+                margin-bottom: 30px;
+
+            }
+
+
+            .phone-row {
+
+                grid-template-columns: 43% 57%;
+
+                gap: 7px;
+
+            }
+
+
+            .country-button {
+
+                padding: 0 11px;
+
+            }
+
+
+            .country-button-left {
+
+                gap: 8px;
+
+            }
+
+
+            .country-flag {
+
+                font-size: 23px;
+
+            }
+
+
+            .country-dial {
+
+                font-size: 17px;
+
+            }
+
+
+            .phone-input {
+
+                font-size: 18px;
+
+                padding-left: 14px;
+
+                padding-right: 10px;
+
+            }
+
+
+            .auth-tab {
+
+                font-size: 17px;
+
+            }
+
+        }
+
+
+        @media (max-width: 420px) {
+
+            .auth-card {
+
+                padding-left: 17px;
+
+                padding-right: 17px;
+
+            }
+
+
+            .phone-row {
+
+                grid-template-columns: 42% 58%;
+
+            }
+
+
+            .country-dial {
+
+                font-size: 16px;
+
+            }
+
+
+            .phone-input {
+
+                font-size: 16px;
+
+            }
+
+
+            .auth-panel h2 {
+
+                font-size: 31px;
+
+            }
+
+        }
+
     </style>
+
 </head>
+
 
 <body>
 
+
+    <!-- =========================================================
+         HEADER
+         ========================================================= -->
+
     <header class="auth-header">
-        <a href="index.html" class="brand">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--primary)" stroke="none">
+
+        <a
+            href="index.html"
+            class="brand"
+        >
+
+            <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="#102544"
+            >
+
                 <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
+
                 <path d="M4 10h2v9H4v-9zm5 0h2v9H9v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"></path>
+
                 <path d="M2 20h20v2H2v-2z"></path>
+
             </svg>
+
             Atlas Capital
+
         </a>
+
     </header>
 
+
+    <!-- =========================================================
+         CONTENU
+         ========================================================= -->
+
     <main class="auth-page">
+
+
         <div class="auth-card">
 
+
+            <!-- =====================================================
+                 ONGLETS
+                 ===================================================== -->
+
             <div class="auth-tabs">
-                <button type="button"
-                        class="auth-tab active"
-                        id="tab-login"
-                        onclick="switchAuthTab('login')">
+
+                <button
+                    type="button"
+                    class="auth-tab active"
+                    id="tab-login"
+                >
                     Connexion
                 </button>
 
-                <button type="button"
-                        class="auth-tab"
-                        id="tab-register"
-                        onclick="switchAuthTab('register')">
+
+                <button
+                    type="button"
+                    class="auth-tab"
+                    id="tab-register"
+                >
                     Inscription
                 </button>
+
             </div>
 
-            <!-- ==================== CONNEXION ==================== -->
 
-            <div class="auth-panel active" id="login-modal">
 
-                <h2>Content de vous revoir</h2>
+            <!-- =====================================================
+                 CONNEXION
+                 ===================================================== -->
+
+            <div
+                class="auth-panel active"
+                id="login-panel"
+            >
+
+                <h2>
+                    Content de vous revoir
+                </h2>
+
 
                 <form id="login-form">
 
-                    <!-- Choix Email / Téléphone -->
 
-                    <div class="auth-methods">
+                    <!-- TELEPHONE -->
 
-                        <button type="button"
-                                class="auth-method-btn active"
-                                id="login-email-btn"
-                                onclick="switchLoginMethod('email')">
-                            Email
-                        </button>
+                    <div
+                        class="form-group"
+                        id="login-phone-group"
+                    >
 
-                        <button type="button"
-                                class="auth-method-btn"
-                                id="login-phone-btn"
-                                onclick="switchLoginMethod('phone')">
+                        <label class="phone-label">
                             Téléphone
-                        </button>
+                        </label>
+
+
+                        <div class="phone-wrapper">
+
+                            <div class="phone-row">
+
+
+                                <!-- PAYS -->
+
+                                <div
+                                    class="country-selector"
+                                    id="login-country-selector"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="country-button"
+                                        id="login-country-button"
+                                    >
+
+                                        <span
+                                            class="country-button-left"
+                                        >
+
+                                            <span
+                                                class="country-flag"
+                                                id="login-selected-flag"
+                                            >
+                                                🇨🇲
+                                            </span>
+
+                                            <span
+                                                class="country-dial"
+                                                id="login-selected-dial"
+                                            >
+                                                +237
+                                            </span>
+
+                                        </span>
+
+
+                                        <span
+                                            class="country-arrow"
+                                        ></span>
+
+                                    </button>
+
+
+                                    <div
+                                        class="country-menu"
+                                        id="login-country-menu"
+                                    >
+
+                                        <input
+                                            type="text"
+                                            class="country-search"
+                                            id="login-country-search"
+                                            placeholder="Rechercher un pays..."
+                                            autocomplete="off"
+                                        >
+
+                                        <div
+                                            id="login-country-options"
+                                        ></div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- NUMERO -->
+
+                                <input
+                                    type="tel"
+                                    id="login-phone"
+                                    class="form-control phone-input"
+                                    placeholder="6XX XXX XXX"
+                                    inputmode="tel"
+                                    autocomplete="tel"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
 
                     </div>
 
-                    <!-- Connexion Email -->
 
-                    <div class="form-group" id="login-email-group">
+                    <!-- EMAIL -->
+
+                    <div
+                        class="form-group"
+                        id="login-email-group"
+                        style="display:none;"
+                    >
 
                         <label for="login-email">
                             Email
@@ -135,47 +1374,34 @@
                             id="login-email"
                             class="form-control"
                             placeholder="jean.dupont@email.com"
+                            autocomplete="email"
                         >
 
                     </div>
 
-                    <!-- Connexion Téléphone -->
 
-                    <div class="form-group"
-                         id="login-phone-group"
-                         style="display:none;">
+                    <!-- CHANGEMENT TELEPHONE / EMAIL -->
 
-                        <label for="login-phone">
-                            Numéro de téléphone
-                        </label>
+                    <div class="alternative-login">
 
-                        <div class="phone-row">
-
-                            <select
-                                id="login-phone-country"
-                                class="form-control phone-country">
-                            </select>
-
-                            <input
-                                type="tel"
-                                id="login-phone"
-                                class="form-control"
-                                placeholder="690 123 456"
-                                inputmode="tel"
-                                autocomplete="tel"
-                            >
-
-                        </div>
+                        <button
+                            type="button"
+                            id="login-method-button"
+                        >
+                            Utiliser une adresse email
+                        </button>
 
                     </div>
 
-                    <!-- Mot de passe -->
+
+                    <!-- MOT DE PASSE -->
 
                     <div class="form-group">
 
                         <label for="login-password">
                             Mot de passe
                         </label>
+
 
                         <div class="password-input">
 
@@ -187,29 +1413,34 @@
                                 required
                             >
 
+
                             <button
                                 type="button"
                                 class="password-toggle"
-                                onclick="togglePassword('login-password')"
-                                aria-label="Afficher/Masquer">
+                                data-target="login-password"
+                                aria-label="Afficher ou masquer le mot de passe"
+                            >
 
                                 <svg
-                                    width="20"
-                                    height="20"
+                                    width="22"
+                                    height="22"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                    stroke-linejoin="round"
+                                >
 
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <path
+                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                    ></path>
 
                                     <circle
                                         cx="12"
                                         cy="12"
-                                        r="3">
-                                    </circle>
+                                        r="3"
+                                    ></circle>
 
                                 </svg>
 
@@ -219,19 +1450,26 @@
 
                     </div>
 
+
+                    <!-- OPTIONS -->
+
                     <div class="modal-actions">
 
                         <div class="checkbox-group">
 
                             <input
                                 type="checkbox"
-                                id="remember-me">
+                                id="remember-me"
+                            >
 
-                            <label for="remember-me">
+                            <label
+                                for="remember-me"
+                            >
                                 Se souvenir de moi
                             </label>
 
                         </div>
+
 
                         <a href="#">
                             Mot de passe oublié ?
@@ -239,26 +1477,41 @@
 
                     </div>
 
+
+                    <!-- BOUTON -->
+
                     <button
                         type="submit"
-                        class="btn btn-primary">
+                        class="btn btn-primary"
+                    >
                         Se connecter
                     </button>
+
 
                 </form>
 
             </div>
 
 
-            <!-- ==================== INSCRIPTION ==================== -->
 
-            <div class="auth-panel" id="register-modal">
+            <!-- =====================================================
+                 INSCRIPTION
+                 ===================================================== -->
 
-                <h2>Créez votre compte</h2>
+            <div
+                class="auth-panel"
+                id="register-panel"
+            >
+
+                <h2>
+                    Créez votre compte
+                </h2>
+
 
                 <form id="register-form">
 
-                    <!-- Nom -->
+
+                    <!-- NOM -->
 
                     <div class="form-group">
 
@@ -271,40 +1524,119 @@
                             id="reg-name"
                             class="form-control"
                             placeholder="Jean Dupont"
+                            autocomplete="name"
                             required
                         >
 
                     </div>
 
 
-                    <!-- Choix Email / Téléphone -->
+                    <!-- TELEPHONE -->
 
-                    <div class="auth-methods">
+                    <div
+                        class="form-group"
+                        id="register-phone-group"
+                    >
 
-                        <button
-                            type="button"
-                            class="auth-method-btn active"
-                            id="register-email-btn"
-                            onclick="switchRegisterMethod('email')">
-                            Email
-                        </button>
-
-                        <button
-                            type="button"
-                            class="auth-method-btn"
-                            id="register-phone-btn"
-                            onclick="switchRegisterMethod('phone')">
+                        <label class="phone-label">
                             Téléphone
-                        </button>
+                        </label>
+
+
+                        <div class="phone-wrapper">
+
+                            <div class="phone-row">
+
+
+                                <!-- PAYS -->
+
+                                <div
+                                    class="country-selector"
+                                    id="register-country-selector"
+                                >
+
+                                    <button
+                                        type="button"
+                                        class="country-button"
+                                        id="register-country-button"
+                                    >
+
+                                        <span
+                                            class="country-button-left"
+                                        >
+
+                                            <span
+                                                class="country-flag"
+                                                id="register-selected-flag"
+                                            >
+                                                🇨🇲
+                                            </span>
+
+                                            <span
+                                                class="country-dial"
+                                                id="register-selected-dial"
+                                            >
+                                                +237
+                                            </span>
+
+                                        </span>
+
+
+                                        <span
+                                            class="country-arrow"
+                                        ></span>
+
+                                    </button>
+
+
+                                    <div
+                                        class="country-menu"
+                                        id="register-country-menu"
+                                    >
+
+                                        <input
+                                            type="text"
+                                            class="country-search"
+                                            id="register-country-search"
+                                            placeholder="Rechercher un pays..."
+                                            autocomplete="off"
+                                        >
+
+                                        <div
+                                            id="register-country-options"
+                                        ></div>
+
+                                    </div>
+
+                                </div>
+
+
+                                <!-- NUMERO -->
+
+                                <input
+                                    type="tel"
+                                    id="reg-phone"
+                                    class="form-control phone-input"
+                                    placeholder="6XX XXX XXX"
+                                    inputmode="tel"
+                                    autocomplete="tel"
+                                    required
+                                >
+
+                            </div>
+
+                        </div>
 
                     </div>
 
 
-                    <!-- Inscription Email -->
+                    <!-- EMAIL -->
 
                     <div
                         class="form-group"
-                        id="register-email-group">
+                        id="register-email-group"
+                        style="display:none;"
+                    >
 
                         <label for="reg-email">
                             Email
@@ -315,50 +1647,34 @@
                             id="reg-email"
                             class="form-control"
                             placeholder="jean.dupont@email.com"
+                            autocomplete="email"
                         >
 
                     </div>
 
 
-                    <!-- Inscription Téléphone -->
+                    <!-- CHANGEMENT -->
 
-                    <div
-                        class="form-group"
-                        id="register-phone-group"
-                        style="display:none;">
+                    <div class="alternative-login">
 
-                        <label for="reg-phone">
-                            Numéro de téléphone
-                        </label>
-
-                        <div class="phone-row">
-
-                            <select
-                                id="reg-phone-country"
-                                class="form-control phone-country">
-                            </select>
-
-                            <input
-                                type="tel"
-                                id="reg-phone"
-                                class="form-control"
-                                placeholder="690 123 456"
-                                inputmode="tel"
-                                autocomplete="tel"
-                            >
-
-                        </div>
+                        <button
+                            type="button"
+                            id="register-method-button"
+                        >
+                            Utiliser une adresse email
+                        </button>
 
                     </div>
 
 
-                    <!-- Mot de passe -->
+                    <!-- MOT DE PASSE -->
 
                     <div class="form-group">
 
                         <label for="reg-password">
                             Mot de passe
                         </label>
+
 
                         <div class="password-input">
 
@@ -370,29 +1686,34 @@
                                 required
                             >
 
+
                             <button
                                 type="button"
                                 class="password-toggle"
-                                onclick="togglePassword('reg-password')"
-                                aria-label="Afficher/Masquer">
+                                data-target="reg-password"
+                                aria-label="Afficher ou masquer le mot de passe"
+                            >
 
                                 <svg
-                                    width="20"
-                                    height="20"
+                                    width="22"
+                                    height="22"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
                                     stroke-linecap="round"
-                                    stroke-linejoin="round">
+                                    stroke-linejoin="round"
+                                >
 
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <path
+                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                    ></path>
 
                                     <circle
                                         cx="12"
                                         cy="12"
-                                        r="3">
-                                    </circle>
+                                        r="3"
+                                    ></circle>
 
                                 </svg>
 
@@ -403,7 +1724,7 @@
                     </div>
 
 
-                    <!-- Confirmation -->
+                    <!-- CONFIRMATION -->
 
                     <div class="form-group">
 
@@ -422,7 +1743,7 @@
                     </div>
 
 
-                    <!-- Pays de résidence -->
+                    <!-- PAYS DE RESIDENCE -->
 
                     <div class="form-group">
 
@@ -430,463 +1751,1968 @@
                             Pays de résidence
                         </label>
 
+
                         <select
                             id="reg-country"
                             class="form-control"
-                            required>
+                            required
+                        >
 
                             <option
                                 value=""
                                 disabled
-                                selected>
+                                selected
+                            >
                                 Sélectionnez votre pays
                             </option>
 
                         </select>
 
+
                         <small
-                            style="display:block; margin-top:6px; color:var(--text-secondary); font-size:0.78rem;">
-
+                            style="
+                                display:block;
+                                margin-top:7px;
+                                color:#66758a;
+                                font-size:13px;
+                                line-height:1.5;
+                            "
+                        >
                             Détermine les moyens de paiement disponibles pour vos dépôts et retraits.
-
                         </small>
 
                     </div>
 
 
-                    <!-- Conditions -->
+                    <!-- CONDITIONS -->
 
                     <div class="checkbox-group">
 
                         <input
                             type="checkbox"
                             id="terms"
-                            required>
+                            required
+                        >
 
                         <label for="terms">
 
-                            J'accepte les conditions générales d'utilisation et la politique de confidentialité
+                            J'accepte les conditions générales
+                            d'utilisation et la politique de
+                            confidentialité
 
                         </label>
 
                     </div>
 
 
+                    <!-- BOUTON -->
+
                     <button
                         type="submit"
-                        class="btn btn-primary">
-
+                        class="btn btn-primary"
+                    >
                         Créer mon compte
-
                     </button>
+
 
                 </form>
 
             </div>
 
+
         </div>
+
     </main>
 
 
+    <!-- =========================================================
+         TOAST
+         ========================================================= -->
+
     <div
         class="toast-container"
-        id="toast-container">
-    </div>
+        id="toast-container"
+    ></div>
 
 
-    <!-- Fichiers JavaScript -->
 
-    <script src="js/payment%20methods.js"></script>
+    <!-- =========================================================
+         SUPABASE
+         ========================================================= -->
 
-    <script src="js/supabase-config.js"></script>
-
-    <script src="js/main.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+    ></script>
 
 
     <script>
 
-        /* ================================================================
-           PAYS + INDICATIFS TÉLÉPHONIQUES
-           ================================================================ */
+        /* =========================================================
+           SUPABASE
+           ========================================================= */
 
-        window.AtlasAuthCountries = [
+        const SUPABASE_URL =
+            'https://lpgcnhycveliaxnkwgig.supabase.co';
 
-            {
-                code: 'CM',
-                name: '🇨🇲 Cameroun',
-                dial: '+237'
-            },
+        const SUPABASE_KEY =
+            'sb_publishable_J42fuJ5ITrrRfgJ00JOS5g_U-GNXJmF';
 
-            {
-                code: 'CI',
-                name: "🇨🇮 Côte d'Ivoire",
-                dial: '+225'
-            },
 
-            {
-                code: 'SN',
-                name: '🇸🇳 Sénégal',
-                dial: '+221'
-            },
+        window.supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
 
-            {
-                code: 'GA',
-                name: '🇬🇦 Gabon',
-                dial: '+241'
-            },
+
+
+        /* =========================================================
+           LISTE DES PAYS
+           ========================================================= */
+
+        const PHONE_COUNTRIES = [
 
             {
-                code: 'CG',
-                name: '🇨🇬 Congo-Brazzaville',
-                dial: '+242'
-            },
-
-            {
-                code: 'CD',
-                name: '🇨🇩 RD Congo',
-                dial: '+243'
-            },
-
-            {
-                code: 'TD',
-                name: '🇹🇩 Tchad',
-                dial: '+235'
-            },
-
-            {
-                code: 'CF',
-                name: '🇨🇫 Centrafrique',
-                dial: '+236'
-            },
-
-            {
-                code: 'GQ',
-                name: '🇬🇶 Guinée Équatoriale',
-                dial: '+240'
+                code: 'BJ',
+                name: 'Bénin',
+                dial: '+229',
+                flag: '🇧🇯'
             },
 
             {
                 code: 'BF',
-                name: '🇧🇫 Burkina Faso',
-                dial: '+226'
+                name: 'Burkina Faso',
+                dial: '+226',
+                flag: '🇧🇫'
             },
 
             {
-                code: 'ML',
-                name: '🇲🇱 Mali',
-                dial: '+223'
+                code: 'CV',
+                name: 'Cap-Vert',
+                dial: '+238',
+                flag: '🇨🇻'
             },
 
             {
-                code: 'NE',
-                name: '🇳🇪 Niger',
-                dial: '+227'
+                code: 'CI',
+                name: "Côte d’Ivoire",
+                dial: '+225',
+                flag: '🇨🇮'
             },
 
             {
-                code: 'TG',
-                name: '🇹🇬 Togo',
-                dial: '+228'
+                code: 'GM',
+                name: 'Gambie',
+                dial: '+220',
+                flag: '🇬🇲'
             },
 
             {
-                code: 'BJ',
-                name: '🇧🇯 Bénin',
-                dial: '+229'
-            },
-
-            {
-                code: 'GW',
-                name: '🇬🇼 Guinée-Bissau',
-                dial: '+245'
+                code: 'GH',
+                name: 'Ghana',
+                dial: '+233',
+                flag: '🇬🇭'
             },
 
             {
                 code: 'GN',
-                name: '🇬🇳 Guinée',
-                dial: '+224'
+                name: 'Guinée',
+                dial: '+224',
+                flag: '🇬🇳'
+            },
+
+            {
+                code: 'GW',
+                name: 'Guinée-Bissau',
+                dial: '+245',
+                flag: '🇬🇼'
+            },
+
+            {
+                code: 'LR',
+                name: 'Libéria',
+                dial: '+231',
+                flag: '🇱🇷'
+            },
+
+            {
+                code: 'ML',
+                name: 'Mali',
+                dial: '+223',
+                flag: '🇲🇱'
+            },
+
+            {
+                code: 'MR',
+                name: 'Mauritanie',
+                dial: '+222',
+                flag: '🇲🇷'
+            },
+
+            {
+                code: 'NE',
+                name: 'Niger',
+                dial: '+227',
+                flag: '🇳🇪'
+            },
+
+            {
+                code: 'NG',
+                name: 'Nigeria',
+                dial: '+234',
+                flag: '🇳🇬'
+            },
+
+            {
+                code: 'SN',
+                name: 'Sénégal',
+                dial: '+221',
+                flag: '🇸🇳'
+            },
+
+            {
+                code: 'SL',
+                name: 'Sierra Leone',
+                dial: '+232',
+                flag: '🇸🇱'
+            },
+
+            {
+                code: 'TG',
+                name: 'Togo',
+                dial: '+228',
+                flag: '🇹🇬'
+            },
+
+            {
+                code: 'CM',
+                name: 'Cameroun',
+                dial: '+237',
+                flag: '🇨🇲'
+            },
+
+            {
+                code: 'CF',
+                name: 'Centrafrique',
+                dial: '+236',
+                flag: '🇨🇫'
+            },
+
+            {
+                code: 'CG',
+                name: 'Congo-Brazzaville',
+                dial: '+242',
+                flag: '🇨🇬'
+            },
+
+            {
+                code: 'CD',
+                name: 'RD Congo',
+                dial: '+243',
+                flag: '🇨🇩'
+            },
+
+            {
+                code: 'GA',
+                name: 'Gabon',
+                dial: '+241',
+                flag: '🇬🇦'
+            },
+
+            {
+                code: 'GQ',
+                name: 'Guinée Équatoriale',
+                dial: '+240',
+                flag: '🇬🇶'
+            },
+
+            {
+                code: 'TD',
+                name: 'Tchad',
+                dial: '+235',
+                flag: '🇹🇩'
             },
 
             {
                 code: 'RW',
-                name: '🇷🇼 Rwanda',
-                dial: '+250'
+                name: 'Rwanda',
+                dial: '+250',
+                flag: '🇷🇼'
+            },
+
+            {
+                code: 'KE',
+                name: 'Kenya',
+                dial: '+254',
+                flag: '🇰🇪'
+            },
+
+            {
+                code: 'TZ',
+                name: 'Tanzanie',
+                dial: '+255',
+                flag: '🇹🇿'
+            },
+
+            {
+                code: 'UG',
+                name: 'Ouganda',
+                dial: '+256',
+                flag: '🇺🇬'
+            },
+
+            {
+                code: 'ZA',
+                name: 'Afrique du Sud',
+                dial: '+27',
+                flag: '🇿🇦'
             },
 
             {
                 code: 'FR',
-                name: '🇫🇷 France',
-                dial: '+33'
+                name: 'France',
+                dial: '+33',
+                flag: '🇫🇷'
             },
 
             {
                 code: 'BE',
-                name: '🇧🇪 Belgique',
-                dial: '+32'
+                name: 'Belgique',
+                dial: '+32',
+                flag: '🇧🇪'
             },
 
             {
                 code: 'CA',
-                name: '🇨🇦 Canada',
-                dial: '+1'
+                name: 'Canada',
+                dial: '+1',
+                flag: '🇨🇦'
             },
 
             {
                 code: 'US',
-                name: '🇺🇸 États-Unis',
-                dial: '+1'
+                name: 'États-Unis',
+                dial: '+1',
+                flag: '🇺🇸'
             },
 
             {
-                code: 'XX',
-                name: '🌍 Autre pays',
-                dial: ''
+                code: 'GB',
+                name: 'Royaume-Uni',
+                dial: '+44',
+                flag: '🇬🇧'
             }
 
         ];
 
 
-        function fillPhoneCountries() {
 
-            [
-                'login-phone-country',
-                'reg-phone-country'
-            ].forEach(id => {
+        /* =========================================================
+           PAYS DE RESIDENCE
+           ========================================================= */
 
-                const select = document.getElementById(id);
+        const residenceCountries = [
 
-                if (!select) return;
+            ['CM', 'Cameroun'],
+            ['CI', "Côte d'Ivoire"],
+            ['SN', 'Sénégal'],
+            ['GA', 'Gabon'],
+            ['CG', 'Congo-Brazzaville'],
+            ['CD', 'RD Congo'],
+            ['TD', 'Tchad'],
+            ['CF', 'Centrafrique'],
+            ['GQ', 'Guinée Équatoriale'],
+            ['BF', 'Burkina Faso'],
+            ['ML', 'Mali'],
+            ['NE', 'Niger'],
+            ['TG', 'Togo'],
+            ['BJ', 'Bénin'],
+            ['GW', 'Guinée-Bissau'],
+            ['GN', 'Guinée'],
+            ['RW', 'Rwanda'],
+            ['FR', 'France'],
+            ['BE', 'Belgique'],
+            ['CA', 'Canada'],
+            ['US', 'États-Unis'],
+            ['KE', 'Kenya'],
+            ['NG', 'Nigeria'],
+            ['GH', 'Ghana'],
+            ['ZA', 'Afrique du Sud']
 
-                select.innerHTML = '';
+        ];
 
-                window.AtlasAuthCountries.forEach(country => {
 
-                    const option = document.createElement('option');
 
-                    option.value = country.dial;
+        const residenceSelect =
+            document.getElementById(
+                'reg-country'
+            );
 
-                    option.dataset.code = country.code;
 
-                    option.textContent =
-                        country.dial
-                            ? `${country.name} ${country.dial}`
-                            : country.name;
+        residenceCountries.forEach(
+            country => {
 
-                    select.appendChild(option);
+                const option =
+                    document.createElement(
+                        'option'
+                    );
 
-                });
+                option.value =
+                    country[0];
 
-                select.value = '+237';
+                option.textContent =
+                    country[1];
 
-            });
+                residenceSelect.appendChild(
+                    option
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           ETAT
+           ========================================================= */
+
+        let loginMethod = 'phone';
+
+        let registerMethod = 'phone';
+
+
+        let loginCountry =
+            PHONE_COUNTRIES.find(
+                c => c.code === 'CM'
+            );
+
+
+        let registerCountry =
+            PHONE_COUNTRIES.find(
+                c => c.code === 'CM'
+            );
+
+
+
+        /* =========================================================
+           UTILITAIRES
+           ========================================================= */
+
+        function showToast(
+            message,
+            type = 'info'
+        ) {
+
+            const container =
+                document.getElementById(
+                    'toast-container'
+                );
+
+
+            const toast =
+                document.createElement(
+                    'div'
+                );
+
+
+            toast.className =
+                'toast';
+
+
+            if (
+                type === 'error'
+            ) {
+
+                toast.style.borderColor =
+                    '#ef4444';
+
+            }
+
+
+            if (
+                type === 'success'
+            ) {
+
+                toast.style.borderColor =
+                    '#10b981';
+
+            }
+
+
+            toast.innerHTML =
+                `<span class="toast-message">${message}</span>`;
+
+
+            container.appendChild(
+                toast
+            );
+
+
+            requestAnimationFrame(
+                () => {
+
+                    toast.classList.add(
+                        'show'
+                    );
+
+                }
+            );
+
+
+            setTimeout(
+                () => {
+
+                    toast.classList.remove(
+                        'show'
+                    );
+
+                    setTimeout(
+                        () => toast.remove(),
+                        300
+                    );
+
+                },
+                4000
+            );
 
         }
 
 
-        function fillResidenceCountries() {
 
-            const select =
-                document.getElementById('reg-country');
+        function showError(
+            input,
+            message
+        ) {
 
-            if (!select) return;
+            clearError(input);
+
+
+            const error =
+                document.createElement(
+                    'div'
+                );
+
+
+            error.className =
+                'error-message';
+
+
+            error.textContent =
+                message;
+
+
+            input.parentElement.appendChild(
+                error
+            );
+
+
+            input.style.borderColor =
+                '#ef4444';
+
+        }
+
+
+
+        function clearError(
+            input
+        ) {
+
+            if (!input)
+                return;
+
+
+            const old =
+                input.parentElement
+                    .querySelector(
+                        '.error-message'
+                    );
+
+
+            if (old)
+                old.remove();
+
+
+            input.style.borderColor =
+                '';
+
+        }
+
+
+
+        function validateEmail(
+            email
+        ) {
+
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+                .test(email);
+
+        }
+
+
+
+        function normalizePhone(
+            number,
+            dial
+        ) {
+
+            let digits =
+                String(number || '')
+                    .replace(/\D/g, '');
+
+
+            let countryDial =
+                String(dial || '')
+                    .replace(/\D/g, '');
+
+
+            if (!digits)
+                return '';
+
+
+            /*
+             * 00237690123456
+             */
+
+            if (
+                digits.startsWith('00')
+            ) {
+
+                digits =
+                    digits.substring(2);
+
+            }
+
+
+            /*
+             * Si le numéro contient déjà
+             * l'indicatif
+             */
+
+            if (
+                countryDial &&
+                digits.startsWith(
+                    countryDial
+                )
+            ) {
+
+                return '+' + digits;
+
+            }
+
+
+            /*
+             * Numéro local
+             * 690123456
+             */
+
+            if (
+                digits.startsWith('0')
+            ) {
+
+                digits =
+                    digits.substring(1);
+
+            }
+
+
+            return (
+                '+' +
+                countryDial +
+                digits
+            );
+
+        }
+
+
+
+        /* =========================================================
+           CREATION DU MENU PAYS
+           ========================================================= */
+
+        function renderCountryMenu(
+            type,
+            search = ''
+        ) {
+
+            const options =
+                document.getElementById(
+                    type === 'login'
+                        ? 'login-country-options'
+                        : 'register-country-options'
+                );
+
+
+            const query =
+                search
+                    .trim()
+                    .toLowerCase();
+
+
+            const filtered =
+                PHONE_COUNTRIES.filter(
+                    country => {
+
+                        return (
+                            country.name
+                                .toLowerCase()
+                                .includes(query)
+                            ||
+                            country.dial
+                                .includes(query)
+                            ||
+                            country.code
+                                .toLowerCase()
+                                .includes(query)
+                        );
+
+                    }
+                );
+
+
+            options.innerHTML = '';
 
 
             if (
-                window.AtlasCountries &&
-                Array.isArray(window.AtlasCountries)
+                filtered.length === 0
             ) {
 
-                window.AtlasCountries.forEach(c => {
-
-                    if (
-                        !select.querySelector(
-                            `option[value="${c.code}"]`
-                        )
-                    ) {
-
-                        const opt =
-                            document.createElement('option');
-
-                        opt.value = c.code;
-
-                        opt.textContent = c.name;
-
-                        select.appendChild(opt);
-
-                    }
-
-                });
+                options.innerHTML =
+                    `<div class="country-no-result">
+                        Aucun pays trouvé
+                    </div>`;
 
                 return;
 
             }
 
 
-            window.AtlasAuthCountries.forEach(c => {
+            filtered.forEach(
+                country => {
 
-                if (c.code === 'XX') return;
+                    const button =
+                        document.createElement(
+                            'button'
+                        );
 
-                const opt =
-                    document.createElement('option');
 
-                opt.value = c.code;
+                    button.type =
+                        'button';
 
-                opt.textContent =
-                    c.name.replace(/^\S+\s/, '');
 
-                select.appendChild(opt);
+                    button.className =
+                        'country-option';
 
-            });
+
+                    button.innerHTML = `
+
+                        <span class="country-option-left">
+
+                            <span class="country-option-flag">
+                                ${country.flag}
+                            </span>
+
+                            <span class="country-option-name">
+                                ${country.name}
+                            </span>
+
+                        </span>
+
+                        <span class="country-option-dial">
+                            ${country.dial}
+                        </span>
+
+                    `;
+
+
+                    button.addEventListener(
+                        'click',
+                        () => {
+
+                            selectCountry(
+                                type,
+                                country
+                            );
+
+                        }
+                    );
+
+
+                    options.appendChild(
+                        button
+                    );
+
+                }
+            );
 
         }
 
 
-        fillPhoneCountries();
 
-        fillResidenceCountries();
+        /* =========================================================
+           SELECTION PAYS
+           ========================================================= */
 
+        function selectCountry(
+            type,
+            country
+        ) {
 
-        function switchLoginMethod(method) {
+            const prefix =
+                type === 'login'
+                    ? 'login'
+                    : 'register';
 
-            const emailMode =
-                method === 'email';
-
-            document.getElementById(
-                'login-email-group'
-            ).style.display =
-                emailMode ? '' : 'none';
-
-            document.getElementById(
-                'login-phone-group'
-            ).style.display =
-                emailMode ? 'none' : '';
 
             document.getElementById(
-                'login-email-btn'
-            ).classList.toggle(
-                'active',
-                emailMode
+                `${prefix}-selected-flag`
+            ).textContent =
+                country.flag;
+
+
+            document.getElementById(
+                `${prefix}-selected-dial`
+            ).textContent =
+                country.dial;
+
+
+            if (
+                type === 'login'
+            ) {
+
+                loginCountry =
+                    country;
+
+            }
+
+            else {
+
+                registerCountry =
+                    country;
+
+            }
+
+
+            document.getElementById(
+                `${prefix}-country-selector`
+            ).classList.remove(
+                'open'
             );
 
+
             document.getElementById(
-                'login-phone-btn'
-            ).classList.toggle(
-                'active',
-                !emailMode
+                `${prefix}-country-search`
+            ).value =
+                '';
+
+
+            renderCountryMenu(
+                type
             );
-
-            document.getElementById(
-                'login-email'
-            ).required =
-                emailMode;
-
-            document.getElementById(
-                'login-phone'
-            ).required =
-                !emailMode;
-
-            window.loginMethod = method;
 
         }
 
 
-        function switchRegisterMethod(method) {
 
-            const emailMode =
-                method === 'email';
+        /* =========================================================
+           INITIALISATION MENUS
+           ========================================================= */
 
-            document.getElementById(
-                'register-email-group'
-            ).style.display =
-                emailMode ? '' : 'none';
+        renderCountryMenu(
+            'login'
+        );
 
-            document.getElementById(
-                'register-phone-group'
-            ).style.display =
-                emailMode ? 'none' : '';
 
-            document.getElementById(
-                'register-email-btn'
-            ).classList.toggle(
-                'active',
-                emailMode
+        renderCountryMenu(
+            'register'
+        );
+
+
+
+        /* =========================================================
+           OUVERTURE PAYS
+           ========================================================= */
+
+        document.getElementById(
+            'login-country-button'
+        ).addEventListener(
+            'click',
+            event => {
+
+                event.stopPropagation();
+
+
+                document.getElementById(
+                    'login-country-selector'
+                ).classList.toggle(
+                    'open'
+                );
+
+
+                document.getElementById(
+                    'register-country-selector'
+                ).classList.remove(
+                    'open'
+                );
+
+            }
+        );
+
+
+        document.getElementById(
+            'register-country-button'
+        ).addEventListener(
+            'click',
+            event => {
+
+                event.stopPropagation();
+
+
+                document.getElementById(
+                    'register-country-selector'
+                ).classList.toggle(
+                    'open'
+                );
+
+
+                document.getElementById(
+                    'login-country-selector'
+                ).classList.remove(
+                    'open'
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           RECHERCHE PAYS
+           ========================================================= */
+
+        document.getElementById(
+            'login-country-search'
+        ).addEventListener(
+            'input',
+            event => {
+
+                renderCountryMenu(
+                    'login',
+                    event.target.value
+                );
+
+            }
+        );
+
+
+        document.getElementById(
+            'register-country-search'
+        ).addEventListener(
+            'input',
+            event => {
+
+                renderCountryMenu(
+                    'register',
+                    event.target.value
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           FERMER MENU EN CLIQUANT AILLEURS
+           ========================================================= */
+
+        document.addEventListener(
+            'click',
+            () => {
+
+                document.getElementById(
+                    'login-country-selector'
+                ).classList.remove(
+                    'open'
+                );
+
+
+                document.getElementById(
+                    'register-country-selector'
+                ).classList.remove(
+                    'open'
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           MOT DE PASSE
+           ========================================================= */
+
+        document.querySelectorAll(
+            '.password-toggle'
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    'click',
+                    () => {
+
+                        const input =
+                            document.getElementById(
+                                button.dataset.target
+                            );
+
+
+                        input.type =
+                            input.type === 'password'
+                                ? 'text'
+                                : 'password';
+
+                    }
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           ONGLET CONNEXION / INSCRIPTION
+           ========================================================= */
+
+        document.getElementById(
+            'tab-login'
+        ).addEventListener(
+            'click',
+            () => {
+
+                document.getElementById(
+                    'tab-login'
+                ).classList.add(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'tab-register'
+                ).classList.remove(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'login-panel'
+                ).classList.add(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'register-panel'
+                ).classList.remove(
+                    'active'
+                );
+
+            }
+        );
+
+
+        document.getElementById(
+            'tab-register'
+        ).addEventListener(
+            'click',
+            () => {
+
+                document.getElementById(
+                    'tab-register'
+                ).classList.add(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'tab-login'
+                ).classList.remove(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'register-panel'
+                ).classList.add(
+                    'active'
+                );
+
+
+                document.getElementById(
+                    'login-panel'
+                ).classList.remove(
+                    'active'
+                );
+
+            }
+        );
+
+
+
+        /* =========================================================
+           BASCULER TELEPHONE / EMAIL — CONNEXION
+           ========================================================= */
+
+        document.getElementById(
+            'login-method-button'
+        ).addEventListener(
+            'click',
+            () => {
+
+                if (
+                    loginMethod === 'phone'
+                ) {
+
+                    loginMethod =
+                        'email';
+
+
+                    document.getElementById(
+                        'login-phone-group'
+                    ).style.display =
+                        'none';
+
+
+                    document.getElementById(
+                        'login-email-group'
+                    ).style.display =
+                        'block';
+
+
+                    document.getElementById(
+                        'login-phone'
+                    ).required =
+                        false;
+
+
+                    document.getElementById(
+                        'login-email'
+                    ).required =
+                        true;
+
+
+                    document.getElementById(
+                        'login-method-button'
+                    ).textContent =
+                        'Utiliser un numéro de téléphone';
+
+                }
+
+                else {
+
+                    loginMethod =
+                        'phone';
+
+
+                    document.getElementById(
+                        'login-phone-group'
+                    ).style.display =
+                        'block';
+
+
+                    document.getElementById(
+                        'login-email-group'
+                    ).style.display =
+                        'none';
+
+
+                    document.getElementById(
+                        'login-phone'
+                    ).required =
+                        true;
+
+
+                    document.getElementById(
+                        'login-email'
+                    ).required =
+                        false;
+
+
+                    document.getElementById(
+                        'login-method-button'
+                    ).textContent =
+                        'Utiliser une adresse email';
+
+                }
+
+            }
+        );
+
+
+
+        /* =========================================================
+           BASCULER TELEPHONE / EMAIL — INSCRIPTION
+           ========================================================= */
+
+        document.getElementById(
+            'register-method-button'
+        ).addEventListener(
+            'click',
+            () => {
+
+                if (
+                    registerMethod === 'phone'
+                ) {
+
+                    registerMethod =
+                        'email';
+
+
+                    document.getElementById(
+                        'register-phone-group'
+                    ).style.display =
+                        'none';
+
+
+                    document.getElementById(
+                        'register-email-group'
+                    ).style.display =
+                        'block';
+
+
+                    document.getElementById(
+                        'reg-phone'
+                    ).required =
+                        false;
+
+
+                    document.getElementById(
+                        'reg-email'
+                    ).required =
+                        true;
+
+
+                    document.getElementById(
+                        'register-method-button'
+                    ).textContent =
+                        'Utiliser un numéro de téléphone';
+
+                }
+
+                else {
+
+                    registerMethod =
+                        'phone';
+
+
+                    document.getElementById(
+                        'register-phone-group'
+                    ).style.display =
+                        'block';
+
+
+                    document.getElementById(
+                        'register-email-group'
+                    ).style.display =
+                        'none';
+
+
+                    document.getElementById(
+                        'reg-phone'
+                    ).required =
+                        true;
+
+
+                    document.getElementById(
+                        'reg-email'
+                    ).required =
+                        false;
+
+
+                    document.getElementById(
+                        'register-method-button'
+                    ).textContent =
+                        'Utiliser une adresse email';
+
+                }
+
+            }
+        );
+
+
+
+        /* =========================================================
+           CONNEXION
+           ========================================================= */
+
+        document.getElementById(
+            'login-form'
+        ).addEventListener(
+            'submit',
+            async event => {
+
+                event.preventDefault();
+
+
+                const password =
+                    document.getElementById(
+                        'login-password'
+                    );
+
+
+                const button =
+                    document.querySelector(
+                        '#login-form button[type="submit"]'
+                    );
+
+
+                clearError(
+                    password
+                );
+
+
+                if (
+                    password.value.length < 6
+                ) {
+
+                    showError(
+                        password,
+                        'Le mot de passe doit contenir au moins 6 caractères.'
+                    );
+
+                    return;
+
+                }
+
+
+                let credentials;
+
+
+                if (
+                    loginMethod === 'phone'
+                ) {
+
+                    const phone =
+                        document.getElementById(
+                            'login-phone'
+                        );
+
+
+                    clearError(
+                        phone
+                    );
+
+
+                    if (
+                        phone.value
+                            .replace(/\D/g, '')
+                            .length < 6
+                    ) {
+
+                        showError(
+                            phone,
+                            'Veuillez entrer un numéro de téléphone valide.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    credentials = {
+
+                        phone:
+                            normalizePhone(
+                                phone.value,
+                                loginCountry.dial
+                            ),
+
+                        password:
+                            password.value
+
+                    };
+
+                }
+
+                else {
+
+                    const email =
+                        document.getElementById(
+                            'login-email'
+                        );
+
+
+                    clearError(
+                        email
+                    );
+
+
+                    if (
+                        !validateEmail(
+                            email.value.trim()
+                        )
+                    ) {
+
+                        showError(
+                            email,
+                            'Veuillez entrer une adresse email valide.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    credentials = {
+
+                        email:
+                            email.value.trim(),
+
+                        password:
+                            password.value
+
+                    };
+
+                }
+
+
+                const originalText =
+                    button.textContent;
+
+
+                button.disabled =
+                    true;
+
+
+                button.textContent =
+                    'Connexion...';
+
+
+                try {
+
+                    const {
+                        data,
+                        error
+                    } =
+                        await window.supabaseClient
+                            .auth
+                            .signInWithPassword(
+                                credentials
+                            );
+
+
+                    if (error) {
+
+                        showToast(
+                            error.message,
+                            'error'
+                        );
+
+
+                        button.disabled =
+                            false;
+
+
+                        button.textContent =
+                            originalText;
+
+
+                        return;
+
+                    }
+
+
+                    const user =
+                        data.user;
+
+
+                    localStorage.setItem(
+                        'isLoggedIn',
+                        'true'
+                    );
+
+
+                    localStorage.setItem(
+                        'userEmail',
+                        user.email ||
+                        user.phone ||
+                        ''
+                    );
+
+
+                    localStorage.setItem(
+                        'userName',
+                        user.user_metadata?.full_name ||
+                        user.email ||
+                        user.phone ||
+                        'Utilisateur'
+                    );
+
+
+                    showToast(
+                        'Connexion réussie !',
+                        'success'
+                    );
+
+
+                    setTimeout(
+                        () => {
+
+                            window.location.href =
+                                'dashboard.html';
+
+                        },
+                        600
+                    );
+
+                }
+
+                catch (
+                    error
+                ) {
+
+                    showToast(
+                        error.message ||
+                        'Une erreur est survenue.',
+                        'error'
+                    );
+
+
+                    button.disabled =
+                        false;
+
+
+                    button.textContent =
+                        originalText;
+
+                }
+
+            }
+        );
+
+
+
+        /* =========================================================
+           INSCRIPTION
+           ========================================================= */
+
+        document.getElementById(
+            'register-form'
+        ).addEventListener(
+            'submit',
+            async event => {
+
+                event.preventDefault();
+
+
+                const name =
+                    document.getElementById(
+                        'reg-name'
+                    );
+
+
+                const password =
+                    document.getElementById(
+                        'reg-password'
+                    );
+
+
+                const confirm =
+                    document.getElementById(
+                        'reg-confirm'
+                    );
+
+
+                const terms =
+                    document.getElementById(
+                        'terms'
+                    );
+
+
+                const button =
+                    document.querySelector(
+                        '#register-form button[type="submit"]'
+                    );
+
+
+                clearError(name);
+
+                clearError(password);
+
+                clearError(confirm);
+
+
+
+                /* NOM */
+
+                if (
+                    name.value.trim().length < 2
+                ) {
+
+                    showError(
+                        name,
+                        'Veuillez entrer votre nom complet.'
+                    );
+
+                    return;
+
+                }
+
+
+
+                /* MOT DE PASSE */
+
+                if (
+                    password.value.length < 6
+                ) {
+
+                    showError(
+                        password,
+                        'Le mot de passe doit contenir au moins 6 caractères.'
+                    );
+
+                    return;
+
+                }
+
+
+
+                /* CONFIRMATION */
+
+                if (
+                    password.value !==
+                    confirm.value
+                ) {
+
+                    showError(
+                        confirm,
+                        'Les mots de passe ne correspondent pas.'
+                    );
+
+                    return;
+
+                }
+
+
+
+                /* CONDITIONS */
+
+                if (
+                    !terms.checked
+                ) {
+
+                    showToast(
+                        'Vous devez accepter les conditions générales.',
+                        'error'
+                    );
+
+                    return;
+
+                }
+
+
+                let signupData;
+
+
+                if (
+                    registerMethod === 'phone'
+                ) {
+
+                    const phone =
+                        document.getElementById(
+                            'reg-phone'
+                        );
+
+
+                    clearError(
+                        phone
+                    );
+
+
+                    if (
+                        phone.value
+                            .replace(/\D/g, '')
+                            .length < 6
+                    ) {
+
+                        showError(
+                            phone,
+                            'Veuillez entrer un numéro de téléphone valide.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    const fullPhone =
+                        normalizePhone(
+                            phone.value,
+                            registerCountry.dial
+                        );
+
+
+                    signupData = {
+
+                        phone:
+                            fullPhone,
+
+                        password:
+                            password.value,
+
+                        options: {
+
+                            data: {
+
+                                full_name:
+                                    name.value.trim(),
+
+                                country:
+                                    registerCountry.code,
+
+                                phone_country:
+                                    registerCountry.code,
+
+                                referred_by:
+                                    localStorage.getItem(
+                                        'referredBy'
+                                    ) || null
+
+                            }
+
+                        }
+
+                    };
+
+                }
+
+                else {
+
+                    const email =
+                        document.getElementById(
+                            'reg-email'
+                        );
+
+
+                    clearError(
+                        email
+                    );
+
+
+                    if (
+                        !validateEmail(
+                            email.value.trim()
+                        )
+                    ) {
+
+                        showError(
+                            email,
+                            'Veuillez entrer une adresse email valide.'
+                        );
+
+                        return;
+
+                    }
+
+
+                    signupData = {
+
+                        email:
+                            email.value.trim(),
+
+                        password:
+                            password.value,
+
+                        options: {
+
+                            data: {
+
+                                full_name:
+                                    name.value.trim(),
+
+                                country:
+                                    document.getElementById(
+                                        'reg-country'
+                                    ).value,
+
+                                referred_by:
+                                    localStorage.getItem(
+                                        'referredBy'
+                                    ) || null
+
+                            }
+
+                        }
+
+                    };
+
+                }
+
+
+                const originalText =
+                    button.textContent;
+
+
+                button.disabled =
+                    true;
+
+
+                button.textContent =
+                    'Création en cours...';
+
+
+                try {
+
+                    const {
+                        data,
+                        error
+                    } =
+                        await window.supabaseClient
+                            .auth
+                            .signUp(
+                                signupData
+                            );
+
+
+                    if (error) {
+
+                        showToast(
+                            error.message,
+                            'error'
+                        );
+
+
+                        button.disabled =
+                            false;
+
+
+                        button.textContent =
+                            originalText;
+
+
+                        return;
+
+                    }
+
+
+                    localStorage.removeItem(
+                        'referredBy'
+                    );
+
+
+                    /*
+                     * Avec le téléphone, Supabase
+                     * peut demander la confirmation
+                     * du code SMS.
+                     */
+
+                    if (
+                        registerMethod === 'phone'
+                    ) {
+
+                        showToast(
+                            'Compte créé. Un code SMS peut vous être demandé pour confirmer votre numéro.',
+                            'success'
+                        );
+
+                    }
+
+                    else {
+
+                        showToast(
+                            'Compte créé ! Vérifiez votre email si une confirmation est demandée.',
+                            'success'
+                        );
+
+                    }
+
+
+                    button.disabled =
+                        false;
+
+
+                    button.textContent =
+                        originalText;
+
+
+                    /*
+                     * Retour vers Connexion
+                     */
+
+                    document.getElementById(
+                        'tab-login'
+                    ).click();
+
+                }
+
+                catch (
+                    error
+                ) {
+
+                    showToast(
+                        error.message ||
+                        'Une erreur est survenue.',
+                        'error'
+                    );
+
+
+                    button.disabled =
+                        false;
+
+
+                    button.textContent =
+                        originalText;
+
+                }
+
+            }
+        );
+
+
+
+        /* =========================================================
+           CODE DE PARRAINAGE
+           ========================================================= */
+
+        const ref =
+            new URLSearchParams(
+                window.location.search
+            ).get('ref');
+
+
+        if (ref) {
+
+            localStorage.setItem(
+                'referredBy',
+                ref
             );
-
-            document.getElementById(
-                'register-phone-btn'
-            ).classList.toggle(
-                'active',
-                !emailMode
-            );
-
-            document.getElementById(
-                'reg-email'
-            ).required =
-                emailMode;
-
-            document.getElementById(
-                'reg-phone'
-            ).required =
-                !emailMode;
-
-            window.registerMethod = method;
 
         }
 
 
-        window.loginMethod = 'email';
 
-        window.registerMethod = 'email';
-
-
-        function switchAuthTab(tab) {
-
-            const isLogin =
-                tab === 'login';
-
-            document.getElementById(
-                'tab-login'
-            ).classList.toggle(
-                'active',
-                isLogin
-            );
-
-            document.getElementById(
-                'tab-register'
-            ).classList.toggle(
-                'active',
-                !isLogin
-            );
-
-            openModal(
-                isLogin
-                    ? 'login-modal'
-                    : 'register-modal'
-            );
-
-            closeModal(
-                isLogin
-                    ? 'register-modal'
-                    : 'login-modal'
-            );
-
-            document.body.style.overflow = '';
-
-        }
-
+        /* =========================================================
+           OUVRIR INSCRIPTION SI ?tab=register
+           ========================================================= */
 
         const params =
             new URLSearchParams(
                 window.location.search
             );
 
-        switchAuthTab(
-            params.get('tab') === 'register'
-                ? 'register'
-                : 'login'
-        );
+
+        if (
+            params.get('tab') ===
+            'register'
+        ) {
+
+            document.getElementById(
+                'tab-register'
+            ).click();
+
+        }
 
     </script>
 
+
 </body>
+
 </html>
