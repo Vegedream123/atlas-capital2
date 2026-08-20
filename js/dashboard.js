@@ -50,13 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Chargement des données réelles : profil, portefeuille, produits,
     //    investissements en cours, transactions
     // ------------------------------------------------------------------
-    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes] = await Promise.all([
+    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes] = await Promise.all([
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
         window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
         window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
-        window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30)
+        window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30),
+        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single()
     ]);
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
@@ -65,16 +66,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     let investments = investmentsRes.data || [];
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
+    let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
+
+    // Hash SHA-256 (utilisé pour le code PIN de retrait : jamais stocké en clair)
+    const sha256Hex = async (text) => {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    };
 
     const userName = profile.full_name || authUser.email;
     const userEmail = profile.email || authUser.email;
 
     document.querySelectorAll('.user-name').forEach(el => { el.textContent = userName; el.classList.remove('skeleton-text'); el.classList.add('loaded'); });
     document.querySelectorAll('.user-email').forEach(el => { el.textContent = userEmail; el.classList.remove('skeleton-text'); el.classList.add('loaded'); });
+
 
     const initials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
     document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
@@ -519,7 +528,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const depositBtn = document.getElementById('wallet-deposit-btn');
     const withdrawBtn = document.getElementById('wallet-withdraw-btn');
-    if (withdrawBtn) withdrawBtn.addEventListener('click', () => window.showToast('Le retrait sera disponible après validation du code PIN.', 'info'));
 
     // ------------------------------------------------------------------
     // 7bis. Modal de dépôt : pays -> moyen de paiement -> montant -> preuve
@@ -677,6 +685,189 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (depositBtn) depositBtn.addEventListener('click', openDepositModal);
+
+    // ------------------------------------------------------------------
+    // 7ter. Retrait : vérification du code PIN -> pays -> moyen de
+    //       réception -> montant. Envoie directement sur le formulaire
+    //       de retrait si le PIN est bon et le solde suffisant.
+    // ------------------------------------------------------------------
+    let withdrawModalOverlay = null;
+    let selectedWithdrawMethod = null;
+    const closeWithdrawModal = () => { if (withdrawModalOverlay) withdrawModalOverlay.classList.remove('active'); };
+
+    const ensureWithdrawModal = () => {
+        if (!withdrawModalOverlay) {
+            withdrawModalOverlay = document.createElement('div');
+            withdrawModalOverlay.className = 'modal-overlay';
+            withdrawModalOverlay.innerHTML = '<div class="modal-card"></div>';
+            document.body.appendChild(withdrawModalOverlay);
+            withdrawModalOverlay.addEventListener('click', (e) => { if (e.target === withdrawModalOverlay) closeWithdrawModal(); });
+        }
+        return withdrawModalOverlay;
+    };
+
+    const renderWithdrawMethods = (countryCode) => {
+        const listEl = withdrawModalOverlay.querySelector('#withdraw-methods-list');
+        if (!listEl) return;
+        if (!countryCode || !window.AtlasPaymentMethods) { listEl.innerHTML = ''; return; }
+        const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
+        selectedWithdrawMethod = null;
+        withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = true;
+        listEl.innerHTML = methods.map(m => `
+            <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
+                <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
+            </button>`).join('');
+        listEl.querySelectorAll('.deposit-method-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
+                withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
+            });
+        });
+    };
+
+    // Étape 2 : formulaire de retrait (affiché directement après validation du PIN)
+    const renderWithdrawForm = () => {
+        const countries = window.AtlasCountries || [];
+        const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
+        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+            <button type="button" class="modal-close" data-close-withdraw-modal>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <span class="task-modal-badge">Retrait</span>
+            <h2 class="task-modal-title">Retirer des fonds</h2>
+            <p class="task-modal-sub">Solde disponible : <strong>${formatFCFA(wallet.balance)}</strong>. Choisissez comment vous souhaitez être payé.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-country-select">Pays</label>
+                <select id="withdraw-country-select" class="form-control">
+                    <option value="">Sélectionnez votre pays</option>
+                    ${countries.map(c => `<option value="${c.code}">${c.name}</option>`).join('')}
+                </select>
+            </div>
+
+            <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
+                <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
+            </div>
+
+            <div class="quiz-feedback" id="withdraw-feedback"></div>
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-submit-btn" disabled>Envoyer ma demande de retrait</button>`;
+
+        withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
+        withdrawModalOverlay.querySelector('#withdraw-country-select').addEventListener('change', (e) => renderWithdrawMethods(e.target.value));
+
+        withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', async () => {
+            const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
+            const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
+            const amountInput = withdrawModalOverlay.querySelector('#withdraw-amount-input');
+            const submitBtn = withdrawModalOverlay.querySelector('#withdraw-submit-btn');
+            const amount = Number(amountInput.value);
+            const destination = destinationInput.value.trim();
+
+            if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+            feedbackEl.textContent = '';
+
+            try {
+                const { error: insertError } = await window.supabaseClient.from('withdrawal_requests').insert({
+                    user_id: authUser.id,
+                    amount,
+                    method_name: selectedWithdrawMethod.name,
+                    destination,
+                    status: 'pending'
+                });
+                if (insertError) throw insertError;
+
+                window.showToast('<strong>Demande envoyée ✅</strong><br>Votre retrait sera traité après validation par notre équipe.', 'success', { extraClass: 'investment-toast' });
+                closeWithdrawModal();
+                await refreshDashboardData();
+                await refreshNotifications();
+            } catch (err) {
+                feedbackEl.textContent = "Erreur : " + (err.message || "impossible d'envoyer la demande.");
+                feedbackEl.className = 'quiz-feedback error';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Envoyer ma demande de retrait';
+            }
+        });
+    };
+
+    // Étape 1 : vérification du code PIN, avant d'accéder au formulaire
+    const renderWithdrawPinStep = () => {
+        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+            <button type="button" class="modal-close" data-close-withdraw-modal>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <span class="task-modal-badge">Retrait</span>
+            <h2 class="task-modal-title">Confirmez votre code PIN</h2>
+            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour continuer.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-pin-input">Code PIN</label>
+                <input type="password" id="withdraw-pin-input" class="form-control" maxlength="5" inputmode="numeric" placeholder="•••••">
+            </div>
+
+            <div class="quiz-feedback" id="withdraw-pin-feedback"></div>
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-pin-submit-btn">Valider</button>`;
+
+        withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
+
+        const pinInputEl = withdrawModalOverlay.querySelector('#withdraw-pin-input');
+        const submitPin = async () => {
+            const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-pin-feedback');
+            const pin = pinInputEl.value.trim();
+            if (!/^\d{5}$/.test(pin)) { feedbackEl.textContent = 'Le code PIN doit contenir 5 chiffres.'; feedbackEl.className = 'quiz-feedback error'; return; }
+
+            const hash = await sha256Hex(pin + ':' + authUser.id);
+            if (hash !== profile.withdrawal_pin_hash) {
+                feedbackEl.textContent = 'Code PIN incorrect.';
+                feedbackEl.className = 'quiz-feedback error';
+                pinInputEl.value = '';
+                pinInputEl.focus();
+                return;
+            }
+            // PIN correct -> direction directe vers le formulaire de retrait
+            renderWithdrawForm();
+        };
+        withdrawModalOverlay.querySelector('#withdraw-pin-submit-btn').addEventListener('click', submitPin);
+        pinInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
+        pinInputEl.focus();
+    };
+
+    const openWithdrawFlow = () => {
+        const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
+
+        if (!profile.withdrawal_pin_hash) {
+            window.showToast("Définissez d'abord votre code PIN de retrait dans Mon Compte > Sécurité.", 'info');
+            const link = document.querySelector('.nav-link[data-target="compte"], .bottom-nav-item[data-target="compte"]');
+            if (link) link.click();
+            openAccountSubview('securite');
+            return;
+        }
+        if (wallet.balance < minWithdrawal) {
+            window.showToast(`Solde insuffisant pour un retrait. Minimum requis : ${formatFCFA(minWithdrawal)}.`, 'error');
+            return;
+        }
+
+        ensureWithdrawModal();
+        renderWithdrawPinStep();
+        withdrawModalOverlay.classList.add('active');
+    };
+
+    if (withdrawBtn) withdrawBtn.addEventListener('click', openWithdrawFlow);
 
     // ------------------------------------------------------------------
     // 8. Navigation Top & Bottom (Multi-View SPA)
@@ -935,12 +1126,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.showToast('Les deux codes PIN ne correspondent pas.', 'error');
                 return;
             }
-            // Le PIN est un secret : il doit être hashé côté serveur (Edge Function) avant stockage.
-            // Ici on informe simplement l'utilisateur ; à brancher sur une fonction sécurisée.
-            window.showToast('Code PIN enregistré !', 'success');
-            pinInput.value = '';
-            pinConfirmInput.value = '';
-            showAccountMenu();
+            const originalLabel = pinSaveBtn.textContent;
+            pinSaveBtn.disabled = true;
+            pinSaveBtn.textContent = 'Enregistrement...';
+            try {
+                const hash = await sha256Hex(pin + ':' + authUser.id);
+                const { error } = await window.supabaseClient.from('profiles').update({ withdrawal_pin_hash: hash }).eq('id', authUser.id);
+                if (error) throw error;
+                profile.withdrawal_pin_hash = hash;
+                window.showToast('Code PIN enregistré !', 'success');
+                pinInput.value = '';
+                pinConfirmInput.value = '';
+                showAccountMenu();
+            } catch (err) {
+                window.showToast('Erreur : ' + (err.message || "impossible d'enregistrer le code PIN."), 'error');
+            } finally {
+                pinSaveBtn.disabled = false;
+                pinSaveBtn.textContent = originalLabel;
+            }
         });
     }
 
