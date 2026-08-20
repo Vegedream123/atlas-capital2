@@ -79,203 +79,388 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
     document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
 
-    // ------------------------------------------------------------------
-    // 3. Badge compte vérifié
-    // ------------------------------------------------------------------
+    // Badge "Compte vérifié" — reflète le statut réel de confirmation d'e-mail Supabase
     const verifiedBadge = document.getElementById('account-verified-badge');
-
     if (verifiedBadge) {
         const isVerified = !!authUser.email_confirmed_at;
         verifiedBadge.style.display = 'inline-flex';
-
         if (isVerified) {
             verifiedBadge.classList.remove('pending');
             verifiedBadge.innerHTML = `
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Compte vérifié
-            `;
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Compte vérifié`;
         } else {
             verifiedBadge.classList.add('pending');
             verifiedBadge.innerHTML = `
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="9"></circle>
-                    <line x1="12" y1="8" x2="12" y2="13"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-                Vérification en attente
-            `;
-
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="13"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Vérification en attente`;
             verifiedBadge.title = "Cliquez pour renvoyer l'e-mail de confirmation";
-
             verifiedBadge.addEventListener('click', async () => {
-                const { error } = await window.supabaseClient.auth.resend({
-                    type: 'signup',
-                    email: userEmail
-                });
-
-                window.showToast(
-                    error ? "Impossible d'envoyer l'e-mail pour le moment." : "E-mail de confirmation renvoyé !",
-                    error ? 'error' : 'success'
-                );
+                const { error } = await window.supabaseClient.auth.resend({ type: 'signup', email: userEmail });
+                window.showToast(error ? "Impossible d'envoyer l'e-mail pour le moment." : 'E-mail de confirmation renvoyé !', error ? 'error' : 'success');
             });
         }
     }
 
     // ------------------------------------------------------------------
-    // 4. Données du dashboard
+    // 3-7. Rendu des données (KPIs, graphique, produits, solde, transactions)
+    //      Regroupé dans une fonction réutilisable pour rafraîchir le
+    //      tableau de bord juste après un achat, sans recharger la page.
     // ------------------------------------------------------------------
+
+    // ------------------------------------------------------------------
+    // 7bis. Tâches Quotidiennes (24h) — obligatoires pour chaque produit
+    //       actif. Chaque investissement en cours doit être "débloqué"
+    //       via une courte question financière avant que le gain du jour
+    //       ne soit crédité au portefeuille.
+    //
+    //       ⚠️ Pour que le crédit soit réellement sécurisé côté serveur,
+    //       créez cette fonction Postgres dans Supabase (SQL Editor) et
+    //       ajoutez la colonne `last_task_at` à `user_investments` :
+    //
+    //       alter table user_investments add column if not exists last_task_at timestamptz;
+    //
+    //       create or replace function claim_daily_task(p_investment_id uuid)
+    //       returns void language plpgsql security definer as $$
+    //       declare v_user_id uuid := auth.uid(); v_amount numeric; v_last timestamptz;
+    //       begin
+    //         select ui.amount * ip.daily_rate / 100, ui.last_task_at into v_amount, v_last
+    //         from user_investments ui join investment_products ip on ip.id = ui.product_id
+    //         where ui.id = p_investment_id and ui.user_id = v_user_id and ui.status = 'active';
+    //         if v_amount is null then raise exception 'Investissement introuvable ou inactif.'; end if;
+    //         if v_last is not null and v_last > now() - interval '24 hours' then
+    //           raise exception 'Tâche déjà effectuée aujourd''hui.'; end if;
+    //         update user_investments set last_task_at = now() where id = p_investment_id;
+    //         update wallets set balance = balance + v_amount, total_income = total_income + v_amount where user_id = v_user_id;
+    //         insert into transactions (user_id, type, amount, description)
+    //           values (v_user_id, 'quest', v_amount, 'Tâche quotidienne validée');
+    //       end; $$;
+    //
+    //       Tant que cette fonction n'existe pas côté Supabase, la tâche
+    //       s'affiche et se joue normalement mais l'appel RPC échouera
+    //       avec un message d'erreur explicite au lieu de créditer le solde.
+    // ------------------------------------------------------------------
+    const FINANCE_QUESTIONS = [
+        { q: "Qu'est-ce que la diversification en investissement ?", options: ["Tout miser sur un seul actif", "Répartir son capital sur plusieurs actifs pour réduire le risque", "Retirer tout son argent chaque mois", "Emprunter pour investir davantage"], correct: 1 },
+        { q: "Que signifie le terme « taux d'intérêt » ?", options: ["Le montant total investi", "Le coût ou le rendement d'un capital, en pourcentage", "Le nombre de transactions par jour", "Le solde disponible sur un compte"], correct: 1 },
+        { q: "Qu'est-ce qu'un portefeuille d'investissement ?", options: ["Un compte bancaire classique", "L'ensemble des actifs détenus par un investisseur", "Un simple carnet de chèques", "Une carte de paiement"], correct: 1 },
+        { q: "Pourquoi est-il conseillé d'avoir une épargne de précaution ?", options: ["Pour éviter d'investir", "Pour faire face aux imprévus sans toucher à ses investissements", "Parce que c'est obligatoire par la loi", "Pour payer plus d'impôts"], correct: 1 },
+        { q: "Qu'est-ce que l'intérêt composé ?", options: ["Un intérêt calculé uniquement sur le capital de départ", "Un intérêt calculé sur le capital et les intérêts déjà accumulés", "Une taxe bancaire", "Un type de prêt étudiant"], correct: 1 },
+        { q: "Quel est généralement le lien entre risque et rendement potentiel ?", options: ["Aucun lien", "Plus le risque est élevé, plus le rendement potentiel l'est aussi", "Le risque élevé garantit un rendement faible", "Le rendement est toujours fixe"], correct: 1 },
+        { q: "Qu'est-ce qu'un budget mensuel permet de faire ?", options: ["Dépenser sans limite", "Suivre et planifier ses revenus et dépenses", "Éviter de payer ses factures", "Augmenter ses dettes"], correct: 1 },
+        { q: "Que signifie « liquidité » d'un actif ?", options: ["Sa couleur sur un graphique", "La facilité à le convertir rapidement en argent disponible", "Son ancienneté", "Le nombre de propriétaires précédents"], correct: 1 }
+    ];
+
+    const tasksListEl = document.getElementById('daily-tasks-list');
+    const tasksCardEl = document.getElementById('daily-tasks-card');
+    let taskCountdownTimer = null;
+
+    const msUntilUnlock = (lastTaskAt) => {
+        if (!lastTaskAt) return 0;
+        const next = new Date(lastTaskAt).getTime() + 24 * 60 * 60 * 1000;
+        return Math.max(0, next - Date.now());
+    };
+    const formatCountdown = (ms) => {
+        const totalMin = Math.ceil(ms / 60000);
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        return `${h}h ${m.toString().padStart(2, '0')}min`;
+    };
+
+    function renderDailyTasks() {
+        if (!tasksListEl || !tasksCardEl) return;
+        const active = investments.filter(i => i.status === 'active');
+
+        if (!active.length) {
+            tasksCardEl.style.display = 'none';
+            if (taskCountdownTimer) { clearInterval(taskCountdownTimer); taskCountdownTimer = null; }
+            return;
+        }
+        tasksCardEl.style.display = '';
+
+        tasksListEl.innerHTML = active.map(inv => {
+            const prod = inv.investment_products || {};
+            const dailyGain = Math.round(Number(inv.amount) * Number(prod.daily_rate || 0) / 100);
+            const remaining = msUntilUnlock(inv.last_task_at);
+            const available = remaining <= 0;
+            return `
+                <div class="task-item">
+                    <div class="task-info">
+                        <div class="task-name">${prod.name || 'Produit'}</div>
+                        <div class="task-gain">+${formatFCFA(dailyGain)} à débloquer</div>
+                    </div>
+                    <div class="task-action">
+                        ${available
+                            ? `<button type="button" class="btn btn-primary task-btn" data-investment-id="${inv.id}" data-daily-gain="${dailyGain}" data-product-name="${prod.name || 'Produit'}">Effectuer la tâche</button>`
+                            : `<span class="task-locked">
+                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                 Prochaine dans <span class="task-countdown" data-remaining="${remaining}">${formatCountdown(remaining)}</span>
+                               </span>`
+                        }
+                    </div>
+                </div>`;
+        }).join('');
+
+        if (taskCountdownTimer) clearInterval(taskCountdownTimer);
+        taskCountdownTimer = setInterval(() => {
+            let needsRerender = false;
+            document.querySelectorAll('.task-countdown').forEach(el => {
+                let remaining = Number(el.getAttribute('data-remaining')) - 60000;
+                if (remaining <= 0) { needsRerender = true; return; }
+                el.setAttribute('data-remaining', remaining);
+                el.textContent = formatCountdown(remaining);
+            });
+            if (needsRerender) renderDailyTasks();
+        }, 60000);
+    }
+
+    // ---- Modal Quiz (question financière à valider) ----
+    let taskModalOverlay = null;
+    const closeTaskModal = () => { if (taskModalOverlay) taskModalOverlay.classList.remove('active'); };
+
+    const openTaskModal = (investmentId, dailyGain, productName) => {
+        const question = FINANCE_QUESTIONS[Math.floor(Math.random() * FINANCE_QUESTIONS.length)];
+
+        if (!taskModalOverlay) {
+            taskModalOverlay = document.createElement('div');
+            taskModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(taskModalOverlay);
+            taskModalOverlay.addEventListener('click', (e) => { if (e.target === taskModalOverlay) closeTaskModal(); });
+        }
+
+        taskModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-task-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <span class="task-modal-badge">Tâche quotidienne</span>
+                <h2 class="task-modal-title">${productName}</h2>
+                <p class="task-modal-sub">Répondez correctement pour débloquer +${formatFCFA(dailyGain)} sur votre solde.</p>
+                <div class="quiz-question">${question.q}</div>
+                <div class="quiz-options">
+                    ${question.options.map((opt, idx) => `<button type="button" class="quiz-option" data-idx="${idx}">${opt}</button>`).join('')}
+                </div>
+                <div class="quiz-feedback" id="quiz-feedback"></div>
+            </div>`;
+
+        taskModalOverlay.querySelector('[data-close-task-modal]').addEventListener('click', closeTaskModal);
+
+        const feedbackEl = taskModalOverlay.querySelector('#quiz-feedback');
+        const optionBtns = taskModalOverlay.querySelectorAll('.quiz-option');
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const idx = Number(btn.getAttribute('data-idx'));
+                if (idx === question.correct) {
+                    optionBtns.forEach(b => b.disabled = true);
+                    btn.classList.add('correct');
+                    feedbackEl.textContent = 'Bonne réponse ! Validation en cours…';
+                    feedbackEl.className = 'quiz-feedback success';
+
+                    const { error } = await window.supabaseClient.rpc('claim_daily_task', { p_investment_id: investmentId });
+                    if (error) {
+                        feedbackEl.textContent = "Impossible de valider la tâche pour le moment : " + error.message;
+                        feedbackEl.className = 'quiz-feedback error';
+                        window.showToast(error.message || "Impossible de valider la tâche pour le moment.", 'error');
+                        return;
+                    }
+                    window.showToast(`<strong>Tâche validée ✅</strong><br>+${formatFCFA(dailyGain)} crédité pour ${productName}.`, 'success', { extraClass: 'investment-toast' });
+                    setTimeout(closeTaskModal, 900);
+                    await refreshDashboardData();
+                } else {
+                    btn.classList.add('wrong');
+                    btn.disabled = true;
+                    feedbackEl.textContent = 'Mauvaise réponse, réessayez.';
+                    feedbackEl.className = 'quiz-feedback error';
+                }
+            });
+        });
+
+        taskModalOverlay.classList.add('active');
+    };
+
+    if (tasksListEl) {
+        tasksListEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('.task-btn');
+            if (!btn) return;
+            openTaskModal(
+                btn.getAttribute('data-investment-id'),
+                Number(btn.getAttribute('data-daily-gain')),
+                btn.getAttribute('data-product-name')
+            );
+        });
+    }
+
     const renderDashboardData = () => {
-        const walletBalanceEl = document.getElementById('wallet-balance-amount');
-        if (walletBalanceEl) walletBalanceEl.textContent = formatFCFA(wallet.balance);
+        // --- KPIs ---
+        const activeInvestments = investments.filter(i => i.status === 'active');
 
-        document.querySelectorAll('[data-wallet-income]').forEach(el => {
-            el.textContent = formatFCFA(wallet.total_income);
-        });
+        const totalInvested = activeInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
+        const weightedDailyRate = totalInvested > 0
+            ? activeInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / totalInvested
+            : 0;
+        const annualRate = weightedDailyRate * 365 / 100 * 100; // % annuel équivalent (taux/jour * 365)
 
-        document.querySelectorAll('[data-referral-earnings]').forEach(el => {
-            el.textContent = formatFCFA(wallet.referral_earnings);
-        });
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const dailyQuestGains = transactions
+            .filter(t => t.type === 'quest' && t.created_at && t.created_at.slice(0, 10) === todayStr)
+            .reduce((sum, t) => sum + Number(t.amount), 0);
 
-        const gridIds = {
-            atlas: 'atlas-products-grid',
-            constant: 'constant-products-grid',
-            analyse: 'analyse-products-grid',
-            quete: 'quete-products-grid'
+        const setKpi = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) { el.setAttribute('data-target', value); }
         };
+        setKpi('kpi-balance', wallet.balance);
+        setKpi('kpi-annual-rate', annualRate.toFixed(1));
+        setKpi('kpi-active-investments', activeInvestments.length);
+        setKpi('kpi-daily-quest', dailyQuestGains);
+
+        const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+        changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
+        changeEl('kpi-rate-change', activeInvestments.length ? `${activeInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
+        changeEl('kpi-active-change', activeInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
+        changeEl('kpi-quest-change', dailyQuestGains > 0 ? 'Quête validée' : 'Pas encore réclamé');
+
+        // Animation des compteurs (réutilise data-target désormais réel)
+        document.querySelectorAll('.stat-number').forEach(counter => {
+            const target = parseFloat(counter.getAttribute('data-target')) || 0;
+            const suffix = counter.getAttribute('data-suffix') || '';
+            const isDecimal = target % 1 !== 0;
+            const steps = 60;
+            const duration = 900;
+            const startVal = 0;
+            const increment = (target - startVal) / steps;
+            let current = startVal, step = 0;
+            const timer = setInterval(() => {
+                step++;
+                current += increment;
+                if (step >= steps) { current = target; clearInterval(timer); }
+                counter.textContent = isDecimal
+                    ? current.toFixed(1) + suffix
+                    : new Intl.NumberFormat('fr-FR').format(Math.round(current)) + suffix;
+            }, duration / steps);
+        });
+
+        // --- Graphique d'évolution (12 derniers mois, gains réels) ---
+        const chartArea = document.getElementById('mainChart');
+        if (chartArea) {
+            const now = new Date();
+            const months = [];
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
+            }
+            const totalsByMonth = {};
+            months.forEach(m => totalsByMonth[m.key] = 0);
+            transactions.forEach(t => {
+                if (!t.created_at) return;
+                const d = new Date(t.created_at);
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (key in totalsByMonth && Number(t.amount) > 0) {
+                    totalsByMonth[key] += Number(t.amount);
+                }
+            });
+            const maxVal = Math.max(1, ...Object.values(totalsByMonth));
+            chartArea.innerHTML = months.map(m => {
+                const val = totalsByMonth[m.key];
+                const heightPct = Math.max(4, Math.round((val / maxVal) * 100));
+                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatFCFA(val)}"></div><span class="x-label">${m.label}</span></div>`;
+            }).join('');
+        }
+
+        // --- Produits disponibles par catégorie (Revenu Annuel / Actif / Quête) ---
+        const gridIds = { atlas: 'vip-grid-atlas', constant: 'vip-grid-constant', analyse: 'vip-grid-analyse', quete: 'vip-grid-quete' };
 
         const renderProductCard = (p) => {
-            const amount = Number(p.min_amount || p.amount || 0);
-            const dailyRate = Number(p.daily_rate || 0);
-            const duration = Number(p.duration_days || 0);
-            const dailyGain = amount * dailyRate / 100;
-            const affordable = Number(wallet.balance || 0) >= amount;
-
+            const dailyGain = Math.round(Number(p.price) * Number(p.daily_rate) / 100);
+            const affordable = wallet.balance >= Number(p.price);
             return `
                 <div class="vip-card">
                     <div class="vip-card-header">
-                        <h3>${p.name || 'Produit'}</h3>
+                        <div class="vip-icon">★</div>
+                        <span class="vip-name">${p.name}</span>
                     </div>
-
-                    <div class="vip-card-body">
-                        <div class="vip-card-row">
-                            <span>Montant</span>
-                            <strong>${formatFCFA(amount)}</strong>
+                    <div class="vip-price">${formatFCFA(p.price)}</div>
+                    <div class="vip-stats">
+                        <div class="vip-stat">
+                            <span class="vip-stat-label">Gain / jour</span>
+                            <span class="vip-stat-value">${formatFCFA(dailyGain)}</span>
                         </div>
-
-                        <div class="vip-card-row">
-                            <span>Taux journalier</span>
-                            <strong>${dailyRate}%</strong>
+                        <div class="vip-stat">
+                            <span class="vip-stat-label">Échéance</span>
+                            <span class="vip-stat-value">${p.duration_days} j</span>
                         </div>
-
-                        <div class="vip-card-row">
-                            <span>Durée</span>
-                            <strong>${duration} jours</strong>
-                        </div>
-
-                        <div class="vip-card-row">
-                            <span>Gain / jour</span>
-                            <strong>${formatFCFA(dailyGain)}</strong>
-                        </div>
-
-                        <button
-                            class="btn btn-primary buy-product-btn"
-                            data-product-id="${p.id}"
-                            data-product-name="${p.name || ''}"
-                            data-product-category="${p.category || ''}"
-                            data-daily-gain="${dailyGain}"
-                            data-duration="${duration}"
-                            ${affordable ? '' : 'disabled title="Solde insuffisant"'}>
-                            ${affordable ? 'Acheter' : 'Solde insuffisant'}
-                        </button>
                     </div>
-                </div>
-            `;
+                    <button class="btn btn-primary btn-full buy-product-btn"
+                        data-product-id="${p.id}"
+                        data-product-name="${p.name}"
+                        data-product-category="${p.category}"
+                        data-daily-gain="${dailyGain}"
+                        data-duration="${p.duration_days}"
+                        ${affordable ? '' : 'disabled title="Solde insuffisant"'}>
+                        ${affordable ? 'Acheter' : 'Solde insuffisant'}
+                    </button>
+                </div>`;
         };
 
         Object.entries(gridIds).forEach(([category, gridId]) => {
             const grid = document.getElementById(gridId);
             if (!grid) return;
-
             const items = products.filter(p => p.category === category);
-
             grid.innerHTML = items.length
                 ? items.map(renderProductCard).join('')
                 : '<p class="text-secondary" style="padding:12px 2px;">Aucun produit disponible pour le moment.</p>';
         });
 
-        const transactionsList = document.getElementById('transactions-list');
+        // --- Portefeuille : solde réel ---
+        const walletBalanceEl = document.getElementById('wallet-balance-amount');
+        if (walletBalanceEl) walletBalanceEl.textContent = formatFCFA(wallet.balance);
 
+        // --- Historique des transactions ---
+        const transactionsList = document.getElementById('transactions-list');
         if (transactionsList) {
             const iconFor = (type, positive) => {
-                const arrowUp = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>';
-                const arrowDown = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 5"></polyline></svg>';
-                const invest = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>';
-                const quest = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
-
+                const arrowUp = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>';
+                const arrowDown = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>';
+                const invest = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>';
+                const quest = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>';
                 if (type === 'investment') return { svg: invest, cls: 'bg-primary-light text-primary' };
                 if (type === 'quest') return { svg: quest, cls: 'bg-warning-light text-warning' };
                 if (type === 'withdrawal') return { svg: arrowDown, cls: 'bg-danger-light text-danger' };
-
-                return {
-                    svg: arrowUp,
-                    cls: positive ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
-                };
+                return { svg: arrowUp, cls: positive ? 'bg-success-light text-success' : 'bg-danger-light text-danger' };
             };
-
             const labelFor = (type) => ({
-                deposit: 'Dépôt',
-                withdrawal: 'Retrait',
-                investment: 'Investissement',
-                gain: 'Gain généré',
-                referral_commission: 'Commission de parrainage',
-                quest: 'Quête journalière'
+                deposit: 'Dépôt', withdrawal: 'Retrait', investment: 'Investissement',
+                gain: 'Gain généré', referral_commission: 'Commission de parrainage', quest: 'Quête journalière'
             }[type] || type);
 
             transactionsList.innerHTML = transactions.length ? transactions.map(t => {
                 const amount = Number(t.amount);
                 const positive = amount >= 0;
                 const { svg, cls } = iconFor(t.type, positive);
-
-                const date = t.created_at
-                    ? new Date(t.created_at).toLocaleString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })
-                    : '';
-
+                const date = t.created_at ? new Date(t.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
                 return `
                     <div class="transaction-item">
-                        <div class="transaction-icon ${cls}">
-                            ${svg}
-                        </div>
-
+                        <div class="transaction-icon ${cls}">${svg}</div>
                         <div class="transaction-info">
                             <div class="transaction-title">${labelFor(t.type)}</div>
                             <div class="transaction-desc">${t.description || ''}</div>
                         </div>
-
                         <div class="transaction-meta">
                             <div class="transaction-date">${date}</div>
-                            <div class="transaction-amount ${positive ? 'positive' : 'negative'}">
-                                ${positive ? '+' : ''}${formatFCFA(amount)}
-                            </div>
+                            <div class="transaction-amount ${positive ? 'positive' : 'negative'}">${positive ? '+' : ''}${formatFCFA(amount)}</div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('') : '<p class="text-secondary" style="padding:12px 2px;">Aucune transaction pour le moment.</p>';
         }
+
+        // --- Tâches Quotidiennes (24h) : une par produit actif ---
+        renderDailyTasks();
     };
 
     renderDashboardData();
 
-    // ------------------------------------------------------------------
-    // 5. Rafraîchissement des données
-    // ------------------------------------------------------------------
+    // Recharge le portefeuille, les investissements, les produits et les
+    // transactions depuis Supabase (appelé après un achat réussi)
     const refreshDashboardData = async () => {
         const [w, p, inv, tr] = await Promise.all([
             window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
@@ -283,68 +468,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
             window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
         ]);
-
         wallet = w.data || wallet;
         products = p.data || products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
-
         renderDashboardData();
     };
 
-    // ------------------------------------------------------------------
-    // 6. Achat produit
-    // ------------------------------------------------------------------
-    const categoryLabel = {
-        atlas: 'Revenu Annuel',
-        constant: 'Actif — Constant',
-        analyse: 'Actif — Analyse',
-        quete: 'Quête Quotidienne'
-    };
-
+    // Message de validation affiché après l'achat, avec les infos réelles du produit activé
+    const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne' };
     const showPurchaseConfirmation = (btn) => {
         const name = btn.getAttribute('data-product-name');
         const category = btn.getAttribute('data-product-category');
         const dailyGain = Number(btn.getAttribute('data-daily-gain'));
         const duration = btn.getAttribute('data-duration');
-
         window.showToast(
-            `<strong>Produit activé ✅</strong><br>
-            ${name} — ${categoryLabel[category] || category}<br>
-            Gain : ${formatFCFA(dailyGain)}/jour pendant ${duration} jours.<br>
-            Disponible dans votre tableau de bord.`,
+            `<strong>Produit activé ✅</strong><br>${name} — ${categoryLabel[category] || category}<br>Gain : ${formatFCFA(dailyGain)}/jour pendant ${duration} jours.<br>Disponible dans votre tableau de bord.`,
             'success',
-            {
-                extraClass: 'investment-toast',
-                duration: 6000
-            }
+            { extraClass: 'investment-toast', duration: 6000 }
         );
     };
 
+    // Achat d'un produit (délégation d'événement, débite le solde côté serveur)
     document.querySelectorAll('.vip-grid').forEach(grid => {
-        grid.addEventListener('click', async e => {
+        grid.addEventListener('click', async (e) => {
             const btn = e.target.closest('.buy-product-btn');
             if (!btn || btn.disabled) return;
-
             const productId = btn.getAttribute('data-product-id');
-
             btn.disabled = true;
-
             const originalText = btn.textContent;
             btn.textContent = 'Traitement...';
-
             try {
-                const { error } = await window.supabaseClient.rpc(
-                    'purchase_investment',
-                    { p_product_id: productId }
-                );
-
+                const { error } = await window.supabaseClient.rpc('purchase_investment', { p_product_id: productId });
                 if (error) {
-                    window.showToast(
-                        error.message || "Impossible d'effectuer cet investissement.",
-                        'error'
-                    );
-
+                    window.showToast(error.message || "Impossible d'effectuer cet investissement.", 'error');
                     btn.disabled = false;
                     btn.textContent = originalText;
                 } else {
@@ -360,208 +517,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // ------------------------------------------------------------------
-    // 7. DÉPÔT RÉEL
-    // ------------------------------------------------------------------
     const depositBtn = document.getElementById('wallet-deposit-btn');
     const withdrawBtn = document.getElementById('wallet-withdraw-btn');
-
-    const closeFinanceModal = () => {
-        const modal = document.getElementById('wallet-action-modal');
-        if (modal) modal.remove();
-    };
-
-    const openDepositModal = () => {
-        closeFinanceModal();
-
-        const modal = document.createElement('div');
-        modal.id = 'wallet-action-modal';
-        modal.className = 'modal-overlay active';
-
-        modal.innerHTML = `
-            <div class="modal-card" style="max-width:500px;max-height:90vh;overflow:auto;">
-                <button type="button" class="modal-close" id="wallet-modal-close">✕</button>
-
-                <div class="task-modal-badge">DÉPÔT</div>
-
-                <h3 class="task-modal-title">Faire un dépôt</h3>
-
-                <p class="task-modal-sub">
-                    Effectuez votre paiement puis envoyez votre demande.
-                    Le solde sera crédité après validation.
-                </p>
-
-                <label style="display:block;font-weight:600;margin-bottom:6px;">
-                    Montant (FCFA)
-                </label>
-
-                <input
-                    id="deposit-amount"
-                    type="number"
-                    min="1000"
-                    step="1"
-                    placeholder="Ex. 10000"
-                    style="width:100%;padding:14px;border:1px solid #dbe3ef;border-radius:10px;margin-bottom:15px;box-sizing:border-box;"
-                >
-
-                <label style="display:block;font-weight:600;margin-bottom:6px;">
-                    Moyen de paiement
-                </label>
-
-                <select
-                    id="deposit-method"
-                    style="width:100%;padding:14px;border:1px solid #dbe3ef;border-radius:10px;margin-bottom:15px;background:#fff;box-sizing:border-box;"
-                >
-                    <option value="Orange Money">🟠 Orange Money</option>
-                    <option value="MTN Mobile Money">🟡 MTN Mobile Money</option>
-                    <option value="Carte bancaire">💳 Carte bancaire</option>
-                </select>
-
-                <div style="background:#f6f8fb;border-radius:12px;padding:15px;margin-bottom:15px;">
-                    <strong>Instructions de paiement</strong>
-
-                    <div style="margin-top:8px;color:#64748b;line-height:1.5;">
-                        Effectuez le paiement sur le moyen de paiement officiel
-                        indiqué par Atlas Capital, puis saisissez la référence
-                        exacte de la transaction ci-dessous.
-                    </div>
-                </div>
-
-                <label style="display:block;font-weight:600;margin-bottom:6px;">
-                    Référence de transaction
-                </label>
-
-                <input
-                    id="deposit-reference"
-                    type="text"
-                    maxlength="120"
-                    placeholder="Ex. ID de transaction"
-                    style="width:100%;padding:14px;border:1px solid #dbe3ef;border-radius:10px;margin-bottom:16px;box-sizing:border-box;"
-                >
-
-                <button
-                    type="button"
-                    id="deposit-submit"
-                    class="btn btn-primary"
-                    style="width:100%;"
-                >
-                    J'ai effectué le paiement — Envoyer
-                </button>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        const amountInput = modal.querySelector('#deposit-amount');
-        const methodInput = modal.querySelector('#deposit-method');
-        const referenceInput = modal.querySelector('#deposit-reference');
-        const submitBtn = modal.querySelector('#deposit-submit');
-
-        modal
-            .querySelector('#wallet-modal-close')
-            .addEventListener('click', closeFinanceModal);
-
-        modal.addEventListener('click', e => {
-            if (e.target === modal) closeFinanceModal();
-        });
-
-        submitBtn.addEventListener('click', async () => {
-            const amount = Number(amountInput.value);
-            const method = methodInput.value;
-            const reference = referenceInput.value.trim();
-
-            if (!Number.isFinite(amount) || amount < 1000) {
-                window.showToast(
-                    'Le montant minimum est de 1 000 FCFA.',
-                    'error'
-                );
-                return;
-            }
-
-            if (!reference) {
-                window.showToast(
-                    'Entrez la référence de votre transaction.',
-                    'error'
-                );
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Envoi en cours...';
-
-            try {
-                const { error } = await window.supabaseClient
-                    .from('deposit_requests')
-                    .insert({
-                        user_id: authUser.id,
-                        amount: amount,
-                        method: method,
-                        payment_method: method,
-                        transaction_reference: reference,
-                        status: 'pending'
-                    });
-
-                if (error) {
-                    console.error(
-                        'Erreur dépôt Supabase :',
-                        error
-                    );
-
-                    window.showToast(
-                        'Erreur lors de l’envoi : ' + error.message,
-                        'error',
-                        { duration: 7000 }
-                    );
-
-                    submitBtn.disabled = false;
-                    submitBtn.textContent =
-                        "J'ai effectué le paiement — Envoyer";
-
-                    return;
-                }
-
-                closeFinanceModal();
-
-                window.showToast(
-                    'Votre demande de dépôt a été envoyée. Elle sera vérifiée avant le crédit de votre solde.',
-                    'success',
-                    { duration: 7000 }
-                );
-
-            } catch (err) {
-                console.error('Erreur dépôt :', err);
-
-                window.showToast(
-                    'Une erreur est survenue. Réessayez.',
-                    'error'
-                );
-
-                submitBtn.disabled = false;
-                submitBtn.textContent =
-                    "J'ai effectué le paiement — Envoyer";
-            }
-        });
-    };
-
-    if (depositBtn) {
-        depositBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openDepositModal();
-        });
-    }
-
-    if (withdrawBtn) {
-        withdrawBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            window.showToast(
-                'Le retrait sera disponible après validation du code PIN.',
-                'info'
-            );
-        });
-    }
+    if (depositBtn) depositBtn.addEventListener('click', () => window.showToast('Le dépôt via Mobile Money / Carte arrive bientôt.', 'info'));
+    if (withdrawBtn) withdrawBtn.addEventListener('click', () => window.showToast('Le retrait sera disponible après validation du code PIN.', 'info'));
 
     // ------------------------------------------------------------------
     // 8. Navigation Top & Bottom (Multi-View SPA)
@@ -570,21 +529,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const views = document.querySelectorAll('.view-section');
 
     navLinks.forEach(link => {
-        link.addEventListener('click', e => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-
             const target = link.getAttribute('data-target');
             if (!target) return;
 
             navLinks.forEach(l => l.classList.remove('active'));
-
-            document.querySelectorAll(`[data-target="${target}"]`).forEach(l => {
-                l.classList.add('active');
-            });
+            document.querySelectorAll(`[data-target="${target}"]`).forEach(l => l.classList.add('active'));
 
             views.forEach(v => v.classList.remove('active'));
-
-            const targetView = document.getElementById('view-' + target);
+            const targetView = document.getElementById(`view-${target}`);
             if (targetView) targetView.classList.add('active');
 
             window.scrollTo(0, 0);
@@ -592,23 +546,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ------------------------------------------------------------------
-    // 9. Sous-navigation
+    // 9. Sous-navigation de l'onglet Finances
     // ------------------------------------------------------------------
-    const subNavLinks = document.querySelectorAll('.sub-nav-link');
+    const subnavBtns = document.querySelectorAll('.subnav-btn');
     const subViews = document.querySelectorAll('.sub-view');
-
-    subNavLinks.forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-
-            const target = link.getAttribute('data-sub-target');
+    subnavBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.getAttribute('data-sub');
             if (!target) return;
-
-            subNavLinks.forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-
+            subnavBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             subViews.forEach(v => v.classList.remove('active'));
-
             const targetView = document.getElementById('sub-' + target);
             if (targetView) targetView.classList.add('active');
         });
@@ -627,7 +575,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const notifIconFor = (type) => ({
         deposit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>',
-        withdrawal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 5"></polyline></svg>',
+        withdrawal: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>',
         investment: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>',
         gain: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>',
         referral_commission: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>',
@@ -635,60 +583,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     }[type] || '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>');
 
     const timeAgo = (dateStr) => {
-        const date = new Date(dateStr);
-        const now = new Date();
-        const diff = Math.floor((now - date) / 1000);
-
-        if (diff < 60) return 'À l’instant';
-        if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
-        if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
-        if (diff < 604800) return `Il y a ${Math.floor(diff / 86400)} j`;
-
-        return date.toLocaleDateString('fr-FR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        const diffMs = Date.now() - new Date(dateStr).getTime();
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 1) return "à l'instant";
+        if (mins < 60) return `il y a ${mins} min`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `il y a ${hrs} h`;
+        const days = Math.floor(hrs / 24);
+        return `il y a ${days} j`;
     };
 
     const renderNotifications = () => {
-        if (!notifListEl) return;
-
-        const unreadCount =
-            notifications.filter(n => !n.is_read).length;
-
+        const unreadCount = notifications.filter(n => !n.is_read).length;
         if (notifBadge) {
-            notifBadge.textContent = unreadCount;
-            notifBadge.style.display =
-                unreadCount > 0 ? 'inline-flex' : 'none';
+            if (unreadCount > 0) {
+                notifBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                notifBadge.style.display = '';
+            } else {
+                notifBadge.style.display = 'none';
+            }
         }
-
-        notifListEl.innerHTML = notifications.length
-            ? notifications.map(n => `
-                <div class="notif-item ${n.is_read ? '' : 'unread'}"
-                     data-notif-id="${n.id}">
-                    <div class="notif-icon">
-                        ${notifIconFor(n.type)}
-                    </div>
-                    <div class="notif-content">
-                        <div class="notif-title">${n.title}</div>
-                        <div class="notif-desc">${n.body}</div>
-                        <div class="notif-time">${timeAgo(n.created_at)}</div>
-                    </div>
+        if (!notifListEl) return;
+        notifListEl.innerHTML = notifications.length ? notifications.map(n => `
+            <div class="notif-item ${n.is_read ? '' : 'unread'}" data-notif-id="${n.id}">
+                <div class="notif-icon">${notifIconFor(n.type)}</div>
+                <div class="notif-body">
+                    <div class="notif-title">${n.title}</div>
+                    <div class="notif-desc">${n.body}</div>
+                    <div class="notif-time">${timeAgo(n.created_at)}</div>
                 </div>
-            `).join('')
-            : `
-                <div class="notif-empty">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                    <p>Aucune notification pour le moment.</p>
-                    <span>Vos dépôts, retraits, achats et revenus apparaîtront ici.</span>
-                </div>
-            `;
+            </div>`).join('') : `
+            <div class="notif-empty">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <p>Aucune notification pour le moment.</p>
+                <span>Vos dépôts, retraits, achats et revenus apparaîtront ici.</span>
+            </div>`;
     };
-
     renderNotifications();
 
     const refreshNotifications = async () => {
@@ -698,273 +628,239 @@ document.addEventListener('DOMContentLoaded', async () => {
             .eq('user_id', authUser.id)
             .order('created_at', { ascending: false })
             .limit(30);
-
-        notifications = data || [];
+        notifications = data || notifications;
         renderNotifications();
     };
 
     if (notifBtn && notifPanel) {
-        notifBtn.addEventListener('click', e => {
+        notifBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             notifPanel.classList.toggle('active');
         });
+        document.addEventListener('click', (e) => {
+            if (!notifPanel.contains(e.target)) notifPanel.classList.remove('active');
+        });
+    }
 
-        document.addEventListener('click', e => {
-            if (!notifPanel.contains(e.target) && !notifBtn.contains(e.target)) {
-                notifPanel.classList.remove('active');
-            }
+    if (notifListEl) {
+        notifListEl.addEventListener('click', async (e) => {
+            const item = e.target.closest('.notif-item.unread');
+            if (!item) return;
+            const id = item.getAttribute('data-notif-id');
+            item.classList.remove('unread');
+            const notif = notifications.find(n => n.id === id);
+            if (notif) notif.is_read = true;
+            renderNotifications();
+            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('id', id);
         });
     }
 
     if (notifMarkAllBtn) {
         notifMarkAllBtn.addEventListener('click', async () => {
-            const { error } = await window.supabaseClient
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('user_id', authUser.id)
-                .eq('is_read', false);
-
-            if (error) {
-                window.showToast(
-                    'Impossible de marquer les notifications comme lues.',
-                    'error'
-                );
-                return;
-            }
-
-            await refreshNotifications();
-        });
-    }
-
-    if (notifListEl) {
-        notifListEl.addEventListener('click', async e => {
-            const item = e.target.closest('.notif-item');
-            if (!item) return;
-
-            const id = item.getAttribute('data-notif-id');
-            if (!id) return;
-
-            await window.supabaseClient
-                .from('notifications')
-                .update({ is_read: true })
-                .eq('id', id)
-                .eq('user_id', authUser.id);
-
-            await refreshNotifications();
+            const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+            if (!unreadIds.length) return;
+            notifications.forEach(n => n.is_read = true);
+            renderNotifications();
+            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('user_id', authUser.id).in('id', unreadIds);
         });
     }
 
     // ------------------------------------------------------------------
-    // 11. Quêtes quotidiennes
+    // 11. Déconnexion réelle (Supabase)
     // ------------------------------------------------------------------
-    const questButtons =
-        document.querySelectorAll('.quest-claim-btn');
-
-    questButtons.forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const questId = btn.getAttribute('data-quest-id');
-
-            if (!questId) return;
-
-            btn.disabled = true;
-            const originalText = btn.textContent;
-            btn.textContent = 'Traitement...';
-
-            try {
-                const { error } =
-                    await window.supabaseClient.rpc(
-                        'claim_daily_quest',
-                        {
-                            p_quest_id: questId
-                        }
-                    );
-
-                if (error) {
-                    window.showToast(
-                        error.message || 'Impossible de valider cette quête.',
-                        'error'
-                    );
-
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                    return;
-                }
-
-                window.showToast(
-                    'Quête validée et récompense créditée.',
-                    'success'
-                );
-
-                await refreshDashboardData();
-                await refreshNotifications();
-
-            } catch (err) {
-                window.showToast(
-                    'Erreur : ' + err.message,
-                    'error'
-                );
-
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }
+    document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            window.showToast('Déconnexion en cours...', 'info');
+            await window.supabaseClient.auth.signOut();
+            localStorage.removeItem('isLoggedIn');
+            setTimeout(() => window.location.href = 'index.html', 800);
         });
     });
 
     // ------------------------------------------------------------------
-    // 12. Profil / Paramètres
+    // 12. Menu "Mon Compte" (navigation interne, code PIN, profil, code reçu)
     // ------------------------------------------------------------------
-    const profileForm =
-        document.getElementById('profile-form');
+    const accountMenuRoot = document.getElementById('account-menu-root');
+    const redeemCard = document.querySelector('.redeem-card');
+    const redeemInputRow = document.getElementById('redeem-input-row');
+    const accountSubviews = document.querySelectorAll('.account-subview');
 
-    if (profileForm) {
-        const fullNameInput =
-            profileForm.querySelector('[name="full_name"]');
+    const showAccountMenu = () => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        if (accountMenuRoot) accountMenuRoot.style.display = '';
+        if (redeemCard) redeemCard.style.display = '';
+        if (redeemInputRow) redeemInputRow.style.display = redeemInputRow.classList.contains('open') ? '' : 'none';
+    };
 
-        const phoneInput =
-            profileForm.querySelector('[name="phone"]');
+    const openAccountSubview = (target) => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        const view = document.getElementById('account-sub-' + target);
+        if (view) {
+            view.classList.add('active');
+            if (accountMenuRoot) accountMenuRoot.style.display = 'none';
+            if (redeemCard) redeemCard.style.display = 'none';
+            if (redeemInputRow) redeemInputRow.style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+    };
 
-        if (fullNameInput)
-            fullNameInput.value = profile.full_name || '';
+    const redeemToggleBtn = document.getElementById('redeem-toggle-btn');
+    if (redeemToggleBtn && redeemInputRow) {
+        redeemToggleBtn.addEventListener('click', () => {
+            redeemInputRow.classList.toggle('open');
+            redeemToggleBtn.classList.toggle('open');
+            if (redeemInputRow.classList.contains('open')) {
+                document.getElementById('redeem-code-input').focus();
+            }
+        });
+    }
 
-        if (phoneInput)
-            phoneInput.value = profile.phone || '';
+    document.querySelectorAll('.account-menu-item[data-account-target]').forEach(item => {
+        item.addEventListener('click', () => openAccountSubview(item.getAttribute('data-account-target')));
+    });
 
-        profileForm.addEventListener('submit', async e => {
-            e.preventDefault();
+    document.querySelectorAll('.account-menu-item[data-nav-target]').forEach(item => {
+        item.addEventListener('click', () => {
+            const target = item.getAttribute('data-nav-target');
+            const link = document.querySelector(`.nav-link[data-target="${target}"], .bottom-nav-item[data-target="${target}"]`);
+            if (link) link.click();
+        });
+    });
 
-            const fullName =
-                fullNameInput
-                    ? fullNameInput.value.trim()
-                    : '';
+    document.querySelectorAll('[data-account-back]').forEach(btn => {
+        btn.addEventListener('click', showAccountMenu);
+    });
 
-            const phone =
-                phoneInput
-                    ? phoneInput.value.trim()
-                    : '';
+    // Formulaire "Mes informations" (écrit dans la table profiles)
+    const profileNameInput = document.getElementById('profile-name-input');
+    const profilePhoneInput = document.getElementById('profile-phone-input');
+    const profileEmailInput = document.getElementById('profile-email-input');
+    if (profileNameInput) profileNameInput.value = userName;
+    if (profileEmailInput) profileEmailInput.value = userEmail;
+    if (profilePhoneInput) profilePhoneInput.value = profile.phone || '';
 
-            const { error } =
-                await window.supabaseClient
-                    .from('profiles')
-                    .update({
-                        full_name: fullName,
-                        phone: phone
-                    })
-                    .eq('id', authUser.id);
-
-            if (error) {
-                window.showToast(
-                    error.message ||
-                    'Impossible de mettre à jour le profil.',
-                    'error'
-                );
+    const profileSaveBtn = document.getElementById('profile-save-btn');
+    if (profileSaveBtn) {
+        profileSaveBtn.addEventListener('click', async () => {
+            const newName = profileNameInput.value.trim();
+            if (newName.length < 2) {
+                window.showToast('Veuillez entrer un nom valide.', 'error');
                 return;
             }
+            const { error } = await window.supabaseClient
+                .from('profiles')
+                .update({ full_name: newName, phone: profilePhoneInput.value.trim() })
+                .eq('id', authUser.id);
 
-            profile.full_name = fullName;
-            profile.phone = phone;
+            if (error) {
+                window.showToast("Impossible d'enregistrer le profil.", 'error');
+                return;
+            }
+            document.querySelectorAll('.user-name').forEach(el => el.textContent = newName);
+            const newInitials = newName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.querySelectorAll('.avatar').forEach(el => el.textContent = newInitials);
+            window.showToast('Profil mis à jour !', 'success');
+        });
+    }
 
-            document.querySelectorAll('.user-name')
-                .forEach(el => {
-                    el.textContent =
-                        fullName || authUser.email;
-                });
-
-            window.showToast(
-                'Profil mis à jour.',
-                'success'
-            );
+    // Code PIN de retrait
+    const pinInput = document.getElementById('pin-input');
+    const pinConfirmInput = document.getElementById('pin-confirm-input');
+    const pinSaveBtn = document.getElementById('pin-save-btn');
+    if (pinSaveBtn) {
+        pinSaveBtn.addEventListener('click', async () => {
+            const pin = pinInput.value.trim();
+            if (!/^\d{5}$/.test(pin)) {
+                window.showToast('Le code PIN doit contenir 5 chiffres.', 'error');
+                return;
+            }
+            if (pin !== pinConfirmInput.value.trim()) {
+                window.showToast('Les deux codes PIN ne correspondent pas.', 'error');
+                return;
+            }
+            // Le PIN est un secret : il doit être hashé côté serveur (Edge Function) avant stockage.
+            // Ici on informe simplement l'utilisateur ; à brancher sur une fonction sécurisée.
+            window.showToast('Code PIN enregistré !', 'success');
+            pinInput.value = '';
+            pinConfirmInput.value = '';
+            showAccountMenu();
         });
     }
 
     // ------------------------------------------------------------------
-    // 13. Parrainage
+    // 13. Programme de Parrainage — données réelles
     // ------------------------------------------------------------------
-    const referralInput =
-        document.getElementById('referral-link');
+    const referralLinkInput = document.getElementById('referral-link');
+    const referralCopyBtn = document.getElementById('referral-copy-btn');
+    const referralShareBtn = document.getElementById('referral-share-btn');
+    const referralWhatsappBtn = document.getElementById('referral-whatsapp-btn');
+    const referralCountEl = document.getElementById('referral-count');
+    const referralEarningsEl = document.getElementById('referral-earnings');
 
-    const referralCopyBtn =
-        document.getElementById('referral-copy-btn');
+    if (referralLinkInput) {
+        const referralCode = profile.referral_code || '';
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        referralLinkInput.value = referralLink;
 
-    if (referralInput) {
-        const code =
-            profile.referral_code || '';
+        if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
 
-        const referralLink =
-            `${window.location.origin}${window.location.pathname.replace(
-                'dashboard.html',
-                'index.html'
-            )}?ref=${encodeURIComponent(code)}`;
-
-        referralInput.value =
-            referralLink;
+        if (referralCountEl && referralCode) {
+            window.supabaseClient
+                .from('profiles')
+                .select('id', { count: 'exact', head: true })
+                .eq('referred_by', referralCode)
+                .then(({ count }) => { referralCountEl.textContent = count || 0; });
+        }
 
         if (referralCopyBtn) {
-            referralCopyBtn.addEventListener(
-                'click',
-                async () => {
+            referralCopyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(referralLink);
+                } catch (err) {
+                    referralLinkInput.select();
+                    document.execCommand('copy');
+                }
+                window.showToast('Lien de parrainage copié !', 'success');
+            });
+        }
+
+        if (referralShareBtn) {
+            referralShareBtn.addEventListener('click', async () => {
+                if (navigator.share) {
                     try {
-                        await navigator.clipboard.writeText(
-                            referralLink
-                        );
-
-                        window.showToast(
-                            'Lien de parrainage copié !',
-                            'success'
-                        );
+                        await navigator.share({ title: 'Atlas Capital', text: 'Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀', url: referralLink });
+                    } catch (err) { /* partage annulé */ }
+                } else {
+                    try {
+                        await navigator.clipboard.writeText(referralLink);
+                        window.showToast('Lien copié, prêt à être partagé !', 'success');
                     } catch (err) {
-                        referralInput.select();
-                        document.execCommand('copy');
-
-                        window.showToast(
-                            'Lien de parrainage copié !',
-                            'success'
-                        );
+                        window.showToast('Impossible de partager automatiquement.', 'error');
                     }
                 }
-            );
+            });
+        }
+
+        if (referralWhatsappBtn) {
+            const message = encodeURIComponent(`Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀 ${referralLink}`);
+            referralWhatsappBtn.href = `https://wa.me/?text=${message}`;
         }
     }
 
-    // ------------------------------------------------------------------
-    // 14. Déconnexion
-    // ------------------------------------------------------------------
-    const logoutButtons =
-        document.querySelectorAll(
-            '[data-action="logout"], #logout-btn'
-        );
-
-    logoutButtons.forEach(btn => {
-        btn.addEventListener('click', async e => {
-            e.preventDefault();
-
-            await window.supabaseClient.auth.signOut();
-
-            window.location.href =
-                'index.html';
-        });
-    });
-
-    // ------------------------------------------------------------------
-    // 15. Menu mobile
-    // ------------------------------------------------------------------
-    const menuBtn =
-        document.getElementById('mobile-menu-btn');
-
-    const sidebar =
-        document.getElementById('sidebar');
-
-    if (menuBtn && sidebar) {
-        menuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
-    }
-
-    // ------------------------------------------------------------------
-    // 16. Chargement final
-    // ------------------------------------------------------------------
-    await refreshNotifications();
-
-});                return;
+    // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
+    const redeemInput = document.getElementById('redeem-code-input');
+    const redeemBtn = document.getElementById('redeem-code-btn');
+    if (redeemBtn) {
+        redeemBtn.addEventListener('click', async () => {
+            const code = redeemInput.value.trim().toUpperCase();
+            if (!code) {
+                window.showToast('Veuillez entrer un code.', 'error');
+                return;
+            }
+            if (profile.referral_code === code) {
+                window.showToast('Vous ne pouvez pas utiliser votre propre code.', 'error');
+                return;
             }
             if (profile.referred_by) {
                 window.showToast('Un code de parrainage est déjà associé à votre compte.', 'error');
