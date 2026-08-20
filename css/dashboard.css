@@ -172,16 +172,24 @@ svg { flex-shrink: 0; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
 .amount { font-size: 2rem; font-weight: 700; }
 
-.active-invest-split { display: grid; grid-template-columns: 1fr; gap: 16px; }
-@media (min-width: 720px) { .active-invest-split { grid-template-columns: 1fr 1fr; } }
-.invest-list, .invest-analysis { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; }
-.invest-list h4, .invest-analysis h4 { margin-bottom: 14px; color: var(--primary); }
-.invest-list ul { display: flex; flex-direction: column; gap: 10px; }
-.invest-list li { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--gray-100); font-size: 0.9rem; }
+.active-invest-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+.invest-list, .invest-analysis { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; min-width: 0; }
+.invest-list h4, .invest-analysis h4 { margin-bottom: 10px; color: var(--primary); font-size: 0.95rem; }
+.invest-list ul { display: flex; flex-direction: column; gap: 8px; }
+.invest-list li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--gray-100); font-size: 0.8rem; }
 .invest-list li:last-child { border-bottom: none; }
-.mini-chart-placeholder { display: flex; align-items: flex-end; gap: 8px; height: 140px; margin-bottom: 14px; }
-.mc-bar { flex: 1; background: linear-gradient(180deg, var(--success), var(--accent)); border-radius: 4px 4px 0 0; }
-.analysis-text { font-size: 0.9rem; }
+@media (min-width: 480px) {
+    .active-invest-split { gap: 16px; }
+    .invest-list, .invest-analysis { padding: 20px; }
+    .invest-list li { flex-direction: row; justify-content: space-between; font-size: 0.9rem; }
+}
+.mini-chart-placeholder { display: flex; align-items: flex-end; gap: 4px; height: 100px; margin-bottom: 12px; }
+.mc-bar { flex: 1; min-width: 0; background: linear-gradient(180deg, var(--success), var(--accent)); border-radius: 3px 3px 0 0; }
+.analysis-text { font-size: 0.78rem; }
+@media (min-width: 480px) {
+    .mini-chart-placeholder { height: 140px; gap: 8px; }
+    .analysis-text { font-size: 0.9rem; }
+}
 
 .wallet-overview { display: grid; grid-template-columns: 1fr; gap: 16px; }
 @media (min-width: 720px) { .wallet-overview { grid-template-columns: 1.2fr 1fr; } }
