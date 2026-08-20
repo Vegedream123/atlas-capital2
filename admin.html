@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration - Atlas Capital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/dashboard.css">
+<link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+<div id="admin-gate" class="admin-gate">
+    <p>Vérification des droits d'accès…</p>
+</div>
+
+<div class="admin-layout" id="admin-app" style="display:none;">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--primary)" stroke="none">
+                <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
+                <path d="M4 10h2v9H4v-9zm5 0h2v9H9v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"></path>
+                <path d="M2 20h20v2H2v-2z"></path>
+            </svg>
+            <span>Atlas Admin</span>
+        </div>
+        <nav class="admin-nav">
+            <button class="admin-nav-item active" data-target="apercu">📊 Aperçu</button>
+            <button class="admin-nav-item" data-target="produits">📦 Produits</button>
+            <button class="admin-nav-item" data-target="depots">⬆️ Dépôts</button>
+            <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
+            <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
+        </nav>
+        <div class="admin-sidebar-footer">
+            <a href="dashboard.html" class="admin-back-link">← Retour à l'espace client</a>
+            <button class="admin-back-link" id="admin-logout-btn" style="border:none;background:none;cursor:pointer;text-align:left;">Déconnexion</button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <h1 id="admin-view-title">Aperçu</h1>
+            <div class="admin-topbar-user">
+                <span class="user-name">Admin</span>
+                <span class="admin-avatar user-avatar-initials">A</span>
+            </div>
+        </header>
+
+        <!-- VUE: APERÇU -->
+        <section class="admin-view active" id="view-apercu">
+            <div class="admin-stats-grid">
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Utilisateurs inscrits</div>
+                    <div class="admin-stat-value" id="stat-total-users">—</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Total dépôts validés</div>
+                    <div class="admin-stat-value" id="stat-total-deposits">—</div>
+                </div>
+                <div class="admin-stat-card">
+                    <div class="admin-stat-label">Total retraits validés</div>
+                    <div class="admin-stat-value" id="stat-total-withdrawals">—</div>
+                </div>
+                <div class="admin-stat-card accent">
+                    <div class="admin-stat-label">Dépôts en attente</div>
+                    <div class="admin-stat-value" id="stat-pending-deposits">—</div>
+                </div>
+                <div class="admin-stat-card accent">
+                    <div class="admin-stat-label">Retraits en attente</div>
+                    <div class="admin-stat-value" id="stat-pending-withdrawals">—</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE: PRODUITS -->
+        <section class="admin-view" id="view-produits">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2 id="product-form-title">Ajouter un produit</h2>
+                </div>
+                <form id="product-form" class="admin-form">
+                    <input type="hidden" id="product-id" value="">
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Nom du produit</label>
+                            <input type="text" id="product-name" required placeholder="Ex: Pack Atlas 1">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Catégorie</label>
+                            <select id="product-category" required>
+                                <option value="atlas">Revenu Annuel (Atlas)</option>
+                                <option value="constant">Actif — Constant</option>
+                                <option value="analyse">Actif — Analyse</option>
+                                <option value="quete">Quête Quotidienne</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Prix (FCFA)</label>
+                            <input type="number" id="product-price" min="0" step="1" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Pourcentage / jour (%)</label>
+                            <input type="number" id="product-rate" min="0" step="0.01" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Échéance (jours)</label>
+                            <input type="number" id="product-duration" min="1" step="1" required>
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Gain journalier estimé</label>
+                        <div class="admin-computed" id="product-daily-gain-preview">—</div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Image du produit</label>
+                        <input type="file" id="product-image" accept="image/*">
+                        <img id="product-image-preview" class="admin-image-preview" style="display:none;">
+                    </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="product-submit-btn">Ajouter le produit</button>
+                        <button type="button" class="btn btn-outline" id="product-cancel-edit" style="display:none;">Annuler la modification</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header"><h2>Produits existants</h2></div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table" id="products-table">
+                        <thead>
+                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Échéance</th><th>Statut</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="products-tbody"><tr><td colspan="8">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE: DEPOTS -->
+        <section class="admin-view" id="view-depots">
+            <div class="admin-panel">
+                <div class="admin-subnav">
+                    <button class="admin-subnav-btn active" data-status="pending" data-list="deposits">En attente</button>
+                    <button class="admin-subnav-btn" data-status="validated" data-list="deposits">Validés</button>
+                    <button class="admin-subnav-btn" data-status="rejected" data-list="deposits">Rejetés</button>
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Date</th><th>Utilisateur</th><th>Montant</th><th>Méthode</th><th>Capture</th><th>Statut</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="deposits-tbody"><tr><td colspan="7">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE: RETRAITS -->
+        <section class="admin-view" id="view-retraits">
+            <div class="admin-panel">
+                <div class="admin-subnav">
+                    <button class="admin-subnav-btn active" data-status="pending" data-list="withdrawals">En attente</button>
+                    <button class="admin-subnav-btn" data-status="validated" data-list="withdrawals">Validés</button>
+                    <button class="admin-subnav-btn" data-status="rejected" data-list="withdrawals">Rejetés</button>
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Date</th><th>Utilisateur</th><th>Montant</th><th>Méthode</th><th>Destination</th><th>Statut</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="withdrawals-tbody"><tr><td colspan="7">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE: UTILISATEURS -->
+        <section class="admin-view" id="view-utilisateurs">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Utilisateurs inscrits</h2>
+                    <input type="text" id="user-search" placeholder="Rechercher un nom ou un email…" class="admin-search-input">
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Nom</th><th>Email</th><th>Solde</th><th>Statut</th><th>Inscrit le</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="users-tbody"><tr><td colspan="6">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- Modal détail utilisateur -->
+<div class="modal-overlay" id="user-detail-modal">
+    <div class="modal admin-user-modal">
+        <div class="modal-header">
+            <h3 id="user-detail-name">Utilisateur</h3>
+            <button class="modal-close" data-close-modal="user-detail-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="admin-user-summary" id="user-detail-summary"></div>
+            <h4>Dépôts</h4>
+            <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-deposits"></tbody></table></div>
+            <h4>Retraits</h4>
+            <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-withdrawals"></tbody></table></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal image plein écran (captures) -->
+<div class="modal-overlay" id="image-view-modal">
+    <div class="modal admin-image-modal">
+        <div class="modal-header">
+            <h3>Capture</h3>
+            <button class="modal-close" data-close-modal="image-view-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="image-view-full" style="width:100%;border-radius:8px;">
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
