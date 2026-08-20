@@ -73,8 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const userName = profile.full_name || authUser.email;
     const userEmail = profile.email || authUser.email;
 
-    document.querySelectorAll('.user-name').forEach(el => el.textContent = userName);
-    document.querySelectorAll('.user-email').forEach(el => el.textContent = userEmail);
+    document.querySelectorAll('.user-name').forEach(el => { el.textContent = userName; el.classList.remove('skeleton-text'); el.classList.add('loaded'); });
+    document.querySelectorAll('.user-email').forEach(el => { el.textContent = userEmail; el.classList.remove('skeleton-text'); el.classList.add('loaded'); });
 
     const initials = userName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U';
     document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
