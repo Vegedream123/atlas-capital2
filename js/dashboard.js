@@ -50,13 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Chargement des données réelles : profil, portefeuille, produits,
     //    investissements en cours, transactions
     // ------------------------------------------------------------------
-    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes] = await Promise.all([
+    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes] = await Promise.all([
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
         window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
         window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
-        window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30)
+        window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30),
+        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single()
     ]);
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let investments = investmentsRes.data || [];
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
+    let siteSettings = settingsRes.data || {};
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
@@ -517,9 +519,182 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // ------------------------------------------------------------------
+    // 7ter. Dépôt — crée une demande dans `deposit_requests`, à valider
+    //       par un admin (voir admin.html > Dépôts > admin_review_deposit).
+    //
+    //       ⚠️ Si un justificatif (capture d'écran) est joint, il est
+    //       envoyé dans le bucket Supabase Storage `deposit-proofs`.
+    //       Créez ce bucket (Storage > New bucket, "Public") s'il n'existe
+    //       pas encore, sinon l'upload échouera et la demande sera créée
+    //       sans justificatif.
+    // ------------------------------------------------------------------
     const depositBtn = document.getElementById('wallet-deposit-btn');
     const withdrawBtn = document.getElementById('wallet-withdraw-btn');
-    if (depositBtn) depositBtn.addEventListener('click', () => window.showToast('Le dépôt via Mobile Money / Carte arrive bientôt.', 'info'));
+
+    let depositModalOverlay = null;
+    const closeDepositModal = () => { if (depositModalOverlay) depositModalOverlay.classList.remove('active'); };
+
+    const openDepositModal = () => {
+        const minDeposit = Number(siteSettings.min_deposit) || 0;
+        const usdtAddress = siteSettings.deposit_usdt_address || '';
+        const quickAmounts = Array.isArray(siteSettings.deposit_amounts) ? siteSettings.deposit_amounts : [];
+
+        if (!depositModalOverlay) {
+            depositModalOverlay = document.createElement('div');
+            depositModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(depositModalOverlay);
+            depositModalOverlay.addEventListener('click', (e) => { if (e.target === depositModalOverlay) closeDepositModal(); });
+        }
+
+        if (!usdtAddress) {
+            depositModalOverlay.innerHTML = `
+                <div class="modal-card">
+                    <button type="button" class="modal-close" data-close-deposit-modal>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <span class="task-modal-badge">Dépôt</span>
+                    <h2 class="task-modal-title">Dépôt momentanément indisponible</h2>
+                    <p class="task-modal-sub">Aucun moyen de paiement n'est configuré pour le moment. Contactez le support pour effectuer votre dépôt.</p>
+                </div>`;
+            depositModalOverlay.querySelector('[data-close-deposit-modal]').addEventListener('click', closeDepositModal);
+            depositModalOverlay.classList.add('active');
+            return;
+        }
+
+        depositModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-deposit-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <span class="task-modal-badge">Dépôt</span>
+                <h2 class="task-modal-title">Alimenter mon compte</h2>
+                <p class="task-modal-sub">Envoyez votre paiement en USDT (réseau TRC-20) à l'adresse ci-dessous, puis confirmez votre dépôt.${minDeposit ? ` Montant minimum : ${formatFCFA(minDeposit)}.` : ''}</p>
+
+                ${quickAmounts.length ? `
+                <div class="form-group">
+                    <label>Montant</label>
+                    <div class="quiz-options" id="deposit-quick-amounts">
+                        ${quickAmounts.map(a => `<button type="button" class="quiz-option" data-amount="${a}">${formatFCFA(a)}</button>`).join('')}
+                    </div>
+                </div>` : ''}
+
+                <div class="form-group">
+                    <label for="deposit-amount-input">${quickAmounts.length ? 'Ou montant personnalisé' : 'Montant'} (FCFA)</label>
+                    <input type="number" class="form-control" id="deposit-amount-input" min="${minDeposit || 0}" placeholder="Ex : 25000">
+                </div>
+
+                <div class="form-group">
+                    <label>Adresse USDT (TRC-20)</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="text" class="form-control" id="deposit-address-display" value="${usdtAddress}" readonly>
+                        <button type="button" class="btn btn-outline" id="deposit-copy-address-btn">Copier</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="deposit-proof-input">Justificatif (capture d'écran) — optionnel</label>
+                    <input type="file" class="form-control" id="deposit-proof-input" accept="image/*">
+                </div>
+
+                <div class="quiz-feedback" id="deposit-feedback"></div>
+
+                <button type="button" class="btn btn-primary btn-full" id="deposit-submit-btn">J'ai envoyé le paiement</button>
+            </div>`;
+
+        depositModalOverlay.querySelector('[data-close-deposit-modal]').addEventListener('click', closeDepositModal);
+
+        const amountInput = depositModalOverlay.querySelector('#deposit-amount-input');
+        const quickAmountsWrap = depositModalOverlay.querySelector('#deposit-quick-amounts');
+        if (quickAmountsWrap) {
+            quickAmountsWrap.querySelectorAll('.quiz-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    quickAmountsWrap.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('correct'));
+                    btn.classList.add('correct');
+                    amountInput.value = btn.getAttribute('data-amount');
+                });
+            });
+        }
+
+        const copyBtn = depositModalOverlay.querySelector('#deposit-copy-address-btn');
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(usdtAddress);
+            } catch (err) {
+                const addressInput = depositModalOverlay.querySelector('#deposit-address-display');
+                addressInput.select();
+                document.execCommand('copy');
+            }
+            window.showToast('Adresse copiée !', 'success');
+        });
+
+        const feedbackEl = depositModalOverlay.querySelector('#deposit-feedback');
+        const submitBtn = depositModalOverlay.querySelector('#deposit-submit-btn');
+        const proofInput = depositModalOverlay.querySelector('#deposit-proof-input');
+
+        submitBtn.addEventListener('click', async () => {
+            const amount = Number(amountInput.value);
+            feedbackEl.textContent = '';
+            feedbackEl.className = 'quiz-feedback';
+
+            if (!amount || amount <= 0) {
+                feedbackEl.textContent = 'Veuillez indiquer un montant valide.';
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+            if (minDeposit && amount < minDeposit) {
+                feedbackEl.textContent = `Le montant minimum est de ${formatFCFA(minDeposit)}.`;
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Envoi en cours…';
+
+            let proofUrl = null;
+            const proofFile = proofInput.files && proofInput.files[0];
+            if (proofFile) {
+                try {
+                    const ext = proofFile.name.split('.').pop();
+                    const path = `${authUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                    const { error: uploadError } = await window.supabaseClient.storage.from('deposit-proofs').upload(path, proofFile);
+                    if (uploadError) throw uploadError;
+                    const { data: publicUrlData } = window.supabaseClient.storage.from('deposit-proofs').getPublicUrl(path);
+                    proofUrl = publicUrlData.publicUrl;
+                } catch (err) {
+                    console.error('Erreur upload justificatif :', err);
+                    // On continue sans bloquer le dépôt : le justificatif n'est pas obligatoire.
+                }
+            }
+
+            const { error } = await window.supabaseClient.from('deposit_requests').insert({
+                user_id: authUser.id,
+                amount,
+                method_name: 'USDT (TRC-20)',
+                proof_url: proofUrl,
+                status: 'pending'
+            });
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+
+            if (error) {
+                feedbackEl.textContent = "Impossible d'enregistrer la demande : " + error.message;
+                feedbackEl.className = 'quiz-feedback error';
+                window.showToast("Impossible d'enregistrer la demande de dépôt.", 'error');
+                return;
+            }
+
+            window.showToast(`<strong>Demande envoyée ✅</strong><br>Votre dépôt de ${formatFCFA(amount)} sera crédité après validation.`, 'success', { extraClass: 'investment-toast' });
+            setTimeout(closeDepositModal, 900);
+            await refreshNotifications();
+        });
+
+        depositModalOverlay.classList.add('active');
+    };
+
+    if (depositBtn) depositBtn.addEventListener('click', openDepositModal);
     if (withdrawBtn) withdrawBtn.addEventListener('click', () => window.showToast('Le retrait sera disponible après validation du code PIN.', 'info'));
 
     // ------------------------------------------------------------------
