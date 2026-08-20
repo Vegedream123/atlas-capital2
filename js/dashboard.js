@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const icons = {
             success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
             error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-            info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+            info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A227" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
         };
 
         toast.innerHTML = `${icons[type] || icons.info}<div>${message}</div>`;
@@ -269,6 +269,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>`;
             }).join('') : '<p class="text-secondary" style="padding:12px 2px;">Aucune transaction pour le moment.</p>';
         }
+
+        // --- Tâches Quotidiennes (24h) : une par produit actif ---
+        renderDailyTasks();
     };
 
     renderDashboardData();
@@ -288,6 +291,188 @@ document.addEventListener('DOMContentLoaded', async () => {
         transactions = tr.data || transactions;
         renderDashboardData();
     };
+
+    // ------------------------------------------------------------------
+    // 7bis. Tâches Quotidiennes (24h) — obligatoires pour chaque produit
+    //       actif. Chaque investissement en cours doit être "débloqué"
+    //       via une courte question financière avant que le gain du jour
+    //       ne soit crédité au portefeuille.
+    //
+    //       ⚠️ Pour que le crédit soit réellement sécurisé côté serveur,
+    //       créez cette fonction Postgres dans Supabase (SQL Editor) et
+    //       ajoutez la colonne `last_task_at` à `user_investments` :
+    //
+    //       alter table user_investments add column if not exists last_task_at timestamptz;
+    //
+    //       create or replace function claim_daily_task(p_investment_id uuid)
+    //       returns void language plpgsql security definer as $$
+    //       declare v_user_id uuid := auth.uid(); v_amount numeric; v_last timestamptz;
+    //       begin
+    //         select ui.amount * ip.daily_rate / 100, ui.last_task_at into v_amount, v_last
+    //         from user_investments ui join investment_products ip on ip.id = ui.product_id
+    //         where ui.id = p_investment_id and ui.user_id = v_user_id and ui.status = 'active';
+    //         if v_amount is null then raise exception 'Investissement introuvable ou inactif.'; end if;
+    //         if v_last is not null and v_last > now() - interval '24 hours' then
+    //           raise exception 'Tâche déjà effectuée aujourd''hui.'; end if;
+    //         update user_investments set last_task_at = now() where id = p_investment_id;
+    //         update wallets set balance = balance + v_amount, total_income = total_income + v_amount where user_id = v_user_id;
+    //         insert into transactions (user_id, type, amount, description)
+    //           values (v_user_id, 'quest', v_amount, 'Tâche quotidienne validée');
+    //       end; $$;
+    //
+    //       Tant que cette fonction n'existe pas côté Supabase, la tâche
+    //       s'affiche et se joue normalement mais l'appel RPC échouera
+    //       avec un message d'erreur explicite au lieu de créditer le solde.
+    // ------------------------------------------------------------------
+    const FINANCE_QUESTIONS = [
+        { q: "Qu'est-ce que la diversification en investissement ?", options: ["Tout miser sur un seul actif", "Répartir son capital sur plusieurs actifs pour réduire le risque", "Retirer tout son argent chaque mois", "Emprunter pour investir davantage"], correct: 1 },
+        { q: "Que signifie le terme « taux d'intérêt » ?", options: ["Le montant total investi", "Le coût ou le rendement d'un capital, en pourcentage", "Le nombre de transactions par jour", "Le solde disponible sur un compte"], correct: 1 },
+        { q: "Qu'est-ce qu'un portefeuille d'investissement ?", options: ["Un compte bancaire classique", "L'ensemble des actifs détenus par un investisseur", "Un simple carnet de chèques", "Une carte de paiement"], correct: 1 },
+        { q: "Pourquoi est-il conseillé d'avoir une épargne de précaution ?", options: ["Pour éviter d'investir", "Pour faire face aux imprévus sans toucher à ses investissements", "Parce que c'est obligatoire par la loi", "Pour payer plus d'impôts"], correct: 1 },
+        { q: "Qu'est-ce que l'intérêt composé ?", options: ["Un intérêt calculé uniquement sur le capital de départ", "Un intérêt calculé sur le capital et les intérêts déjà accumulés", "Une taxe bancaire", "Un type de prêt étudiant"], correct: 1 },
+        { q: "Quel est généralement le lien entre risque et rendement potentiel ?", options: ["Aucun lien", "Plus le risque est élevé, plus le rendement potentiel l'est aussi", "Le risque élevé garantit un rendement faible", "Le rendement est toujours fixe"], correct: 1 },
+        { q: "Qu'est-ce qu'un budget mensuel permet de faire ?", options: ["Dépenser sans limite", "Suivre et planifier ses revenus et dépenses", "Éviter de payer ses factures", "Augmenter ses dettes"], correct: 1 },
+        { q: "Que signifie « liquidité » d'un actif ?", options: ["Sa couleur sur un graphique", "La facilité à le convertir rapidement en argent disponible", "Son ancienneté", "Le nombre de propriétaires précédents"], correct: 1 }
+    ];
+
+    const tasksListEl = document.getElementById('daily-tasks-list');
+    const tasksCardEl = document.getElementById('daily-tasks-card');
+    let taskCountdownTimer = null;
+
+    const msUntilUnlock = (lastTaskAt) => {
+        if (!lastTaskAt) return 0;
+        const next = new Date(lastTaskAt).getTime() + 24 * 60 * 60 * 1000;
+        return Math.max(0, next - Date.now());
+    };
+    const formatCountdown = (ms) => {
+        const totalMin = Math.ceil(ms / 60000);
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        return `${h}h ${m.toString().padStart(2, '0')}min`;
+    };
+
+    function renderDailyTasks() {
+        if (!tasksListEl || !tasksCardEl) return;
+        const active = investments.filter(i => i.status === 'active');
+
+        if (!active.length) {
+            tasksCardEl.style.display = 'none';
+            if (taskCountdownTimer) { clearInterval(taskCountdownTimer); taskCountdownTimer = null; }
+            return;
+        }
+        tasksCardEl.style.display = '';
+
+        tasksListEl.innerHTML = active.map(inv => {
+            const prod = inv.investment_products || {};
+            const dailyGain = Math.round(Number(inv.amount) * Number(prod.daily_rate || 0) / 100);
+            const remaining = msUntilUnlock(inv.last_task_at);
+            const available = remaining <= 0;
+            return `
+                <div class="task-item">
+                    <div class="task-info">
+                        <div class="task-name">${prod.name || 'Produit'}</div>
+                        <div class="task-gain">+${formatFCFA(dailyGain)} à débloquer</div>
+                    </div>
+                    <div class="task-action">
+                        ${available
+                            ? `<button type="button" class="btn btn-primary task-btn" data-investment-id="${inv.id}" data-daily-gain="${dailyGain}" data-product-name="${prod.name || 'Produit'}">Effectuer la tâche</button>`
+                            : `<span class="task-locked">
+                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                 Prochaine dans <span class="task-countdown" data-remaining="${remaining}">${formatCountdown(remaining)}</span>
+                               </span>`
+                        }
+                    </div>
+                </div>`;
+        }).join('');
+
+        if (taskCountdownTimer) clearInterval(taskCountdownTimer);
+        taskCountdownTimer = setInterval(() => {
+            let needsRerender = false;
+            document.querySelectorAll('.task-countdown').forEach(el => {
+                let remaining = Number(el.getAttribute('data-remaining')) - 60000;
+                if (remaining <= 0) { needsRerender = true; return; }
+                el.setAttribute('data-remaining', remaining);
+                el.textContent = formatCountdown(remaining);
+            });
+            if (needsRerender) renderDailyTasks();
+        }, 60000);
+    }
+
+    // ---- Modal Quiz (question financière à valider) ----
+    let taskModalOverlay = null;
+    const closeTaskModal = () => { if (taskModalOverlay) taskModalOverlay.classList.remove('active'); };
+
+    const openTaskModal = (investmentId, dailyGain, productName) => {
+        const question = FINANCE_QUESTIONS[Math.floor(Math.random() * FINANCE_QUESTIONS.length)];
+
+        if (!taskModalOverlay) {
+            taskModalOverlay = document.createElement('div');
+            taskModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(taskModalOverlay);
+            taskModalOverlay.addEventListener('click', (e) => { if (e.target === taskModalOverlay) closeTaskModal(); });
+        }
+
+        taskModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-task-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <span class="task-modal-badge">Tâche quotidienne</span>
+                <h2 class="task-modal-title">${productName}</h2>
+                <p class="task-modal-sub">Répondez correctement pour débloquer +${formatFCFA(dailyGain)} sur votre solde.</p>
+                <div class="quiz-question">${question.q}</div>
+                <div class="quiz-options">
+                    ${question.options.map((opt, idx) => `<button type="button" class="quiz-option" data-idx="${idx}">${opt}</button>`).join('')}
+                </div>
+                <div class="quiz-feedback" id="quiz-feedback"></div>
+            </div>`;
+
+        taskModalOverlay.querySelector('[data-close-task-modal]').addEventListener('click', closeTaskModal);
+
+        const feedbackEl = taskModalOverlay.querySelector('#quiz-feedback');
+        const optionBtns = taskModalOverlay.querySelectorAll('.quiz-option');
+        optionBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const idx = Number(btn.getAttribute('data-idx'));
+                if (idx === question.correct) {
+                    optionBtns.forEach(b => b.disabled = true);
+                    btn.classList.add('correct');
+                    feedbackEl.textContent = 'Bonne réponse ! Validation en cours…';
+                    feedbackEl.className = 'quiz-feedback success';
+
+                    const { error } = await window.supabaseClient.rpc('claim_daily_task', { p_investment_id: investmentId });
+                    if (error) {
+                        feedbackEl.textContent = "Impossible de valider la tâche pour le moment : " + error.message;
+                        feedbackEl.className = 'quiz-feedback error';
+                        window.showToast(error.message || "Impossible de valider la tâche pour le moment.", 'error');
+                        return;
+                    }
+                    window.showToast(`<strong>Tâche validée ✅</strong><br>+${formatFCFA(dailyGain)} crédité pour ${productName}.`, 'success', { extraClass: 'investment-toast' });
+                    setTimeout(closeTaskModal, 900);
+                    await refreshDashboardData();
+                } else {
+                    btn.classList.add('wrong');
+                    btn.disabled = true;
+                    feedbackEl.textContent = 'Mauvaise réponse, réessayez.';
+                    feedbackEl.className = 'quiz-feedback error';
+                }
+            });
+        });
+
+        taskModalOverlay.classList.add('active');
+    };
+
+    if (tasksListEl) {
+        tasksListEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('.task-btn');
+            if (!btn) return;
+            openTaskModal(
+                btn.getAttribute('data-investment-id'),
+                Number(btn.getAttribute('data-daily-gain')),
+                btn.getAttribute('data-product-name')
+            );
+        });
+    }
 
     // Message de validation affiché après l'achat, avec les infos réelles du produit activé
     const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne' };
