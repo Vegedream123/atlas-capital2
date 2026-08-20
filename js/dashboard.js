@@ -1,323 +1,454 @@
-/* ==========================================================================
-   ATLAS CAPITAL — Dashboard Styles (fichier autonome, ne dépend pas de style.css)
-   ========================================================================== */
+// dashboard.js
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Vérification de l'authentification
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+        window.location.href = 'index.html';
+        return;
+    }
 
-*, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    // Mise à jour des informations de l'utilisateur
+    const userName = localStorage.getItem('userName') || 'Utilisateur';
+    const userEmail = localStorage.getItem('userEmail') || 'contact@atlascapital.com';
+    
+    document.querySelectorAll('.user-name').forEach(el => el.textContent = userName);
+    document.querySelectorAll('.user-email').forEach(el => el.textContent = userEmail);
+    
+    // Initiales Avatar
+    const initials = userName.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+    document.querySelectorAll('.avatar').forEach(el => el.textContent = initials);
 
-:root {
-    --primary: #0B1D3A;
-    --primary-light: #1E3A5F;
-    --primary-hover: #2A5082;
-    --accent: #3B82F6;
-    --accent-hover: #2563EB;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    --danger-light: #FCA5A5;
-    --white: #FFFFFF;
-    --gray-50: #F8FAFC;
-    --gray-100: #F1F5F9;
-    --gray-200: #E2E8F0;
-    --gray-300: #CBD5E1;
-    --gray-500: #64748B;
-    --gray-700: #334155;
-    --text-primary: #0B1D3A;
-    --text-secondary: #5A6A7E;
+    // Fonction Toast (globale pour pouvoir l'utiliser dans le HTML)
+    window.showToast = (message, type = 'info') => {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        const icons = {
+            success: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+            error: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+            info: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+        };
+        
+        toast.innerHTML = `${icons[type] || icons.info}<div>${message}</div>`;
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    };
 
-    --shadow-sm: 0 1px 2px rgba(11,29,58,0.05);
-    --shadow: 0 4px 6px -1px rgba(11,29,58,0.07), 0 2px 4px -2px rgba(11,29,58,0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(11,29,58,0.08), 0 4px 6px -4px rgba(11,29,58,0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(11,29,58,0.1), 0 8px 10px -6px rgba(11,29,58,0.05);
+    // 2. Navigation Top & Bottom (Multi-View SPA)
+    const navLinks = document.querySelectorAll('.nav-link, .bottom-nav-item');
+    const views = document.querySelectorAll('.view-section');
 
-    --radius-sm: 8px;
-    --radius: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = link.getAttribute('data-target');
+            if(!target) return;
 
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
+            // Update active states
+            navLinks.forEach(l => l.classList.remove('active'));
+            document.querySelectorAll(`[data-target="${target}"]`).forEach(l => l.classList.add('active'));
 
-html, body {
-    max-width: 100%;
-    overflow-x: hidden;
-}
+            // Switch views
+            views.forEach(v => v.classList.remove('active'));
+            const targetView = document.getElementById(`view-${target}`);
+            if (targetView) targetView.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0,0);
+        });
+    });
 
-body {
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: var(--text-primary);
-    background: var(--gray-50);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
-}
+    // 3. Notifications Toggle
+    const notifBtn = document.getElementById('notif-btn');
+    const notifPanel = document.getElementById('notif-panel');
+    
+    if (notifBtn && notifPanel) {
+        notifBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            notifPanel.classList.toggle('active');
+        });
+        
+        // Hide panel when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!notifPanel.contains(e.target)) {
+                notifPanel.classList.remove('active');
+            }
+        });
+    }
 
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; background: none; border: none; }
-ul { list-style: none; }
-svg { flex-shrink: 0; }
+    // 4. Déconnexion
+    document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('isLoggedIn');
+            window.showToast('Déconnexion en cours...', 'info');
+            setTimeout(() => window.location.href = 'index.html', 1000);
+        });
+    });
 
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 11px 20px;
-    border-radius: var(--radius-sm);
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: var(--transition);
-    border: 1px solid transparent;
-    white-space: nowrap;
-}
-.btn-primary { background: var(--accent); color: var(--white); }
-.btn-primary:hover { background: var(--accent-hover); }
-.btn-outline { background: var(--white); color: var(--primary); border-color: var(--gray-200); }
-.btn-outline:hover { background: var(--gray-100); }
-.btn-full { width: 100%; }
-.text-danger { color: var(--danger); }
-.text-secondary { color: var(--text-secondary); }
-.text-success { color: var(--success); }
-.text-primary { color: var(--accent); }
-.text-warning { color: var(--warning); }
-.mb-3 { margin-bottom: 12px; }
-.mb-4 { margin-bottom: 16px; }
-.mt-3 { margin-top: 12px; }
-.positive { color: var(--success); }
-.negative { color: var(--danger); }
+    // 5. Graphique dynamique (simulation)
+    const chartTabs = document.querySelectorAll('.tab-btn');
+    const chartBars = document.querySelectorAll('.bar');
 
-.dashboard-layout { min-height: 100vh; display: flex; flex-direction: column; max-width: 100%; overflow-x: hidden; }
-.dashboard-main { flex: 1; max-width: 1200px; width: 100%; margin: 0 auto; padding: 24px 20px 100px; overflow-x: hidden; }
-.view-section { display: none; }
-.view-section.active { display: block; animation: fadeIn 0.3s ease; }
+    chartTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            chartTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+            chartBars.forEach(bar => {
+                const randomHeight = Math.floor(Math.random() * 60) + 40; // 40% to 100%
+                bar.style.height = `${randomHeight}%`;
+            });
+        });
+    });
 
-.top-nav { background: var(--white); border-bottom: 1px solid var(--gray-200); position: sticky; top: 0; z-index: 100; }
-.nav-container { max-width: 1200px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%; box-sizing: border-box; }
-.nav-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; color: var(--primary); flex-shrink: 0; }
-.main-nav { display: none; align-items: center; gap: 4px; flex: 1; }
-.nav-link { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); transition: var(--transition); }
-.nav-link:hover { background: var(--gray-100); color: var(--primary); }
-.nav-link.active { background: var(--gray-100); color: var(--accent); }
-.nav-actions { display: flex; align-items: center; gap: 10px; }
+    // 6. Formulaire d'investissement & Estimateur
+    const investForm = document.getElementById('invest-form');
+    const planType = document.getElementById('plan-type');
+    const investAmount = document.getElementById('invest-amount');
+    const investDuration = document.getElementById('invest-duration');
+    const estRate = document.getElementById('est-rate');
+    const estGains = document.getElementById('est-gains');
 
-.icon-btn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--text-secondary); transition: var(--transition); position: relative; }
-.icon-btn:hover { background: var(--gray-100); color: var(--primary); }
-.notification-wrapper { position: relative; }
-.badge { position: absolute; top: 2px; right: 2px; background: var(--danger); color: var(--white); font-size: 0.65rem; font-weight: 700; min-width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0 3px; }
+    const formatFCFA = (amount) => {
+        return new Intl.NumberFormat('fr-FR').format(Math.floor(amount)) + ' FCFA';
+    };
 
-.notification-panel { display: none; position: absolute; top: calc(100% + 10px); right: 0; width: 320px; max-width: 90vw; background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-xl); border: 1px solid var(--gray-200); overflow: hidden; z-index: 200; }
-.notification-panel.active { display: block; }
-.notif-header { padding: 14px 16px; font-weight: 600; border-bottom: 1px solid var(--gray-200); font-size: 0.9rem; }
-.notif-list { max-height: 320px; overflow-y: auto; }
-.notif-item { padding: 12px 16px; border-bottom: 1px solid var(--gray-100); }
-.notif-item:last-child { border-bottom: none; }
-.notif-item.unread { background: var(--gray-50); }
-.notif-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 3px; }
-.notif-desc { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+    const calculateGains = () => {
+        const amount = parseFloat(investAmount.value) || 0;
+        const durationMonths = parseInt(investDuration.value);
+        const selectedPlan = planType.options[planType.selectedIndex];
+        const annualRate = parseFloat(selectedPlan.getAttribute('data-rate'));
 
-.page-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-.page-title { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
-.page-subtitle { color: var(--text-secondary); font-size: 0.9rem; }
-.user-name { font-weight: 600; color: var(--primary); }
+        estRate.textContent = `+${annualRate.toFixed(1)}%`;
 
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.kpi-card { background: var(--white); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); border-left: 4px solid var(--gray-300); transition: var(--transition); }
-.kpi-card:hover { box-shadow: var(--shadow); }
-.kpi-card.accent-border { border-left-color: var(--accent); }
-.kpi-card.success-border { border-left-color: var(--success); }
-.kpi-card.primary-border { border-left-color: var(--primary-light); }
-.kpi-card.warning-border { border-left-color: var(--warning); }
-.kpi-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.kpi-label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
-.kpi-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; color: var(--accent); }
-.kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); margin-bottom: 10px; }
-.kpi-footer { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; flex-wrap: wrap; }
-.kpi-change { font-weight: 600; }
-.kpi-change.positive { color: var(--success); }
-.kpi-change.negative { color: var(--danger); }
-.kpi-period { color: var(--text-secondary); }
+        if (amount > 0) {
+            const gains = amount * (annualRate / 100) * (durationMonths / 12);
+            estGains.textContent = `+${formatFCFA(gains)}`;
+        } else {
+            estGains.textContent = '0 FCFA';
+        }
+    };
 
-.card-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.card-title { font-size: 1.05rem; font-weight: 600; color: var(--primary); }
+    if (planType && investAmount && investDuration) {
+        planType.addEventListener('change', calculateGains);
+        investAmount.addEventListener('input', calculateGains);
+        investDuration.addEventListener('change', calculateGains);
+        calculateGains();
+    }
 
-.chart-card, .finance-card, .invest-card, .investments-card, .wallet-balance-card, .wallet-info-card, .transactions-card {
-    background: var(--white); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
-}
-.interactive-card { transition: var(--transition); }
-.interactive-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-.content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-.full-width { width: 100%; }
+    if (investForm) {
+        investForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(investAmount.value);
+            if (amount >= 5000) {
+                window.showToast(`Investissement de ${formatFCFA(amount)} confirmé !`, 'success');
+                investForm.reset();
+                calculateGains();
+            } else {
+                window.showToast('Le montant minimum est de 5 000 FCFA.', 'error');
+            }
+        });
+    }
 
-.period-tabs { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: var(--radius-sm); }
-.tab-btn { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); transition: var(--transition); }
-.tab-btn.active { background: var(--white); color: var(--accent); box-shadow: var(--shadow-sm); }
-.chart-container { display: flex; gap: 10px; align-items: flex-end; height: 260px; max-width: 100%; }
-.y-axis { display: flex; flex-direction: column; justify-content: space-between; height: 100%; font-size: 0.7rem; color: var(--text-secondary); padding-bottom: 24px; flex-shrink: 0; }
-.chart-area { flex: 1; min-width: 0; display: flex; align-items: flex-end; height: 100%; gap: 18px; padding: 0 10px; border-left: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-.bar-group { width: 34px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 8px; }
-.bar { width: 60%; max-width: 26px; background: linear-gradient(180deg, var(--accent), var(--primary-light)); border-radius: 4px 4px 0 0; transition: height 0.6s ease; }
-.x-label { font-size: 0.7rem; color: var(--text-secondary); white-space: nowrap; }
+    // 7. Filtrage du tableau des investissements
+    const filterSelect = document.getElementById('investment-filter');
+    const tableRows = document.querySelectorAll('#investments-body tr');
 
-.finances-subnav { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.subnav-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); transition: var(--transition); white-space: nowrap; }
-.subnav-btn.active { background: var(--accent); color: var(--white); }
-.sub-view { display: none; }
-.sub-view.active { display: block; animation: fadeIn 0.3s ease; }
-.amount { font-size: 2rem; font-weight: 700; }
+    if (filterSelect) {
+        filterSelect.addEventListener('change', () => {
+            const status = filterSelect.value;
+            tableRows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
 
-.vip-section { margin-bottom: 24px; }
-.vip-section:last-child { margin-bottom: 0; }
-.vip-section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
-.vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
-.vip-card-header { display: flex; align-items: center; gap: 8px; }
-.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
-.vip-name { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
-.vip-price { font-size: 0.85rem; color: var(--text-secondary); }
-.vip-stats { display: flex; flex-direction: column; gap: 6px; }
-.vip-stat { background: var(--gray-50); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
-.vip-stat-label { display: block; font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 2px; }
-.vip-stat-value { display: block; font-size: 0.85rem; font-weight: 700; color: var(--accent); }
-@media (min-width: 480px) {
-    .vip-grid { gap: 16px; }
-    .vip-card { padding: 20px; }
-    .vip-name { font-size: 0.95rem; }
-    .vip-price { font-size: 0.95rem; }
-}
-.mini-chart-placeholder { display: flex; align-items: flex-end; gap: 4px; height: 100px; margin-bottom: 12px; }
-.mc-bar { flex: 1; min-width: 0; background: linear-gradient(180deg, var(--success), var(--accent)); border-radius: 3px 3px 0 0; }
-.analysis-text { font-size: 0.78rem; }
-@media (min-width: 480px) {
-    .mini-chart-placeholder { height: 140px; gap: 8px; }
-    .analysis-text { font-size: 0.9rem; }
-}
+    // 8. Animation des compteurs KPI
+    const animateCounters = () => {
+        const counters = document.querySelectorAll('.stat-number');
+        
+        counters.forEach(counter => {
+            const target = parseFloat(counter.getAttribute('data-target'));
+            const suffix = counter.getAttribute('data-suffix') || '';
+            const isDecimal = target % 1 !== 0;
+            const duration = 1500;
+            const steps = 60;
+            const increment = target / steps;
+            let current = 0;
+            let step = 0;
 
-.wallet-overview { display: grid; grid-template-columns: 1fr; gap: 16px; }
-@media (min-width: 720px) { .wallet-overview { grid-template-columns: 1.2fr 1fr; } }
-.wallet-balance-card { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: var(--white); text-align: center; }
-.wallet-label { font-size: 0.85rem; opacity: 0.8; margin-bottom: 8px; }
-.wallet-amount { font-size: 2.2rem; font-weight: 700; margin-bottom: 20px; }
-.wallet-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.wallet-actions .btn-outline { background: rgba(255,255,255,0.1); color: var(--white); border-color: rgba(255,255,255,0.3); }
-.wallet-actions .btn-outline:hover { background: rgba(255,255,255,0.2); }
-.wallet-info-card h3 { margin-bottom: 10px; color: var(--primary); }
+            const timer = setInterval(() => {
+                step++;
+                current += increment;
 
-.transactions-list { display: flex; flex-direction: column; }
-.transaction-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--gray-100); }
-.transaction-item:last-child { border-bottom: none; }
-.transaction-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.bg-success-light { background: rgba(16,185,129,0.12); }
-.bg-primary-light { background: rgba(30,58,95,0.1); }
-.bg-warning-light { background: rgba(245,158,11,0.12); }
-.bg-danger-light { background: rgba(239,68,68,0.12); }
-.transaction-info { flex: 1; min-width: 0; }
-.transaction-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; }
-.transaction-desc { font-size: 0.8rem; color: var(--text-secondary); }
-.transaction-meta { text-align: right; }
-.transaction-date { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 2px; }
-.transaction-amount { font-weight: 700; font-size: 0.9rem; }
-.transaction-amount.positive { color: var(--success); }
-.transaction-amount.negative { color: var(--danger); }
+                if (step >= steps) {
+                    current = target;
+                    clearInterval(timer);
+                }
 
-.account-grid { grid-template-columns: 1fr; }
-@media (min-width: 720px) { .account-grid { grid-template-columns: 1fr 1.3fr; } }
-.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; }
-.view-all { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
-.view-all:hover { text-decoration: underline; }
+                if (isDecimal) {
+                    counter.textContent = current.toFixed(1) + suffix;
+                } else {
+                    counter.textContent = new Intl.NumberFormat('fr-FR').format(Math.ceil(current)) + suffix;
+                }
+            }, duration / steps);
+        });
+    };
 
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--gray-200); display: flex; justify-content: space-around; padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); z-index: 100; }
-.bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-secondary); font-size: 0.7rem; font-weight: 500; padding: 4px 8px; border-radius: var(--radius-sm); transition: var(--transition); }
-.bottom-nav-item.active { color: var(--accent); }
+    // Lancer l'animation
+    animateCounters();
 
-@media (min-width: 900px) {
-    .main-nav { display: flex; }
-    .bottom-nav { display: none; }
-    .dashboard-main { padding-bottom: 40px; }
-}
+    // 10. Programme de Parrainage
+    const referralLinkInput = document.getElementById('referral-link');
+    const referralCopyBtn = document.getElementById('referral-copy-btn');
+    const referralShareBtn = document.getElementById('referral-share-btn');
+    const referralWhatsappBtn = document.getElementById('referral-whatsapp-btn');
+    const referralCountEl = document.getElementById('referral-count');
+    const referralEarningsEl = document.getElementById('referral-earnings');
 
-.toast-container { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 999; width: 90%; max-width: 360px; }
-@media (min-width: 900px) { .toast-container { bottom: 24px; } }
-.toast { display: flex; align-items: center; gap: 10px; background: var(--white); color: var(--text-primary); padding: 12px 16px; border-radius: var(--radius-sm); box-shadow: var(--shadow-lg); border: 1px solid var(--gray-200); opacity: 0; transform: translateY(10px); transition: var(--transition); font-size: 0.85rem; }
-.toast.show { opacity: 1; transform: translateY(0); }
-.toast.success { border-left: 4px solid var(--success); }
-.toast.error { border-left: 4px solid var(--danger); }
-.toast.info { border-left: 4px solid var(--accent); }
+    if (referralLinkInput) {
+        // Génère (ou récupère) un code de parrainage unique et stable pour l'utilisateur
+        const getReferralCode = () => {
+            let code = localStorage.getItem('referralCode');
+            if (code) return code;
 
-/* ---- Programme de Parrainage ---- */
-.referral-card { grid-column: 1 / -1; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); color: var(--white); position: relative; overflow: hidden; }
-.referral-card::before { content: ""; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-.referral-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; position: relative; }
-.referral-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.referral-title { font-size: 1.1rem; font-weight: 700; }
-.referral-subtitle { color: rgba(255,255,255,0.75); font-size: 0.88rem; margin-bottom: 20px; position: relative; max-width: 520px; }
+            const base = (userEmail || userName || 'atlas').toLowerCase();
+            let hash = 0;
+            for (let i = 0; i < base.length; i++) {
+                hash = (hash << 5) - hash + base.charCodeAt(i);
+                hash |= 0;
+            }
+            code = 'AC-' + Math.abs(hash).toString(36).toUpperCase().substring(0, 6);
+            localStorage.setItem('referralCode', code);
+            return code;
+        };
 
-.referral-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; position: relative; }
-.referral-stat { background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
-.referral-stat-value { font-size: 1.15rem; font-weight: 700; display: block; }
-.referral-stat-label { font-size: 0.68rem; color: rgba(255,255,255,0.7); display: block; margin-top: 2px; }
+        const referralCode = getReferralCode();
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        referralLinkInput.value = referralLink;
 
-.referral-link-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: var(--radius-sm); padding: 6px 6px 6px 14px; margin-bottom: 16px; position: relative; }
-.referral-link-box input { flex: 1; min-width: 0; background: transparent; border: none; color: var(--white); font-size: 0.85rem; outline: none; }
-.referral-link-box input::selection { background: rgba(255,255,255,0.3); }
-.referral-copy-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; background: var(--white); color: var(--primary); border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: var(--transition); white-space: nowrap; }
-.referral-copy-btn:hover { background: var(--gray-100); }
+        // Statistiques de parrainage (lues depuis le stockage local en attendant le backend)
+        const referredUsers = JSON.parse(localStorage.getItem('referredUsers') || '[]');
+        const referralEarnings = parseFloat(localStorage.getItem('referralEarnings') || '0');
+        if (referralCountEl) referralCountEl.textContent = referredUsers.length;
+        if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(referralEarnings);
 
-.referral-share-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; }
-.referral-share-btn { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); color: var(--white); border-radius: var(--radius-sm); padding: 9px 16px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
-.referral-share-btn:hover { background: rgba(255,255,255,0.18); }
+        // Bouton Copier
+        if (referralCopyBtn) {
+            referralCopyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(referralLink);
+                } catch (err) {
+                    referralLinkInput.select();
+                    document.execCommand('copy');
+                }
+                window.showToast('Lien de parrainage copié !', 'success');
+            });
+        }
 
-.referral-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 18px; position: relative; }
-.referral-tier { background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px 14px; }
-.referral-tier-rate { font-size: 1.2rem; font-weight: 800; }
-.referral-tier-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        // Bouton Partager (Web Share API avec repli sur la copie)
+        if (referralShareBtn) {
+            referralShareBtn.addEventListener('click', async () => {
+                const shareData = {
+                    title: 'Atlas Capital',
+                    text: 'Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀',
+                    url: referralLink
+                };
+                if (navigator.share) {
+                    try {
+                        await navigator.share(shareData);
+                    } catch (err) {
+                        // Partage annulé par l'utilisateur, rien à faire
+                    }
+                } else {
+                    try {
+                        await navigator.clipboard.writeText(referralLink);
+                        window.showToast('Lien copié, prêt à être partagé !', 'success');
+                    } catch (err) {
+                        window.showToast('Impossible de partager automatiquement.', 'error');
+                    }
+                }
+            });
+        }
 
-@media (max-width: 480px) {
-    .referral-stats { grid-template-columns: 1fr 1fr; }
-    .referral-stats .referral-stat:last-child { grid-column: 1 / -1; }
-}
+        // Lien direct WhatsApp
+        if (referralWhatsappBtn) {
+            const message = encodeURIComponent(`Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀 ${referralLink}`);
+            referralWhatsappBtn.href = `https://wa.me/?text=${message}`;
+        }
+    }
 
-/* ---- Carte de saisie d'un code de parrainage (bannière récompense) ---- */
-.redeem-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
-.redeem-card::before { content: ""; position: absolute; top: -50px; right: 40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.06); }
-.redeem-content { display: flex; align-items: center; gap: 12px; position: relative; min-width: 0; }
-.redeem-emoji { font-size: 1.8rem; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-.redeem-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.redeem-title { color: var(--white); font-weight: 700; font-size: 0.98rem; }
-.redeem-subtitle { color: rgba(255,255,255,0.75); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.redeem-cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: var(--warning); color: var(--primary); border: none; border-radius: 999px; padding: 11px 18px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: var(--transition); position: relative; white-space: nowrap; }
-.redeem-cta:hover { background: #fbbf24; transform: translateY(-1px); }
-.redeem-cta svg { transition: transform 0.25s ease; }
-.redeem-cta.open svg { transform: rotate(90deg); }
+    // 11. Menu "Mon Compte" (navigation interne, code PIN, profil, code de parrainage reçu)
+    const accountMenuRoot = document.getElementById('account-menu-root');
+    const redeemCard = document.querySelector('.redeem-card');
+    const redeemInputRow = document.getElementById('redeem-input-row');
+    const accountSubviews = document.querySelectorAll('.account-subview');
 
-.redeem-input-row { display: none; align-items: center; gap: 8px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 10px 10px 16px; margin: -6px 0 16px 0; box-shadow: var(--shadow-sm); }
-.redeem-input-row.open { display: flex; }
-.redeem-input-row input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
-.redeem-input-row .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
+    const showAccountMenu = () => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        if (accountMenuRoot) accountMenuRoot.style.display = '';
+        if (redeemCard) redeemCard.style.display = '';
+        if (redeemInputRow) redeemInputRow.style.display = redeemInputRow.classList.contains('open') ? '' : 'none';
+    };
 
-/* ---- Menu du compte (style liste) ---- */
-.account-menu { display: flex; flex-direction: column; gap: 8px; }
-.avatar-row { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 4px; }
-.account-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: var(--transition); }
-.account-menu-item:hover { box-shadow: var(--shadow); border-color: var(--gray-300); }
-.account-menu-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.account-menu-icon.danger { background: rgba(239,68,68,0.1); color: var(--danger); }
-.account-menu-icon.admin { background: rgba(245,158,11,0.12); color: var(--warning); }
-.account-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.account-menu-title { font-weight: 600; font-size: 0.92rem; color: var(--text-primary); }
-.account-menu-subtitle { font-size: 0.78rem; color: var(--text-secondary); }
-.account-menu-chevron { color: var(--gray-300); flex-shrink: 0; }
-.account-menu-item.danger .account-menu-title { color: var(--danger); }
-.account-menu-item.admin-item { border: 1px dashed var(--warning); }
+    const openAccountSubview = (target) => {
+        accountSubviews.forEach(v => v.classList.remove('active'));
+        const view = document.getElementById('account-sub-' + target);
+        if (view) {
+            view.classList.add('active');
+            if (accountMenuRoot) accountMenuRoot.style.display = 'none';
+            if (redeemCard) redeemCard.style.display = 'none';
+            if (redeemInputRow) redeemInputRow.style.display = 'none';
+            window.scrollTo(0, 0);
+        }
+    };
 
-/* ---- Sous-vues du compte ---- */
-.account-subview { display: none; }
-.account-subview.active { display: block; }
-.account-back-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-weight: 600; font-size: 0.88rem; cursor: pointer; padding: 8px 0; margin-bottom: 12px; }
-.account-back-btn:hover { text-decoration: underline; }
+    // Ouvre/ferme le champ de saisie du code (bannière "Récompense")
+    const redeemToggleBtn = document.getElementById('redeem-toggle-btn');
+    if (redeemToggleBtn && redeemInputRow) {
+        redeemToggleBtn.addEventListener('click', () => {
+            redeemInputRow.classList.toggle('open');
+            redeemToggleBtn.classList.toggle('open');
+            if (redeemInputRow.classList.contains('open')) {
+                document.getElementById('redeem-code-input').focus();
+            }
+        });
+    }
+
+    document.querySelectorAll('.account-menu-item[data-account-target]').forEach(item => {
+        item.addEventListener('click', () => openAccountSubview(item.getAttribute('data-account-target')));
+    });
+
+    // Renvoie vers un autre onglet principal (ex: Historique des transactions)
+    document.querySelectorAll('.account-menu-item[data-nav-target]').forEach(item => {
+        item.addEventListener('click', () => {
+            const target = item.getAttribute('data-nav-target');
+            const link = document.querySelector(`.nav-link[data-target="${target}"], .bottom-nav-item[data-target="${target}"]`);
+            if (link) link.click();
+        });
+    });
+
+    document.querySelectorAll('[data-account-back]').forEach(btn => {
+        btn.addEventListener('click', showAccountMenu);
+    });
+
+    // Pré-remplissage du formulaire "Mes informations"
+    const profileNameInput = document.getElementById('profile-name-input');
+    const profilePhoneInput = document.getElementById('profile-phone-input');
+    const profileEmailInput = document.getElementById('profile-email-input');
+    if (profileNameInput) profileNameInput.value = userName;
+    if (profileEmailInput) profileEmailInput.value = userEmail;
+    if (profilePhoneInput) profilePhoneInput.value = localStorage.getItem('userPhone') || '';
+
+    const profileSaveBtn = document.getElementById('profile-save-btn');
+    if (profileSaveBtn) {
+        profileSaveBtn.addEventListener('click', () => {
+            const newName = profileNameInput.value.trim();
+            if (newName.length < 2) {
+                window.showToast('Veuillez entrer un nom valide.', 'error');
+                return;
+            }
+            localStorage.setItem('userName', newName);
+            localStorage.setItem('userPhone', profilePhoneInput.value.trim());
+            document.querySelectorAll('.user-name').forEach(el => el.textContent = newName);
+            const newInitials = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            document.querySelectorAll('.avatar').forEach(el => el.textContent = newInitials);
+            window.showToast('Profil mis à jour !', 'success');
+        });
+    }
+
+    // Code PIN de retrait (stocké côté client — un vrai contrôle doit être fait côté serveur)
+    const pinInput = document.getElementById('pin-input');
+    const pinConfirmInput = document.getElementById('pin-confirm-input');
+    const pinSaveBtn = document.getElementById('pin-save-btn');
+    if (pinSaveBtn) {
+        pinSaveBtn.addEventListener('click', () => {
+            const pin = pinInput.value.trim();
+            if (!/^\d{5}$/.test(pin)) {
+                window.showToast('Le code PIN doit contenir 5 chiffres.', 'error');
+                return;
+            }
+            if (pin !== pinConfirmInput.value.trim()) {
+                window.showToast('Les deux codes PIN ne correspondent pas.', 'error');
+                return;
+            }
+            localStorage.setItem('withdrawPin', pin);
+            pinInput.value = '';
+            pinConfirmInput.value = '';
+            window.showToast('Code PIN enregistré !', 'success');
+            showAccountMenu();
+        });
+    }
+
+    // Saisie d'un code de parrainage reçu (pour un utilisateur déjà inscrit)
+    const redeemInput = document.getElementById('redeem-code-input');
+    const redeemBtn = document.getElementById('redeem-code-btn');
+    if (redeemBtn) {
+        redeemBtn.addEventListener('click', async () => {
+            const code = redeemInput.value.trim().toUpperCase();
+            if (!code) {
+                window.showToast('Veuillez entrer un code.', 'error');
+                return;
+            }
+            if (localStorage.getItem('referralCode') === code) {
+                window.showToast('Vous ne pouvez pas utiliser votre propre code.', 'error');
+                return;
+            }
+            if (localStorage.getItem('referredBy')) {
+                window.showToast('Un code de parrainage est déjà associé à votre compte.', 'error');
+                return;
+            }
+            try {
+                if (window.supabaseClient) {
+                    await window.supabaseClient.auth.updateUser({ data: { referred_by: code } });
+                }
+                localStorage.setItem('referredBy', code);
+                redeemInput.value = '';
+                redeemInputRow.classList.remove('open');
+                if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
+                window.showToast('Code de parrainage validé !', 'success');
+            } catch (err) {
+                window.showToast("Impossible d'enregistrer ce code pour le moment.", 'error');
+            }
+        });
+    }
+
+    // Accès admin : n'affiche l'entrée de menu que pour les comptes marqués administrateurs
+    const adminMenuItem = document.getElementById('admin-menu-item');
+    if (adminMenuItem && localStorage.getItem('isAdmin') === 'true') {
+        adminMenuItem.style.display = '';
+    }
+});
+
+    // 9. Sub-Navigation pour l'onglet Finances
+    const subnavBtns = document.querySelectorAll('.subnav-btn');
+    const subViews = document.querySelectorAll('.sub-view');
+
+    subnavBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const target = btn.getAttribute('data-sub');
+            if(!target) return;
+
+            // Update active states
+            subnavBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Switch sub-views
+            subViews.forEach(v => v.classList.remove('active'));
+            const targetView = document.getElementById('sub-' + target);
+            if (targetView) targetView.classList.add('active');
+        });
+    });
