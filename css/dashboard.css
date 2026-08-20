@@ -12,8 +12,8 @@
     --primary: #0B1D3A;
     --primary-light: #1E3A5F;
     --primary-hover: #2A5082;
-    --accent: #3B82F6;
-    --accent-hover: #2563EB;
+    --accent: #C9A227;
+    --accent-hover: #97761B;
     --success: #10B981;
     --warning: #F59E0B;
     --danger: #EF4444;
@@ -76,8 +76,8 @@ svg { flex-shrink: 0; }
     border: 1px solid transparent;
     white-space: nowrap;
 }
-.btn-primary { background: var(--accent); color: var(--white); }
-.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary { background: var(--gold-gradient); color: var(--primary); }
+.btn-primary:hover { background: var(--gold-dark); color: var(--white); }
 .btn-outline { background: var(--white); color: var(--primary); border-color: var(--gray-200); }
 .btn-outline:hover { background: var(--gray-100); }
 .btn-full { width: 100%; }
@@ -127,7 +127,7 @@ svg { flex-shrink: 0; }
 .notif-item.unread { background: var(--gray-50); }
 .notif-item.unread:hover { background: var(--gray-100); }
 .notif-item:not(.unread) { cursor: default; }
-.notif-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(59,130,246,0.12); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.notif-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(201,162,39,0.14); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .notif-item[data-notif-id] .notif-icon { position: relative; }
 .notif-body { flex: 1; min-width: 0; position: relative; }
 .notif-item.unread .notif-body::after { content: ""; position: absolute; top: 2px; right: -6px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
@@ -184,7 +184,7 @@ svg { flex-shrink: 0; }
 
 .finances-subnav { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .subnav-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); transition: var(--transition); white-space: nowrap; }
-.subnav-btn.active { background: var(--accent); color: var(--white); }
+.subnav-btn.active { background: var(--gold-gradient); color: var(--primary); }
 .sub-view { display: none; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
 .amount { font-size: 2rem; font-weight: 700; }
@@ -195,7 +195,7 @@ svg { flex-shrink: 0; }
 .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .vip-card-header { display: flex; align-items: center; gap: 8px; }
-.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
 .vip-name { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
 .vip-price { font-size: 0.85rem; color: var(--text-secondary); }
 .vip-stats { display: flex; flex-direction: column; gap: 6px; }
@@ -245,7 +245,7 @@ svg { flex-shrink: 0; }
 
 .account-grid { grid-template-columns: 1fr; }
 @media (min-width: 720px) { .account-grid { grid-template-columns: 1fr 1.3fr; } }
-.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .view-all { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
 .view-all:hover { text-decoration: underline; }
 
