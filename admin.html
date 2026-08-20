@@ -32,6 +32,7 @@
             <button class="admin-nav-item" data-target="depots">⬆️ Dépôts</button>
             <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
             <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
+            <button class="admin-nav-item" data-target="parametres">⚙️ Paramètres</button>
         </nav>
         <div class="admin-sidebar-footer">
             <a href="dashboard.html" class="admin-back-link">← Retour à l'espace client</a>
@@ -194,6 +195,54 @@
                         <tbody id="users-tbody"><tr><td colspan="6">Chargement…</td></tr></tbody>
                     </table>
                 </div>
+            </div>
+        </section>
+
+        <!-- VUE: PARAMÈTRES -->
+        <section class="admin-view" id="view-parametres">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Paramètres généraux</h2>
+                </div>
+                <form id="settings-form" class="admin-form">
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Nom du site</label>
+                            <input type="text" id="setting-site-name" placeholder="Atlas Capital">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Email support</label>
+                            <input type="email" id="setting-support-email" placeholder="support@atlascapital.com">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>WhatsApp support</label>
+                            <input type="text" id="setting-support-whatsapp" placeholder="+237 690 000 000">
+                        </div>
+                    </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Taux de parrainage (%)</label>
+                            <input type="number" id="setting-referral-rate" min="0" step="0.01">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Dépôt minimum (FCFA)</label>
+                            <input type="number" id="setting-min-deposit" min="0" step="1">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Retrait minimum (FCFA)</label>
+                            <input type="number" id="setting-min-withdrawal" min="0" step="1">
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                            <input type="checkbox" id="setting-maintenance-mode" style="width:auto;">
+                            Activer le mode maintenance (bloque l'accès au site pour les utilisateurs non-admin)
+                        </label>
+                    </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="settings-submit-btn">Enregistrer les paramètres</button>
+                    </div>
+                </form>
             </div>
         </section>
     </main>
