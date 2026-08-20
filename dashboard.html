@@ -247,15 +247,15 @@
                         <div class="wallet-label">Solde Disponible</div>
                         <div class="wallet-amount" id="wallet-balance-amount">0 FCFA</div>
                         <div class="wallet-actions">
-                            <button class="btn btn-primary" id="atlas-deposit-btn" type="button">Faire un dépôt</button>
-                            <button class="btn btn-outline" id="wallet-withdraw-btn" type="button">Retirer des fonds</button>
+                            <button class="btn btn-primary" id="wallet-deposit-btn">Faire un dépôt</button>
+                            <button class="btn btn-outline" id="wallet-withdraw-btn">Retirer des fonds</button>
                         </div>
                     </div>
                     
                     <div class="wallet-info-card">
                         <h3>Moyens de paiement</h3>
-                        <p class="text-secondary mb-4">Choisissez un moyen de paiement, effectuez le transfert puis envoyez votre demande. Votre solde sera crédité après validation de votre paiement.</p>
-                        <button class="btn btn-outline" id="wallet-payment-info-btn" type="button" style="width:100%">+ Voir les moyens de paiement</button>
+                        <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
+                        <button class="btn btn-outline" style="width:100%">+ Ajouter un moyen de paiement</button>
                     </div>
                 </div>
             </div>
@@ -565,114 +565,12 @@
         </nav>
     </div>
 
-    <!-- Dépôt : demande réelle enregistrée dans Supabase -->
-    <div id="deposit-modal" class="ac-modal" aria-hidden="true">
-        <div class="ac-modal-backdrop" data-deposit-close></div>
-        <div class="ac-modal-card" role="dialog" aria-modal="true" aria-labelledby="deposit-modal-title">
-            <button type="button" class="ac-modal-close" data-deposit-close aria-label="Fermer">×</button>
-            <h2 id="deposit-modal-title">Faire un dépôt</h2>
-            <p class="ac-modal-subtitle">Effectuez le paiement, puis envoyez la demande. Le crédit du portefeuille se fait après vérification.</p>
-
-            <form id="deposit-form">
-                <label class="ac-label" for="deposit-amount">Montant (FCFA)</label>
-                <input class="ac-input" id="deposit-amount" type="number" min="1000" step="1" placeholder="Ex. 10000" required>
-
-                <label class="ac-label" for="deposit-method">Moyen de paiement</label>
-                <select class="ac-input" id="deposit-method" required></select>
-
-                <div id="deposit-instructions" class="ac-payment-box"></div>
-
-                <label class="ac-label" for="deposit-reference">Référence / numéro de transaction</label>
-                <input class="ac-input" id="deposit-reference" type="text" maxlength="120" placeholder="Ex. ID de transaction Mobile Money" required>
-
-                <button class="btn btn-primary ac-submit" id="deposit-submit" type="submit">Envoyer la demande de dépôt</button>
-            </form>
-        </div>
-    </div>
-
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/payment-methods.js"></script>
     <script src="js/dashboard.js"></script>
-
-    <script src="js/payment methods.js"></script>
-    <style>
-        .ac-modal{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px}.ac-modal.is-open{display:flex}.ac-modal-backdrop{position:absolute;inset:0;background:rgba(5,18,42,.68);backdrop-filter:blur(4px)}.ac-modal-card{position:relative;width:min(100%,520px);max-height:90vh;overflow:auto;background:#fff;border-radius:24px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.28);z-index:1}.ac-modal-card h2{margin:0 35px 8px 0;color:#0b1f41;font-size:26px}.ac-modal-subtitle{margin:0 0 20px;color:#68788f;line-height:1.5}.ac-modal-close{position:absolute;right:14px;top:10px;width:40px;height:40px;border:0;border-radius:50%;background:#eef2f7;color:#183152;font-size:28px;cursor:pointer}.ac-label{display:block;margin:14px 0 7px;color:#122746;font-weight:700}.ac-input{box-sizing:border-box;width:100%;padding:14px 15px;border:1px solid #d7e0eb;border-radius:13px;background:#fff;color:#102544;font-size:16px;outline:none}.ac-input:focus{border-color:#c99c20;box-shadow:0 0 0 3px rgba(201,156,32,.12)}.ac-payment-box{margin:14px 0;padding:15px;border-radius:15px;background:#f6f8fb;border:1px solid #e0e6ef;color:#233957;line-height:1.55}.ac-payment-title{font-weight:800;font-size:17px;margin-bottom:5px}.ac-copy-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ac-copy{border:0;background:#102746;color:#fff;border-radius:9px;padding:7px 10px;cursor:pointer}.ac-submit{width:100%;margin-top:18px}.ac-submit:disabled{opacity:.6;cursor:not-allowed}@media(max-width:600px){.ac-modal{padding:10px}.ac-modal-card{border-radius:20px;padding:20px}.ac-modal-card h2{font-size:23px}}
-    </style>
-    <script>
-    (function(){
-        const modal=document.getElementById('deposit-modal');
-        const openBtn=document.getElementById('atlas-deposit-btn');
-        const infoBtn=document.getElementById('wallet-payment-info-btn');
-        const form=document.getElementById('deposit-form');
-        const methodEl=document.getElementById('deposit-method');
-        const instructions=document.getElementById('deposit-instructions');
-        const submitBtn=document.getElementById('deposit-submit');
-        const amountEl=document.getElementById('deposit-amount');
-        const refEl=document.getElementById('deposit-reference');
-
-        function methods(){
-            try{
-                if(window.AtlasPaymentMethods && typeof window.AtlasPaymentMethods.getPaymentMethods==='function') return window.AtlasPaymentMethods.getPaymentMethods('CM').filter(m=>m.type!=='card');
-            }catch(e){}
-            return [
-                {id:'orange_money_cm',name:'Orange Money',number:'+237 690 000 000',holder:'ATLAS CAPITAL SARL',note:'Envoyez le montant exact puis indiquez la référence de transaction.'},
-                {id:'mtn_momo_cm',name:'MTN Mobile Money',number:'+237 670 000 000',holder:'ATLAS CAPITAL SARL',note:'Envoyez le montant exact puis indiquez la référence de transaction.'},
-                {id:'bank_transfer',name:'Virement bancaire',number:'CM21 10005 00025 01234567890 25',holder:'ATLAS CAPITAL SARL',note:'Traitement après vérification du virement.'}
-            ];
-        }
-        const paymentMethods=methods();
-        methodEl.innerHTML=paymentMethods.map(m=>'<option value="'+m.id+'">'+m.name+'</option>').join('');
-
-        function selectedMethod(){return paymentMethods.find(m=>m.id===methodEl.value)||paymentMethods[0]}
-        function renderInstructions(){
-            const m=selectedMethod(); if(!m)return;
-            instructions.innerHTML='<div class="ac-payment-title">'+m.icon+' '+m.name+'</div>'
-                +'<div><strong>Bénéficiaire :</strong> '+(m.holder||'ATLAS CAPITAL SARL')+'</div>'
-                +'<div class="ac-copy-line"><strong>Compte / numéro :</strong> <span>'+m.number+'</span> <button type="button" class="ac-copy" id="ac-copy-payment">Copier</button></div>'
-                +'<div style="margin-top:6px">'+(m.note||'Effectuez le paiement puis envoyez la référence.')+'</div>';
-            const copy=document.getElementById('ac-copy-payment');
-            if(copy)copy.onclick=async()=>{try{await navigator.clipboard.writeText(m.number);window.showToast('Coordonnées copiées.','success')}catch(e){window.showToast('Copiez les coordonnées manuellement.','info')}};
-        }
-        renderInstructions();
-        methodEl.addEventListener('change',renderInstructions);
-
-        function openModal(){modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');setTimeout(()=>amountEl.focus(),50)}
-        function closeModal(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true')}
-        document.querySelectorAll('[data-deposit-close]').forEach(el=>el.addEventListener('click',closeModal));
-        document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('is-open'))closeModal()});
-
-        // Le bouton utilise un ID dédié pour ne pas être repris par l'ancien gestionnaire de dashboard.js.
-        if(openBtn) openBtn.addEventListener('click',e=>{e.preventDefault();openModal()});
-        if(infoBtn) infoBtn.addEventListener('click',e=>{e.preventDefault();openModal()});
-
-        form.addEventListener('submit',async e=>{
-            e.preventDefault();
-            const amount=Number(amountEl.value);
-            const m=selectedMethod();
-            const reference=refEl.value.trim();
-            if(!amount || amount<1000){window.showToast('Le montant minimum est de 1 000 FCFA.','error');return}
-            if(!m || !reference){window.showToast('Veuillez compléter le moyen de paiement et la référence.','error');return}
-            submitBtn.disabled=true;submitBtn.textContent='Envoi en cours…';
-            try{
-                const {data:{user},error:userError}=await window.supabaseClient.auth.getUser();
-                if(userError||!user)throw new Error('Session utilisateur introuvable. Veuillez vous reconnecter.');
-                const {error}=await window.supabaseClient.from('deposit_requests').insert({
-                    user_id:user.id,amount:amount,method_name:m.name,proof_url:reference
-                });
-                if(error)throw error;
-                closeModal();form.reset();renderInstructions();
-                window.showToast('Demande de dépôt envoyée. Elle sera créditée après validation.','success');
-                if(typeof window.refreshDashboardData==='function')await window.refreshDashboardData();
-            }catch(err){
-                console.error(err);
-                window.showToast(err.message||'Impossible d'envoyer la demande de dépôt.','error');
-            }finally{submitBtn.disabled=false;submitBtn.textContent='Envoyer la demande de dépôt'}
-        });
-    })();
-    </script>
-
 </body>
 </html>
