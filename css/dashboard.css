@@ -305,33 +305,31 @@ svg { flex-shrink: 0; }
 .redeem-input-row input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
 .redeem-input-row .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
 
-/* ---- Menu du compte (édition Prestige — marine & or) ---- */
-.account-menu { display: flex; flex-direction: column; gap: 10px; }
+/* ---- Menu du compte (édition Prestige Noire — cartes marine profond & or) ---- */
+.account-menu { display: flex; flex-direction: column; gap: 12px; }
 
 .account-profile-card {
     display: flex; align-items: center; gap: 16px;
     background:
-        radial-gradient(120% 140% at 100% 0%, rgba(201,162,39,0.22) 0%, rgba(201,162,39,0) 55%),
-        linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-    border: 1px solid rgba(201,162,39,0.35);
+        radial-gradient(130% 160% at 100% 0%, rgba(201,162,39,0.28) 0%, rgba(201,162,39,0) 55%),
+        linear-gradient(135deg, #081428 0%, #0B1D3A 60%, #14213F 100%);
+    border: 1px solid rgba(201,162,39,0.4);
     border-radius: var(--radius-lg);
-    padding: 20px 22px;
-    margin-bottom: 18px;
-    box-shadow: var(--shadow-lg);
+    padding: 22px;
+    margin-bottom: 20px;
+    box-shadow: 0 16px 32px -12px rgba(5,12,26,0.55);
     position: relative;
     overflow: hidden;
 }
-.account-profile-card::before { content: ""; position: absolute; top: -40px; right: -20px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.05); }
-.account-profile-card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold-gradient); opacity: 0.8; }
+.account-profile-card::before { content: ""; position: absolute; top: -40px; right: -20px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.04); }
+.account-profile-card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--gold-gradient); }
 .account-profile-avatar {
     width: 60px; height: 60px; border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    border: 2px solid transparent;
-    background-clip: padding-box;
+    background: rgba(255,255,255,0.06);
     position: relative;
-    color: var(--white); display: flex; align-items: center; justify-content: center;
+    color: var(--gold-light); display: flex; align-items: center; justify-content: center;
     font-weight: 700; font-size: 1.22rem; letter-spacing: 0.02em; flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(201,162,39,0.5), 0 6px 16px rgba(0,0,0,0.25);
+    box-shadow: 0 0 0 1px rgba(201,162,39,0.55), 0 6px 16px rgba(0,0,0,0.3);
 }
 .account-profile-avatar::before {
     content: ""; position: absolute; inset: -2px; border-radius: 50%; padding: 2px;
@@ -342,11 +340,11 @@ svg { flex-shrink: 0; }
 }
 .account-profile-info { position: relative; min-width: 0; }
 .account-profile-name { color: var(--white); font-size: 1.06rem; font-weight: 700; letter-spacing: 0.01em; margin-bottom: 4px; }
-.account-profile-email { color: rgba(255,255,255,0.68); font-size: 0.8rem; margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-profile-email { color: rgba(255,255,255,0.55); font-size: 0.8rem; margin-bottom: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-verified-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(201,162,39,0.14);
-    border: 1px solid rgba(201,162,39,0.45);
+    background: rgba(201,162,39,0.16);
+    border: 1px solid rgba(201,162,39,0.5);
     color: var(--gold-light);
     font-size: 0.7rem; font-weight: 700; letter-spacing: 0.03em;
     padding: 4px 11px; border-radius: 999px;
@@ -355,59 +353,60 @@ svg { flex-shrink: 0; }
 
 .account-section-label {
     display: flex; align-items: center; gap: 8px;
-    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--text-secondary);
-    margin: 20px 2px 8px;
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--gold-dark);
+    margin: 22px 2px 10px;
 }
 .account-section-label:first-of-type { margin-top: 6px; }
-.account-section-label::before { content: ""; width: 12px; height: 2px; border-radius: 2px; background: var(--gold-gradient); flex-shrink: 0; }
-.account-section-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--gray-200) 0%, transparent 100%); }
+.account-section-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(201,162,39,0.35) 0%, transparent 100%); }
 
+/* Cartes sombres — la nouvelle signature visuelle du menu */
 .account-menu-item {
     display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius);
-    padding: 15px 16px;
+    background: linear-gradient(135deg, #0E2140 0%, #0B1D3A 100%);
+    border: 1px solid rgba(201,162,39,0.16);
+    border-radius: var(--radius-lg);
+    padding: 16px 18px;
     cursor: pointer;
     transition: var(--transition);
     position: relative;
     overflow: hidden;
+    box-shadow: 0 6px 16px -8px rgba(5,12,26,0.5);
 }
-.account-menu-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold-gradient); transform: scaleY(0); transition: transform 0.25s ease; }
-.account-menu-item:hover { box-shadow: 0 10px 24px -8px rgba(11,29,58,0.18); border-color: rgba(201,162,39,0.4); transform: translateY(-1px); }
-.account-menu-item:hover::before { transform: scaleY(1); }
+.account-menu-item::after { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; opacity: 0; transition: opacity 0.25s ease; background: var(--gold-gradient); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+.account-menu-item:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -10px rgba(5,12,26,0.6); }
+.account-menu-item:hover::after { opacity: 1; }
 .account-menu-icon {
     width: 44px; height: 44px; border-radius: 12px;
-    background: var(--gray-100); color: var(--accent);
+    background: rgba(255,255,255,0.06); color: #9DC3FF;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    box-shadow: inset 0 0 0 1px rgba(11,29,58,0.04);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     transition: var(--transition);
 }
-.account-menu-item:hover .account-menu-icon { transform: scale(1.05); }
-.account-menu-icon.security { background: rgba(99,102,241,0.12); color: #6366F1; }
-.account-menu-icon.team { background: linear-gradient(135deg, rgba(233,206,124,0.28), rgba(151,118,27,0.16)); color: var(--gold-dark); }
-.account-menu-icon.support { background: rgba(16,185,129,0.12); color: var(--success); }
-.account-menu-icon.danger { background: rgba(239,68,68,0.1); color: var(--danger); }
-.account-menu-icon.admin { background: linear-gradient(135deg, rgba(233,206,124,0.28), rgba(151,118,27,0.16)); color: var(--gold-dark); }
+.account-menu-item:hover .account-menu-icon { transform: scale(1.06); }
+.account-menu-icon.security { background: rgba(139,146,255,0.14); color: #A9B0FF; }
+.account-menu-icon.team { background: rgba(233,206,124,0.14); color: var(--gold-light); }
+.account-menu-icon.support { background: rgba(52,211,153,0.14); color: #6EE7B7; }
+.account-menu-icon.danger { background: rgba(248,113,113,0.14); color: #FCA5A5; }
+.account-menu-icon.admin { background: rgba(233,206,124,0.14); color: var(--gold-light); }
 .account-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.account-menu-title { font-weight: 650; font-size: 0.94rem; color: var(--text-primary); letter-spacing: 0.005em; display: flex; align-items: center; gap: 8px; }
-.account-menu-subtitle { font-size: 0.79rem; color: var(--text-secondary); }
+.account-menu-title { font-weight: 650; font-size: 0.95rem; color: var(--white); letter-spacing: 0.005em; display: flex; align-items: center; gap: 8px; }
+.account-menu-subtitle { font-size: 0.79rem; color: rgba(255,255,255,0.5); }
 .account-menu-badge {
     background: var(--gold-gradient);
-    color: #3A2C05;
-    font-size: 0.64rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.03em;
-    box-shadow: 0 2px 6px rgba(201,162,39,0.35);
+    color: #2A1F04;
+    font-size: 0.63rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: 0.03em;
+    box-shadow: 0 2px 6px rgba(201,162,39,0.4);
 }
-.account-menu-chevron-wrap { width: 30px; height: 30px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
-.account-menu-item:hover .account-menu-chevron-wrap { background: var(--primary); }
-.account-menu-item:hover .account-menu-chevron-wrap svg { color: var(--gold-light); }
-.account-menu-chevron { color: var(--gray-500); flex-shrink: 0; transition: var(--transition); }
-.account-menu-item.danger { border-top: 1px solid var(--gray-200); margin-top: 10px; padding-top: 15px; }
-.account-menu-item.danger:hover { border-color: rgba(239,68,68,0.35); box-shadow: 0 10px 24px -8px rgba(239,68,68,0.16); }
-.account-menu-item.danger::before { background: var(--danger); }
-.account-menu-item.danger .account-menu-title { color: var(--danger); }
-.account-menu-item.admin-item { border: 1px dashed var(--gold); background: linear-gradient(135deg, rgba(233,206,124,0.06), rgba(255,255,255,0)); }
+.account-menu-chevron-wrap { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+.account-menu-item:hover .account-menu-chevron-wrap { background: var(--gold-gradient); }
+.account-menu-item:hover .account-menu-chevron-wrap svg { color: #2A1F04; }
+.account-menu-chevron { color: rgba(255,255,255,0.4); flex-shrink: 0; transition: var(--transition); }
+.account-menu-item.danger { background: linear-gradient(135deg, #241012 0%, #150a0b 100%); border-color: rgba(248,113,113,0.22); margin-top: 4px; }
+.account-menu-item.danger:hover { box-shadow: 0 14px 28px -10px rgba(120,20,20,0.5); }
+.account-menu-item.danger::after { background: linear-gradient(135deg, #FCA5A5, #EF4444); }
+.account-menu-item.danger .account-menu-title { color: #FCA5A5; }
+.account-menu-item.admin-item { border: 1px dashed rgba(201,162,39,0.5); }
 
 /* ---- Sous-vues du compte ---- */
 .account-subview { display: none; }
