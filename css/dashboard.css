@@ -301,18 +301,40 @@ svg { flex-shrink: 0; }
 .redeem-input-row input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
 .redeem-input-row .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
 
-/* ---- Menu du compte (style liste) ---- */
+/* ---- Menu du compte (style liste, version premium) ---- */
 .account-menu { display: flex; flex-direction: column; gap: 8px; }
-.avatar-row { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 4px; }
-.account-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: var(--transition); }
-.account-menu-item:hover { box-shadow: var(--shadow); border-color: var(--gray-300); }
-.account-menu-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.account-profile-card { display: flex; align-items: center; gap: 14px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.account-profile-card::before { content: ""; position: absolute; top: -40px; right: -20px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.account-profile-avatar { width: 58px; height: 58px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.35); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.2rem; flex-shrink: 0; position: relative; }
+.account-profile-info { position: relative; min-width: 0; }
+.account-profile-name { color: var(--white); font-size: 1.02rem; font-weight: 700; margin-bottom: 3px; }
+.account-profile-email { color: rgba(255,255,255,0.7); font-size: 0.8rem; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-verified-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: var(--white); font-size: 0.7rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+.account-verified-badge svg { color: var(--success); flex-shrink: 0; }
+
+.account-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); margin: 14px 2px 2px; }
+.account-section-label:first-of-type { margin-top: 4px; }
+
+.account-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden; }
+.account-menu-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); transform: scaleY(0); transition: transform 0.2s ease; }
+.account-menu-item:hover { box-shadow: var(--shadow); border-color: var(--gray-300); transform: translateX(2px); }
+.account-menu-item:hover::before { transform: scaleY(1); }
+.account-menu-icon { width: 42px; height: 42px; border-radius: 11px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.account-menu-icon.security { background: rgba(99,102,241,0.12); color: #6366F1; }
+.account-menu-icon.team { background: rgba(245,158,11,0.12); color: var(--warning); }
+.account-menu-icon.support { background: rgba(16,185,129,0.12); color: var(--success); }
 .account-menu-icon.danger { background: rgba(239,68,68,0.1); color: var(--danger); }
 .account-menu-icon.admin { background: rgba(245,158,11,0.12); color: var(--warning); }
 .account-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.account-menu-title { font-weight: 600; font-size: 0.92rem; color: var(--text-primary); }
+.account-menu-title { font-weight: 600; font-size: 0.92rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
 .account-menu-subtitle { font-size: 0.78rem; color: var(--text-secondary); }
-.account-menu-chevron { color: var(--gray-300); flex-shrink: 0; }
+.account-menu-badge { background: rgba(245,158,11,0.14); color: #B45309; font-size: 0.65rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; letter-spacing: 0.02em; }
+.account-menu-chevron-wrap { width: 28px; height: 28px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+.account-menu-item:hover .account-menu-chevron-wrap { background: var(--accent); }
+.account-menu-item:hover .account-menu-chevron-wrap svg { color: var(--white); }
+.account-menu-chevron { color: var(--gray-500); flex-shrink: 0; transition: var(--transition); }
+.account-menu-item.danger { border-top: 1px solid var(--gray-200); margin-top: 8px; padding-top: 14px; }
 .account-menu-item.danger .account-menu-title { color: var(--danger); }
 .account-menu-item.admin-item { border: 1px dashed var(--warning); }
 
