@@ -438,3 +438,63 @@ svg { flex-shrink: 0; }
 .account-subview.active { display: block; }
 .account-back-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-weight: 600; font-size: 0.88rem; cursor: pointer; padding: 8px 0; margin-bottom: 12px; }
 .account-back-btn:hover { text-decoration: underline; }
+
+/* ==========================================================================
+   Tâches Quotidiennes (24h) — 1 tâche financière par produit actif
+   ========================================================================== */
+.daily-tasks-list { display: flex; flex-direction: column; gap: 10px; }
+.task-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 16px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    background: var(--gray-50);
+}
+.task-info { min-width: 0; }
+.task-name { font-weight: 700; color: var(--primary); font-size: 0.92rem; }
+.task-gain { font-size: 0.8rem; color: var(--gold-dark); font-weight: 600; margin-top: 2px; }
+.task-action { flex-shrink: 0; }
+.task-btn { padding: 0.55rem 1.1rem; font-size: 0.85rem; white-space: nowrap; }
+.task-locked {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--text-secondary);
+    background: var(--gray-100); padding: 8px 12px; border-radius: 999px; white-space: nowrap;
+}
+.task-locked svg { flex-shrink: 0; color: var(--success); }
+.task-countdown { font-weight: 700; color: var(--primary); }
+.task-empty { color: var(--text-secondary); font-size: 0.88rem; padding: 4px 2px; }
+
+/* ---- Modal générique (tâche / quiz finance) ---- */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(11,29,58,0.55); backdrop-filter: blur(2px);
+    display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+    z-index: 5000; opacity: 0; visibility: hidden; transition: var(--transition);
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+.modal-card {
+    background: var(--white); width: 100%; max-width: 440px; border-radius: var(--radius-lg);
+    padding: 2rem; position: relative; transform: translateY(20px); transition: var(--transition);
+    box-shadow: var(--shadow-xl);
+}
+.modal-overlay.active .modal-card { transform: translateY(0); }
+.modal-close {
+    position: absolute; top: 1.25rem; right: 1.25rem; color: var(--gray-500); transition: var(--transition);
+}
+.modal-close:hover { color: var(--danger); }
+
+.task-modal-badge {
+    display: inline-flex; align-items: center; gap: 6px; background: rgba(201,162,39,0.14); color: var(--gold-dark);
+    font-size: 0.72rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.task-modal-title { font-size: 1.15rem; margin-bottom: 4px; }
+.task-modal-sub { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
+.quiz-question { font-weight: 600; color: var(--primary); margin-bottom: 16px; font-size: 1rem; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+    text-align: left; padding: 0.85rem 1rem; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 500; color: var(--text-primary); transition: var(--transition);
+}
+.quiz-option:hover:not(:disabled) { border-color: var(--gold); background: rgba(201,162,39,0.06); }
+.quiz-option:disabled { cursor: default; }
+.quiz-option.correct { border-color: var(--success); background: rgba(16,185,129,0.1); color: var(--success); }
+.quiz-option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.08); color: var(--danger); }
+.quiz-feedback { margin-top: 14px; font-size: 0.85rem; font-weight: 600; text-align: center; min-height: 20px; }
+.quiz-feedback.success { color: var(--success); }
+.quiz-feedback.error { color: var(--danger); }
