@@ -545,8 +545,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         listEl.querySelectorAll('.deposit-method-option').forEach(btn => {
             btn.addEventListener('click', () => {
-                listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('correct'));
-                btn.classList.add('correct');
+                listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
                 const method = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 selectedDepositMethod = method;
                 depositModalOverlay.querySelector('#deposit-method-details').innerHTML = method ? `
@@ -579,27 +579,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h2 class="task-modal-title">Faire un dépôt</h2>
                 <p class="task-modal-sub">Choisissez votre pays, puis un moyen de paiement. Votre solde sera crédité après validation par notre équipe.</p>
 
-                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Pays</label>
-                <select id="deposit-country-select" class="form-control" style="margin-bottom:14px;">
-                    <option value="">Sélectionnez votre pays</option>
-                    ${countries.map(c => `<option value="${c.code}">${c.name}</option>`).join('')}
-                </select>
+                <div class="form-group">
+                    <label class="form-label" for="deposit-country-select">Pays</label>
+                    <select id="deposit-country-select" class="form-control">
+                        <option value="">Sélectionnez votre pays</option>
+                        ${countries.map(c => `<option value="${c.code}">${c.name}</option>`).join('')}
+                    </select>
+                </div>
 
                 <div id="deposit-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
                 <div id="deposit-method-details" style="margin-bottom:14px;"></div>
 
-                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Montant (FCFA)</label>
-                <input type="number" id="deposit-amount-input" class="form-control" placeholder="Ex: 10000" min="1" style="margin-bottom:14px;">
+                <div class="form-group">
+                    <label class="form-label" for="deposit-amount-input">Montant (FCFA)</label>
+                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Ex: 10000" min="1">
+                </div>
 
-                <label style="font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px;">Capture / preuve de paiement (optionnel)</label>
-                <input type="file" id="deposit-proof-input" accept="image/*" style="margin-bottom:16px;">
+                <div class="form-group">
+                    <label class="form-label" for="deposit-proof-input">Capture / preuve de paiement (optionnel)</label>
+                    <div class="file-input-group">
+                        <label class="file-input-btn" for="deposit-proof-input">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
+                            Choisir le fichier
+                        </label>
+                        <span class="file-input-filename" id="deposit-proof-filename">Aucun fichier sélectionné</span>
+                        <input type="file" id="deposit-proof-input" accept="image/*">
+                    </div>
+                </div>
 
                 <div class="quiz-feedback" id="deposit-feedback"></div>
-                <button type="button" class="btn btn-primary" id="deposit-submit-btn" style="width:100%;" disabled>Envoyer ma demande de dépôt</button>
+                <button type="button" class="btn btn-primary btn-full" id="deposit-submit-btn" disabled>Envoyer ma demande de dépôt</button>
             </div>`;
 
         depositModalOverlay.querySelector('[data-close-deposit-modal]').addEventListener('click', closeDepositModal);
         depositModalOverlay.querySelector('#deposit-country-select').addEventListener('change', (e) => renderDepositMethods(e.target.value));
+        depositModalOverlay.querySelector('#deposit-proof-input').addEventListener('change', (e) => {
+            const filenameEl = depositModalOverlay.querySelector('#deposit-proof-filename');
+            const file = e.target.files && e.target.files[0];
+            filenameEl.textContent = file ? file.name : 'Aucun fichier sélectionné';
+        });
 
         depositModalOverlay.querySelector('#deposit-submit-btn').addEventListener('click', async () => {
             const feedbackEl = depositModalOverlay.querySelector('#deposit-feedback');
