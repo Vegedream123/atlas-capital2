@@ -249,3 +249,63 @@ svg { flex-shrink: 0; }
 .toast.success { border-left: 4px solid var(--success); }
 .toast.error { border-left: 4px solid var(--danger); }
 .toast.info { border-left: 4px solid var(--accent); }
+
+/* ---- Programme de Parrainage ---- */
+.referral-card { grid-column: 1 / -1; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); color: var(--white); position: relative; overflow: hidden; }
+.referral-card::before { content: ""; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.referral-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; position: relative; }
+.referral-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.referral-title { font-size: 1.1rem; font-weight: 700; }
+.referral-subtitle { color: rgba(255,255,255,0.75); font-size: 0.88rem; margin-bottom: 20px; position: relative; max-width: 520px; }
+
+.referral-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; position: relative; }
+.referral-stat { background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px; text-align: center; }
+.referral-stat-value { font-size: 1.15rem; font-weight: 700; display: block; }
+.referral-stat-label { font-size: 0.68rem; color: rgba(255,255,255,0.7); display: block; margin-top: 2px; }
+
+.referral-link-box { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); border-radius: var(--radius-sm); padding: 6px 6px 6px 14px; margin-bottom: 16px; position: relative; }
+.referral-link-box input { flex: 1; min-width: 0; background: transparent; border: none; color: var(--white); font-size: 0.85rem; outline: none; }
+.referral-link-box input::selection { background: rgba(255,255,255,0.3); }
+.referral-copy-btn { flex-shrink: 0; display: flex; align-items: center; gap: 6px; background: var(--white); color: var(--primary); border: none; border-radius: 8px; padding: 8px 14px; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+.referral-copy-btn:hover { background: var(--gray-100); }
+
+.referral-share-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; }
+.referral-share-btn { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18); color: var(--white); border-radius: var(--radius-sm); padding: 9px 16px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.referral-share-btn:hover { background: rgba(255,255,255,0.18); }
+
+.referral-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 18px; position: relative; }
+.referral-tier { background: rgba(255,255,255,0.08); border-radius: var(--radius-sm); padding: 12px 14px; }
+.referral-tier-rate { font-size: 1.2rem; font-weight: 800; }
+.referral-tier-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+@media (max-width: 480px) {
+    .referral-stats { grid-template-columns: 1fr 1fr; }
+    .referral-stats .referral-stat:last-child { grid-column: 1 / -1; }
+}
+
+/* ---- Carte de saisie d'un code de parrainage ---- */
+.redeem-card { display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 10px 10px 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+.redeem-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.redeem-card input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
+.redeem-card .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
+
+/* ---- Menu du compte (style liste) ---- */
+.account-menu { display: flex; flex-direction: column; gap: 8px; }
+.avatar-row { display: flex; align-items: center; gap: 12px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 4px; }
+.account-menu-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; transition: var(--transition); }
+.account-menu-item:hover { box-shadow: var(--shadow); border-color: var(--gray-300); }
+.account-menu-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.account-menu-icon.danger { background: rgba(239,68,68,0.1); color: var(--danger); }
+.account-menu-icon.admin { background: rgba(245,158,11,0.12); color: var(--warning); }
+.account-menu-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.account-menu-title { font-weight: 600; font-size: 0.92rem; color: var(--text-primary); }
+.account-menu-subtitle { font-size: 0.78rem; color: var(--text-secondary); }
+.account-menu-chevron { color: var(--gray-300); flex-shrink: 0; }
+.account-menu-item.danger .account-menu-title { color: var(--danger); }
+.account-menu-item.admin-item { border: 1px dashed var(--warning); }
+
+/* ---- Sous-vues du compte ---- */
+.account-subview { display: none; }
+.account-subview.active { display: block; }
+.account-back-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--accent); font-weight: 600; font-size: 0.88rem; cursor: pointer; padding: 8px 0; margin-bottom: 12px; }
+.account-back-btn:hover { text-decoration: underline; }
