@@ -247,52 +247,30 @@
 
             <div class="admin-panel">
                 <div class="admin-panel-header">
-                    <h2>Liens de paiement par pays</h2>
+                    <h2>Moyens de paiement</h2>
                 </div>
-                <p class="admin-panel-desc">Sur la page de dépôt, l'utilisateur choisit son pays et le lien correspondant s'affiche. Vous pouvez ajouter jusqu'à 2 numéros (nom du titulaire et réseau) copiables en un clic.</p>
+                <form id="payment-settings-form" class="admin-form">
+                    <div class="admin-form-group">
+                        <label>Moyens de paiement pour les retraits (un par ligne)</label>
+                        <textarea id="setting-withdrawal-methods" rows="6" placeholder="MTN Mobile Money&#10;Orange Money&#10;Moov Money&#10;Wave&#10;USDT-TRC20"></textarea>
+                    </div>
 
-                <div id="payment-links-list"></div>
+                    <h3 class="admin-form-subtitle">Dépôts</h3>
+                    <div class="admin-form-group">
+                        <label>Adresse USDT-TRC-20</label>
+                        <input type="text" id="setting-deposit-usdt-address" placeholder="Adresse de réception USDT (réseau TRC-20)">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Montants de dépôt proposés (FCFA, un par ligne)</label>
+                        <textarea id="setting-deposit-amounts" rows="6" placeholder="5000&#10;15000&#10;50000&#10;150000&#10;250000&#10;500000"></textarea>
+                    </div>
 
-                <button type="button" class="admin-dashed-btn" id="add-country-btn">+ Ajouter un pays</button>
-
-                <div class="admin-form-actions">
-                    <button type="button" class="btn btn-primary" id="payment-links-save-btn">Enregistrer</button>
-                </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="payment-settings-submit-btn">Enregistrer les moyens de paiement</button>
+                    </div>
+                </form>
             </div>
         </section>
-
-        <!-- Template (masqué) d'un bloc pays pour Liens de paiement -->
-        <template id="country-block-template">
-            <div class="admin-country-block" data-country-block>
-                <div class="admin-form-group">
-                    <input type="text" placeholder="Pays (ex: Côte d'Ivoire)" data-field="country">
-                </div>
-                <div class="admin-form-group">
-                    <input type="url" placeholder="https://lien-de-paiement.com/..." data-field="link">
-                </div>
-                <div class="admin-country-numbers" data-numbers-list></div>
-                <button type="button" class="admin-dashed-btn" data-add-number>+ Ajouter un numéro</button>
-                <button type="button" class="admin-danger-btn" data-remove-country>Supprimer le pays</button>
-            </div>
-        </template>
-
-        <!-- Template (masqué) d'un numéro copiable (titulaire + réseau) -->
-        <template id="number-block-template">
-            <div class="admin-number-block" data-number-block>
-                <div class="admin-form-row">
-                    <div class="admin-form-group">
-                        <input type="text" placeholder="Numéro" data-field="number">
-                    </div>
-                    <div class="admin-form-group">
-                        <input type="text" placeholder="Nom du titulaire" data-field="holder">
-                    </div>
-                    <div class="admin-form-group">
-                        <input type="text" placeholder="Réseau (ex: Orange Money)" data-field="network">
-                    </div>
-                </div>
-                <button type="button" class="admin-remove-number-btn" data-remove-number title="Supprimer ce numéro">&times;</button>
-            </div>
-        </template>
     </main>
 </div>
 
