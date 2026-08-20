@@ -283,11 +283,23 @@ svg { flex-shrink: 0; }
     .referral-stats .referral-stat:last-child { grid-column: 1 / -1; }
 }
 
-/* ---- Carte de saisie d'un code de parrainage ---- */
-.redeem-card { display: flex; align-items: center; gap: 10px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 10px 10px 16px; margin-bottom: 16px; box-shadow: var(--shadow-sm); }
-.redeem-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gray-100); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.redeem-card input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
-.redeem-card .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
+/* ---- Carte de saisie d'un code de parrainage (bannière récompense) ---- */
+.redeem-card { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+.redeem-card::before { content: ""; position: absolute; top: -50px; right: 40px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,0.06); }
+.redeem-content { display: flex; align-items: center; gap: 12px; position: relative; min-width: 0; }
+.redeem-emoji { font-size: 1.8rem; line-height: 1; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+.redeem-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.redeem-title { color: var(--white); font-weight: 700; font-size: 0.98rem; }
+.redeem-subtitle { color: rgba(255,255,255,0.75); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.redeem-cta { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; background: var(--warning); color: var(--primary); border: none; border-radius: 999px; padding: 11px 18px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: var(--transition); position: relative; white-space: nowrap; }
+.redeem-cta:hover { background: #fbbf24; transform: translateY(-1px); }
+.redeem-cta svg { transition: transform 0.25s ease; }
+.redeem-cta.open svg { transform: rotate(90deg); }
+
+.redeem-input-row { display: none; align-items: center; gap: 8px; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 10px 10px 10px 16px; margin: -6px 0 16px 0; box-shadow: var(--shadow-sm); }
+.redeem-input-row.open { display: flex; }
+.redeem-input-row input { flex: 1; min-width: 0; border: none; outline: none; font-size: 0.9rem; color: var(--text-primary); background: transparent; }
+.redeem-input-row .btn { flex-shrink: 0; padding: 10px 18px; font-size: 0.85rem; }
 
 /* ---- Menu du compte (style liste) ---- */
 .account-menu { display: flex; flex-direction: column; gap: 8px; }
