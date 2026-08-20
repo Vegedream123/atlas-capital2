@@ -476,12 +476,15 @@ svg { flex-shrink: 0; }
     position: fixed; inset: 0; background: rgba(11,29,58,0.55); backdrop-filter: blur(2px);
     display: flex; align-items: center; justify-content: center; padding: 1.5rem;
     z-index: 5000; opacity: 0; visibility: hidden; transition: var(--transition);
+    overflow-y: auto;
 }
 .modal-overlay.active { opacity: 1; visibility: visible; }
 .modal-card {
     background: var(--white); width: 100%; max-width: 440px; border-radius: var(--radius-lg);
     padding: 2rem; position: relative; transform: translateY(20px); transition: var(--transition);
     box-shadow: var(--shadow-xl);
+    max-height: calc(100vh - 3rem); overflow-y: auto; -webkit-overflow-scrolling: touch;
+    margin: auto;
 }
 .modal-overlay.active .modal-card { transform: translateY(0); }
 .modal-close {
