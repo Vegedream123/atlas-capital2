@@ -7,20 +7,63 @@
     <meta name="author" content="Atlas Capital">
     <title>Connexion | Atlas Capital</title>
 
-    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%233B82F6'/></svg>">
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        .auth-methods {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 18px;
+            padding: 4px;
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .auth-method-btn {
+            flex: 1;
+            border: 0;
+            background: transparent;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font: inherit;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+        }
+
+        .auth-method-btn.active {
+            background: #fff;
+            color: #0f2344;
+            box-shadow: 0 2px 8px rgba(15, 35, 68, 0.08);
+        }
+
+        .phone-row {
+            display: grid;
+            grid-template-columns: 145px 1fr;
+            gap: 10px;
+        }
+
+        .phone-country {
+            min-width: 0;
+        }
+
+        @media (max-width: 480px) {
+            .phone-row {
+                grid-template-columns: 125px 1fr;
+                gap: 7px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-    <!-- Header (logo uniquement) -->
     <header class="auth-header">
         <a href="index.html" class="brand">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--primary)" stroke="none">
@@ -32,118 +75,818 @@
         </a>
     </header>
 
-    <!-- Contenu Connexion / Inscription -->
     <main class="auth-page">
         <div class="auth-card">
+
             <div class="auth-tabs">
-                <button type="button" class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Connexion</button>
-                <button type="button" class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Inscription</button>
+                <button type="button"
+                        class="auth-tab active"
+                        id="tab-login"
+                        onclick="switchAuthTab('login')">
+                    Connexion
+                </button>
+
+                <button type="button"
+                        class="auth-tab"
+                        id="tab-register"
+                        onclick="switchAuthTab('register')">
+                    Inscription
+                </button>
             </div>
 
-            <!-- Panneau Connexion -->
+            <!-- ==================== CONNEXION ==================== -->
+
             <div class="auth-panel active" id="login-modal">
+
                 <h2>Content de vous revoir</h2>
+
                 <form id="login-form">
-                    <div class="form-group">
-                        <label for="login-email">Email</label>
-                        <input type="email" id="login-email" class="form-control" placeholder="jean.dupont@email.com" required>
+
+                    <!-- Choix Email / Téléphone -->
+
+                    <div class="auth-methods">
+
+                        <button type="button"
+                                class="auth-method-btn active"
+                                id="login-email-btn"
+                                onclick="switchLoginMethod('email')">
+                            Email
+                        </button>
+
+                        <button type="button"
+                                class="auth-method-btn"
+                                id="login-phone-btn"
+                                onclick="switchLoginMethod('phone')">
+                            Téléphone
+                        </button>
+
                     </div>
+
+                    <!-- Connexion Email -->
+
+                    <div class="form-group" id="login-email-group">
+
+                        <label for="login-email">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="login-email"
+                            class="form-control"
+                            placeholder="jean.dupont@email.com"
+                        >
+
+                    </div>
+
+                    <!-- Connexion Téléphone -->
+
+                    <div class="form-group"
+                         id="login-phone-group"
+                         style="display:none;">
+
+                        <label for="login-phone">
+                            Numéro de téléphone
+                        </label>
+
+                        <div class="phone-row">
+
+                            <select
+                                id="login-phone-country"
+                                class="form-control phone-country">
+                            </select>
+
+                            <input
+                                type="tel"
+                                id="login-phone"
+                                class="form-control"
+                                placeholder="690 123 456"
+                                inputmode="tel"
+                                autocomplete="tel"
+                            >
+
+                        </div>
+
+                    </div>
+
+                    <!-- Mot de passe -->
+
                     <div class="form-group">
-                        <label for="login-password">Mot de passe</label>
+
+                        <label for="login-password">
+                            Mot de passe
+                        </label>
+
                         <div class="password-input">
-                            <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('login-password')" aria-label="Afficher/Masquer">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+
+                            <input
+                                type="password"
+                                id="login-password"
+                                class="form-control"
+                                placeholder="••••••••"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('login-password')"
+                                aria-label="Afficher/Masquer">
+
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="3">
+                                    </circle>
+
+                                </svg>
+
                             </button>
+
                         </div>
+
                     </div>
+
                     <div class="modal-actions">
+
                         <div class="checkbox-group">
-                            <input type="checkbox" id="remember-me">
-                            <label for="remember-me">Se souvenir de moi</label>
+
+                            <input
+                                type="checkbox"
+                                id="remember-me">
+
+                            <label for="remember-me">
+                                Se souvenir de moi
+                            </label>
+
                         </div>
-                        <a href="#">Mot de passe oublié ?</a>
+
+                        <a href="#">
+                            Mot de passe oublié ?
+                        </a>
+
                     </div>
-                    <button type="submit" class="btn btn-primary">Se connecter</button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+                        Se connecter
+                    </button>
+
                 </form>
+
             </div>
 
-            <!-- Panneau Inscription -->
+
+            <!-- ==================== INSCRIPTION ==================== -->
+
             <div class="auth-panel" id="register-modal">
+
                 <h2>Créez votre compte</h2>
+
                 <form id="register-form">
+
+                    <!-- Nom -->
+
                     <div class="form-group">
-                        <label for="reg-name">Nom complet</label>
-                        <input type="text" id="reg-name" class="form-control" placeholder="Jean Dupont" required>
+
+                        <label for="reg-name">
+                            Nom complet
+                        </label>
+
+                        <input
+                            type="text"
+                            id="reg-name"
+                            class="form-control"
+                            placeholder="Jean Dupont"
+                            required
+                        >
+
                     </div>
-                    <div class="form-group">
-                        <label for="reg-email">Email</label>
-                        <input type="email" id="reg-email" class="form-control" placeholder="jean.dupont@email.com" required>
+
+
+                    <!-- Choix Email / Téléphone -->
+
+                    <div class="auth-methods">
+
+                        <button
+                            type="button"
+                            class="auth-method-btn active"
+                            id="register-email-btn"
+                            onclick="switchRegisterMethod('email')">
+                            Email
+                        </button>
+
+                        <button
+                            type="button"
+                            class="auth-method-btn"
+                            id="register-phone-btn"
+                            onclick="switchRegisterMethod('phone')">
+                            Téléphone
+                        </button>
+
                     </div>
-                    <div class="form-group">
-                        <label for="reg-password">Mot de passe</label>
-                        <div class="password-input">
-                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
-                            <button type="button" class="password-toggle" onclick="togglePassword('reg-password')" aria-label="Afficher/Masquer">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                            </button>
+
+
+                    <!-- Inscription Email -->
+
+                    <div
+                        class="form-group"
+                        id="register-email-group">
+
+                        <label for="reg-email">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="reg-email"
+                            class="form-control"
+                            placeholder="jean.dupont@email.com"
+                        >
+
+                    </div>
+
+
+                    <!-- Inscription Téléphone -->
+
+                    <div
+                        class="form-group"
+                        id="register-phone-group"
+                        style="display:none;">
+
+                        <label for="reg-phone">
+                            Numéro de téléphone
+                        </label>
+
+                        <div class="phone-row">
+
+                            <select
+                                id="reg-phone-country"
+                                class="form-control phone-country">
+                            </select>
+
+                            <input
+                                type="tel"
+                                id="reg-phone"
+                                class="form-control"
+                                placeholder="690 123 456"
+                                inputmode="tel"
+                                autocomplete="tel"
+                            >
+
                         </div>
+
                     </div>
+
+
+                    <!-- Mot de passe -->
+
                     <div class="form-group">
-                        <label for="reg-confirm">Confirmer le mot de passe</label>
-                        <input type="password" id="reg-confirm" class="form-control" placeholder="••••••••" required>
+
+                        <label for="reg-password">
+                            Mot de passe
+                        </label>
+
+                        <div class="password-input">
+
+                            <input
+                                type="password"
+                                id="reg-password"
+                                class="form-control"
+                                placeholder="••••••••"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('reg-password')"
+                                aria-label="Afficher/Masquer">
+
+                                <svg
+                                    width="20"
+                                    height="20"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="3">
+                                    </circle>
+
+                                </svg>
+
+                            </button>
+
+                        </div>
+
                     </div>
+
+
+                    <!-- Confirmation -->
+
                     <div class="form-group">
-                        <label for="reg-country">Pays de résidence</label>
-                        <select id="reg-country" class="form-control" required>
-                            <option value="" disabled selected>Sélectionnez votre pays</option>
+
+                        <label for="reg-confirm">
+                            Confirmer le mot de passe
+                        </label>
+
+                        <input
+                            type="password"
+                            id="reg-confirm"
+                            class="form-control"
+                            placeholder="••••••••"
+                            required
+                        >
+
+                    </div>
+
+
+                    <!-- Pays de résidence -->
+
+                    <div class="form-group">
+
+                        <label for="reg-country">
+                            Pays de résidence
+                        </label>
+
+                        <select
+                            id="reg-country"
+                            class="form-control"
+                            required>
+
+                            <option
+                                value=""
+                                disabled
+                                selected>
+                                Sélectionnez votre pays
+                            </option>
+
                         </select>
-                        <small style="display:block; margin-top:6px; color:var(--text-secondary); font-size:0.78rem;">
+
+                        <small
+                            style="display:block; margin-top:6px; color:var(--text-secondary); font-size:0.78rem;">
+
                             Détermine les moyens de paiement disponibles pour vos dépôts et retraits.
+
                         </small>
+
                     </div>
+
+
+                    <!-- Conditions -->
+
                     <div class="checkbox-group">
-                        <input type="checkbox" id="terms" required>
-                        <label for="terms">J'accepte les conditions générales d'utilisation et la politique de confidentialité</label>
+
+                        <input
+                            type="checkbox"
+                            id="terms"
+                            required>
+
+                        <label for="terms">
+
+                            J'accepte les conditions générales d'utilisation et la politique de confidentialité
+
+                        </label>
+
                     </div>
-                    <button type="submit" class="btn btn-primary">Créer mon compte</button>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+
+                        Créer mon compte
+
+                    </button>
+
                 </form>
+
             </div>
+
         </div>
     </main>
 
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container"></div>
 
-    <!-- JS -->
-    <script src="js/payment-methods.js"></script>
+    <div
+        class="toast-container"
+        id="toast-container">
+    </div>
+
+
+    <!-- Fichiers JavaScript -->
+
+    <script src="js/payment%20methods.js"></script>
+
     <script src="js/supabase-config.js"></script>
+
     <script src="js/main.js"></script>
+
+
     <script>
-        function switchAuthTab(tab) {
-            const isLogin = tab === 'login';
-            document.getElementById('tab-login').classList.toggle('active', isLogin);
-            document.getElementById('tab-register').classList.toggle('active', !isLogin);
-            openModal(isLogin ? 'login-modal' : 'register-modal');
-            closeModal(isLogin ? 'register-modal' : 'login-modal');
-            document.body.style.overflow = '';
+
+        /* ================================================================
+           PAYS + INDICATIFS TÉLÉPHONIQUES
+           ================================================================ */
+
+        window.AtlasAuthCountries = [
+
+            {
+                code: 'CM',
+                name: '🇨🇲 Cameroun',
+                dial: '+237'
+            },
+
+            {
+                code: 'CI',
+                name: "🇨🇮 Côte d'Ivoire",
+                dial: '+225'
+            },
+
+            {
+                code: 'SN',
+                name: '🇸🇳 Sénégal',
+                dial: '+221'
+            },
+
+            {
+                code: 'GA',
+                name: '🇬🇦 Gabon',
+                dial: '+241'
+            },
+
+            {
+                code: 'CG',
+                name: '🇨🇬 Congo-Brazzaville',
+                dial: '+242'
+            },
+
+            {
+                code: 'CD',
+                name: '🇨🇩 RD Congo',
+                dial: '+243'
+            },
+
+            {
+                code: 'TD',
+                name: '🇹🇩 Tchad',
+                dial: '+235'
+            },
+
+            {
+                code: 'CF',
+                name: '🇨🇫 Centrafrique',
+                dial: '+236'
+            },
+
+            {
+                code: 'GQ',
+                name: '🇬🇶 Guinée Équatoriale',
+                dial: '+240'
+            },
+
+            {
+                code: 'BF',
+                name: '🇧🇫 Burkina Faso',
+                dial: '+226'
+            },
+
+            {
+                code: 'ML',
+                name: '🇲🇱 Mali',
+                dial: '+223'
+            },
+
+            {
+                code: 'NE',
+                name: '🇳🇪 Niger',
+                dial: '+227'
+            },
+
+            {
+                code: 'TG',
+                name: '🇹🇬 Togo',
+                dial: '+228'
+            },
+
+            {
+                code: 'BJ',
+                name: '🇧🇯 Bénin',
+                dial: '+229'
+            },
+
+            {
+                code: 'GW',
+                name: '🇬🇼 Guinée-Bissau',
+                dial: '+245'
+            },
+
+            {
+                code: 'GN',
+                name: '🇬🇳 Guinée',
+                dial: '+224'
+            },
+
+            {
+                code: 'RW',
+                name: '🇷🇼 Rwanda',
+                dial: '+250'
+            },
+
+            {
+                code: 'FR',
+                name: '🇫🇷 France',
+                dial: '+33'
+            },
+
+            {
+                code: 'BE',
+                name: '🇧🇪 Belgique',
+                dial: '+32'
+            },
+
+            {
+                code: 'CA',
+                name: '🇨🇦 Canada',
+                dial: '+1'
+            },
+
+            {
+                code: 'US',
+                name: '🇺🇸 États-Unis',
+                dial: '+1'
+            },
+
+            {
+                code: 'XX',
+                name: '🌍 Autre pays',
+                dial: ''
+            }
+
+        ];
+
+
+        function fillPhoneCountries() {
+
+            [
+                'login-phone-country',
+                'reg-phone-country'
+            ].forEach(id => {
+
+                const select = document.getElementById(id);
+
+                if (!select) return;
+
+                select.innerHTML = '';
+
+                window.AtlasAuthCountries.forEach(country => {
+
+                    const option = document.createElement('option');
+
+                    option.value = country.dial;
+
+                    option.dataset.code = country.code;
+
+                    option.textContent =
+                        country.dial
+                            ? `${country.name} ${country.dial}`
+                            : country.name;
+
+                    select.appendChild(option);
+
+                });
+
+                select.value = '+237';
+
+            });
+
         }
 
-        // Remplit la liste des pays (utilisée aussi par le Wallet du dashboard)
-        (function populateCountries() {
-            const select = document.getElementById('reg-country');
-            if (!select || !window.AtlasCountries) return;
-            window.AtlasCountries.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.code;
-                opt.textContent = c.name;
-                select.appendChild(opt);
-            });
-        })();
 
-        // Ouvre directement le bon onglet selon l'URL (?tab=register)
-        const params = new URLSearchParams(window.location.search);
-        switchAuthTab(params.get('tab') === 'register' ? 'register' : 'login');
+        function fillResidenceCountries() {
+
+            const select =
+                document.getElementById('reg-country');
+
+            if (!select) return;
+
+
+            if (
+                window.AtlasCountries &&
+                Array.isArray(window.AtlasCountries)
+            ) {
+
+                window.AtlasCountries.forEach(c => {
+
+                    if (
+                        !select.querySelector(
+                            `option[value="${c.code}"]`
+                        )
+                    ) {
+
+                        const opt =
+                            document.createElement('option');
+
+                        opt.value = c.code;
+
+                        opt.textContent = c.name;
+
+                        select.appendChild(opt);
+
+                    }
+
+                });
+
+                return;
+
+            }
+
+
+            window.AtlasAuthCountries.forEach(c => {
+
+                if (c.code === 'XX') return;
+
+                const opt =
+                    document.createElement('option');
+
+                opt.value = c.code;
+
+                opt.textContent =
+                    c.name.replace(/^\S+\s/, '');
+
+                select.appendChild(opt);
+
+            });
+
+        }
+
+
+        fillPhoneCountries();
+
+        fillResidenceCountries();
+
+
+        function switchLoginMethod(method) {
+
+            const emailMode =
+                method === 'email';
+
+            document.getElementById(
+                'login-email-group'
+            ).style.display =
+                emailMode ? '' : 'none';
+
+            document.getElementById(
+                'login-phone-group'
+            ).style.display =
+                emailMode ? 'none' : '';
+
+            document.getElementById(
+                'login-email-btn'
+            ).classList.toggle(
+                'active',
+                emailMode
+            );
+
+            document.getElementById(
+                'login-phone-btn'
+            ).classList.toggle(
+                'active',
+                !emailMode
+            );
+
+            document.getElementById(
+                'login-email'
+            ).required =
+                emailMode;
+
+            document.getElementById(
+                'login-phone'
+            ).required =
+                !emailMode;
+
+            window.loginMethod = method;
+
+        }
+
+
+        function switchRegisterMethod(method) {
+
+            const emailMode =
+                method === 'email';
+
+            document.getElementById(
+                'register-email-group'
+            ).style.display =
+                emailMode ? '' : 'none';
+
+            document.getElementById(
+                'register-phone-group'
+            ).style.display =
+                emailMode ? 'none' : '';
+
+            document.getElementById(
+                'register-email-btn'
+            ).classList.toggle(
+                'active',
+                emailMode
+            );
+
+            document.getElementById(
+                'register-phone-btn'
+            ).classList.toggle(
+                'active',
+                !emailMode
+            );
+
+            document.getElementById(
+                'reg-email'
+            ).required =
+                emailMode;
+
+            document.getElementById(
+                'reg-phone'
+            ).required =
+                !emailMode;
+
+            window.registerMethod = method;
+
+        }
+
+
+        window.loginMethod = 'email';
+
+        window.registerMethod = 'email';
+
+
+        function switchAuthTab(tab) {
+
+            const isLogin =
+                tab === 'login';
+
+            document.getElementById(
+                'tab-login'
+            ).classList.toggle(
+                'active',
+                isLogin
+            );
+
+            document.getElementById(
+                'tab-register'
+            ).classList.toggle(
+                'active',
+                !isLogin
+            );
+
+            openModal(
+                isLogin
+                    ? 'login-modal'
+                    : 'register-modal'
+            );
+
+            closeModal(
+                isLogin
+                    ? 'register-modal'
+                    : 'login-modal'
+            );
+
+            document.body.style.overflow = '';
+
+        }
+
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        switchAuthTab(
+            params.get('tab') === 'register'
+                ? 'register'
+                : 'login'
+        );
+
     </script>
+
 </body>
 </html>
