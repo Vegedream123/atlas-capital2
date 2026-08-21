@@ -261,7 +261,7 @@
                         <h1 class="page-title">Historique des Transactions</h1>
                         <p class="page-subtitle">Retrouvez l'intégralité de vos opérations financières.</p>
                     </div>
-                    <button class="btn btn-outline">Télécharger PDF</button>
+                    <button class="btn btn-outline" id="download-transactions-btn">Télécharger PDF</button>
                 </div>
                 
                 <div class="transactions-card full-width">
@@ -566,6 +566,8 @@
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/payment-methods.js"></script>
