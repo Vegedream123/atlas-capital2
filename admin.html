@@ -275,6 +275,14 @@
                         <textarea id="setting-deposit-amounts" rows="6" placeholder="5000&#10;15000&#10;50000&#10;150000&#10;250000&#10;500000"></textarea>
                     </div>
 
+                    <h3 class="admin-form-subtitle">Liens de paiement par pays</h3>
+                    <p class="text-secondary" style="font-size:0.85rem;margin:-6px 0 14px;">
+                        Sur la page de dépôt, l'utilisateur choisit son pays et le moyen correspondant s'affiche.
+                        Vous pouvez ajouter jusqu'à 2 numéros (nom du titulaire et réseau) par pays, copiables en un clic.
+                    </p>
+                    <div id="country-payment-links-list"></div>
+                    <button type="button" class="btn btn-outline" id="add-country-payment-link-btn" style="margin-bottom:18px;">+ Ajouter un pays</button>
+
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-primary" id="payment-settings-submit-btn">Enregistrer les moyens de paiement</button>
                     </div>
@@ -354,6 +362,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase-config.js"></script>
+<script src="js/payment-methods.js"></script>
 <script src="js/admin.js"></script>
 </body>
 </html>
