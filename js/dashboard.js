@@ -72,6 +72,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
 
+    // Bouton "Rejoindre le groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
+    const whatsappGroupBtn = document.getElementById('support-whatsapp-group-btn');
+    if (whatsappGroupBtn) {
+        if (siteSettings.whatsapp_group) {
+            whatsappGroupBtn.href = siteSettings.whatsapp_group;
+            whatsappGroupBtn.style.display = 'inline-flex';
+        } else {
+            whatsappGroupBtn.style.display = 'none';
+        }
+    }
+
     // Hash SHA-256 (utilisé pour le code PIN de retrait : jamais stocké en clair)
     const sha256Hex = async (text) => {
         const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
