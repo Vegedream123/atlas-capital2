@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     const navItems = document.querySelectorAll('.admin-nav-item');
     const views = document.querySelectorAll('.admin-view');
-    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', parametres: 'Paramètres' };
+    const titleMap = { apercu: 'Aperçu', produits: 'Produits', codespromo: 'Codes promo', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', parametres: 'Paramètres' };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('admin-view-title').textContent = titleMap[target] || '';
             if (target === 'apercu') loadStats();
             if (target === 'produits') loadProducts();
+            if (target === 'codespromo') loadPromoCodes();
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
@@ -229,6 +230,96 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.showToast('Produit désactivé.', 'success');
                 loadProducts();
             });
+        });
+    }
+
+    // ----------------------------------------------------------------
+    // 4bis. Codes promo
+    // ----------------------------------------------------------------
+    const promoForm = document.getElementById('promo-generate-form');
+    const promoMaxAmountInput = document.getElementById('promo-max-amount');
+    const promoCountInput = document.getElementById('promo-count');
+    const promoGenerateBtn = document.getElementById('promo-generate-btn');
+    const promoTbody = document.getElementById('promo-tbody');
+    const promoSummary = document.getElementById('promo-summary');
+
+    async function loadPromoCodes() {
+        promoTbody.innerHTML = `<tr><td colspan="7">Chargement…</td></tr>`;
+        const { data, error } = await window.supabaseClient
+            .from('promo_codes')
+            .select('*, used_by_profile:profiles!promo_codes_used_by_fkey(full_name, email)')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            promoTbody.innerHTML = `<tr><td colspan="7">Erreur de chargement.</td></tr>`;
+            return;
+        }
+
+        const total = data.length;
+        const activeCount = data.filter(c => !c.is_used).length;
+        promoSummary.textContent = `${activeCount} code(s) actif(s) non utilisé(s) • ${total} au total`;
+
+        if (!total) {
+            promoTbody.innerHTML = `<tr><td colspan="7">Aucun code généré pour le moment.</td></tr>`;
+            return;
+        }
+
+        promoTbody.innerHTML = data.map(c => `
+            <tr>
+                <td><code>${c.code}</code></td>
+                <td>${formatFCFA(c.amount)}</td>
+                <td>${formatFCFA(c.max_amount)}</td>
+                <td><span class="admin-badge ${c.is_used ? 'blocked' : 'active'}">${c.is_used ? 'Utilisé' : 'Actif'}</span></td>
+                <td>${c.used_by_profile ? (c.used_by_profile.full_name || c.used_by_profile.email) : '—'}</td>
+                <td>${formatDate(c.created_at)}</td>
+                <td>
+                    <button class="admin-btn-sm admin-btn-edit" data-copy-code="${c.code}">Copier</button>
+                </td>
+            </tr>`).join('');
+
+        promoTbody.querySelectorAll('[data-copy-code]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const code = btn.getAttribute('data-copy-code');
+                try {
+                    await navigator.clipboard.writeText(code);
+                    window.showToast('Code copié : ' + code, 'success');
+                } catch (err) {
+                    window.showToast('Impossible de copier le code.', 'error');
+                }
+            });
+        });
+    }
+
+    if (promoForm) {
+        promoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const maxAmount = Number(promoMaxAmountInput.value);
+            const count = Number(promoCountInput.value);
+            if (!maxAmount || maxAmount <= 0) {
+                window.showToast('Le plafond du gain doit être supérieur à 0.', 'error');
+                return;
+            }
+            if (!count || count < 1) {
+                window.showToast('Le nombre de codes doit être au moins 1.', 'error');
+                return;
+            }
+            promoGenerateBtn.disabled = true;
+            const originalText = promoGenerateBtn.textContent;
+            promoGenerateBtn.textContent = 'Génération…';
+            try {
+                const { data, error } = await window.supabaseClient.rpc('admin_generate_promo_codes', {
+                    p_max_amount: maxAmount,
+                    p_count: count
+                });
+                if (error) throw error;
+                window.showToast(`${count} code(s) généré(s) !`, 'success');
+                await loadPromoCodes();
+            } catch (err) {
+                window.showToast('Erreur : ' + err.message, 'error');
+            } finally {
+                promoGenerateBtn.disabled = false;
+                promoGenerateBtn.textContent = originalText;
+            }
         });
     }
 
@@ -430,7 +521,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-site-name').value = data.site_name || '';
         document.getElementById('setting-support-email').value = data.support_email || '';
         document.getElementById('setting-support-whatsapp').value = data.support_whatsapp || '';
-        document.getElementById('setting-whatsapp-group').value = data.whatsapp_group || '';
         document.getElementById('setting-referral-rate').value = data.referral_rate ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
@@ -448,7 +538,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             site_name: document.getElementById('setting-site-name').value.trim(),
             support_email: document.getElementById('setting-support-email').value.trim(),
             support_whatsapp: document.getElementById('setting-support-whatsapp').value.trim(),
-            whatsapp_group: document.getElementById('setting-whatsapp-group').value.trim(),
             referral_rate: Number(document.getElementById('setting-referral-rate').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
