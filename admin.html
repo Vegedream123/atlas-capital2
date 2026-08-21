@@ -29,6 +29,7 @@
         <nav class="admin-nav">
             <button class="admin-nav-item active" data-target="apercu">📊 Aperçu</button>
             <button class="admin-nav-item" data-target="produits">📦 Produits</button>
+            <button class="admin-nav-item" data-target="codespromo">🎟️ Codes promo</button>
             <button class="admin-nav-item" data-target="depots">⬆️ Dépôts</button>
             <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
             <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
@@ -142,6 +143,47 @@
             </div>
         </section>
 
+        <!-- VUE: CODES PROMO -->
+        <section class="admin-view" id="view-codespromo">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Codes promo</h2>
+                </div>
+                <p style="color:var(--text-secondary,#667085);margin-top:-8px;margin-bottom:16px;">
+                    Génère un ou plusieurs codes à envoyer aux utilisateurs. Chaque code n'est utilisable qu'une seule fois et fait gagner un montant aléatoire entre 1 et le plafond choisi.
+                </p>
+                <form id="promo-generate-form" class="admin-form">
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Plafond du gain (FCFA)</label>
+                            <input type="number" id="promo-max-amount" min="1" step="1" required value="50">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Nombre de codes</label>
+                            <input type="number" id="promo-count" min="1" max="500" step="1" required value="1">
+                        </div>
+                    </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="promo-generate-btn">+ Générer</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2 id="promo-summary">0 code(s) actif(s) non utilisé(s) • 0 au total</h2>
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table" id="promo-table">
+                        <thead>
+                            <tr><th>Code</th><th>Gain</th><th>Plafond</th><th>Statut</th><th>Utilisé par</th><th>Créé le</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="promo-tbody"><tr><td colspan="7">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- VUE: DEPOTS -->
         <section class="admin-view" id="view-depots">
             <div class="admin-panel">
@@ -217,12 +259,6 @@
                         <div class="admin-form-group">
                             <label>WhatsApp support</label>
                             <input type="text" id="setting-support-whatsapp" placeholder="+237 690 000 000">
-                        </div>
-                    </div>
-                    <div class="admin-form-row">
-                        <div class="admin-form-group">
-                            <label>Lien groupe WhatsApp</label>
-                            <input type="text" id="setting-whatsapp-group" placeholder="https://chat.whatsapp.com/XXXXXXXXXXXXXXXXXXXXXX">
                         </div>
                     </div>
                     <div class="admin-form-row">
