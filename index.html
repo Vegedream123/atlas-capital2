@@ -1621,111 +1621,11 @@
                     </div>
 
 
-                    <!-- TELEPHONE -->
-
-                    <div
-                        class="form-group"
-                        id="register-phone-group"
-                    >
-
-                        <label class="phone-label">
-                            Téléphone
-                        </label>
-
-
-                        <div class="phone-wrapper">
-
-                            <div class="phone-row">
-
-
-                                <!-- PAYS -->
-
-                                <div
-                                    class="country-selector"
-                                    id="register-country-selector"
-                                >
-
-                                    <button
-                                        type="button"
-                                        class="country-button"
-                                        id="register-country-button"
-                                    >
-
-                                        <span
-                                            class="country-button-left"
-                                        >
-
-                                            <span
-                                                class="country-flag"
-                                                id="register-selected-flag"
-                                            >
-                                                🇨🇲
-                                            </span>
-
-                                            <span
-                                                class="country-dial"
-                                                id="register-selected-dial"
-                                            >
-                                                +237
-                                            </span>
-
-                                        </span>
-
-
-                                        <span
-                                            class="country-arrow"
-                                        ></span>
-
-                                    </button>
-
-
-                                    <div
-                                        class="country-menu"
-                                        id="register-country-menu"
-                                    >
-
-                                        <input
-                                            type="text"
-                                            class="country-search"
-                                            id="register-country-search"
-                                            placeholder="Rechercher un pays..."
-                                            autocomplete="off"
-                                        >
-
-                                        <div
-                                            id="register-country-options"
-                                        ></div>
-
-                                    </div>
-
-                                </div>
-
-
-                                <!-- NUMERO -->
-
-                                <input
-                                    type="tel"
-                                    id="reg-phone"
-                                    class="form-control phone-input"
-                                    placeholder="6XX XXX XXX"
-                                    inputmode="tel"
-                                    autocomplete="tel"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
                     <!-- EMAIL -->
 
                     <div
                         class="form-group"
                         id="register-email-group"
-                        style="display:none;"
                     >
 
                         <label for="reg-email">
@@ -1738,21 +1638,8 @@
                             class="form-control"
                             placeholder="jean.dupont@email.com"
                             autocomplete="email"
+                            required
                         >
-
-                    </div>
-
-
-                    <!-- CHANGEMENT -->
-
-                    <div class="alternative-login">
-
-                        <button
-                            type="button"
-                            id="register-method-button"
-                        >
-                            Utiliser une adresse email
-                        </button>
 
                     </div>
 
@@ -2322,16 +2209,8 @@
 
         let loginMethod = 'phone';
 
-        let registerMethod = 'phone';
-
 
         let loginCountry =
-            PHONE_COUNTRIES.find(
-                c => c.code === 'CM'
-            );
-
-
-        let registerCountry =
             PHONE_COUNTRIES.find(
                 c => c.code === 'CM'
             );
@@ -2570,19 +2449,16 @@
 
 
         /* =========================================================
-           CREATION DU MENU PAYS
+           CREATION DU MENU PAYS (CONNEXION)
            ========================================================= */
 
         function renderCountryMenu(
-            type,
             search = ''
         ) {
 
             const options =
                 document.getElementById(
-                    type === 'login'
-                        ? 'login-country-options'
-                        : 'register-country-options'
+                    'login-country-options'
                 );
 
 
@@ -2673,7 +2549,6 @@
                         () => {
 
                             selectCountry(
-                                type,
                                 country
                             );
 
@@ -2693,65 +2568,43 @@
 
 
         /* =========================================================
-           SELECTION PAYS
+           SELECTION PAYS (CONNEXION)
            ========================================================= */
 
         function selectCountry(
-            type,
             country
         ) {
 
-            const prefix =
-                type === 'login'
-                    ? 'login'
-                    : 'register';
-
-
             document.getElementById(
-                `${prefix}-selected-flag`
+                'login-selected-flag'
             ).textContent =
                 country.flag;
 
 
             document.getElementById(
-                `${prefix}-selected-dial`
+                'login-selected-dial'
             ).textContent =
                 country.dial;
 
 
-            if (
-                type === 'login'
-            ) {
-
-                loginCountry =
-                    country;
-
-            }
-
-            else {
-
-                registerCountry =
-                    country;
-
-            }
+            loginCountry =
+                country;
 
 
             document.getElementById(
-                `${prefix}-country-selector`
+                'login-country-selector'
             ).classList.remove(
                 'open'
             );
 
 
             document.getElementById(
-                `${prefix}-country-search`
+                'login-country-search'
             ).value =
                 '';
 
 
-            renderCountryMenu(
-                type
-            );
+            renderCountryMenu();
 
         }
 
@@ -2761,14 +2614,7 @@
            INITIALISATION MENUS
            ========================================================= */
 
-        renderCountryMenu(
-            'login'
-        );
-
-
-        renderCountryMenu(
-            'register'
-        );
+        renderCountryMenu();
 
 
 
@@ -2791,39 +2637,6 @@
                     'open'
                 );
 
-
-                document.getElementById(
-                    'register-country-selector'
-                ).classList.remove(
-                    'open'
-                );
-
-            }
-        );
-
-
-        document.getElementById(
-            'register-country-button'
-        ).addEventListener(
-            'click',
-            event => {
-
-                event.stopPropagation();
-
-
-                document.getElementById(
-                    'register-country-selector'
-                ).classList.toggle(
-                    'open'
-                );
-
-
-                document.getElementById(
-                    'login-country-selector'
-                ).classList.remove(
-                    'open'
-                );
-
             }
         );
 
@@ -2840,22 +2653,6 @@
             event => {
 
                 renderCountryMenu(
-                    'login',
-                    event.target.value
-                );
-
-            }
-        );
-
-
-        document.getElementById(
-            'register-country-search'
-        ).addEventListener(
-            'input',
-            event => {
-
-                renderCountryMenu(
-                    'register',
                     event.target.value
                 );
 
@@ -2878,16 +2675,8 @@
                     'open'
                 );
 
-
-                document.getElementById(
-                    'register-country-selector'
-                ).classList.remove(
-                    'open'
-                );
-
             }
         );
-
 
 
         /* =========================================================
@@ -3082,97 +2871,6 @@
 
                     document.getElementById(
                         'login-method-button'
-                    ).textContent =
-                        'Utiliser une adresse email';
-
-                }
-
-            }
-        );
-
-
-
-        /* =========================================================
-           BASCULER TELEPHONE / EMAIL — INSCRIPTION
-           ========================================================= */
-
-        document.getElementById(
-            'register-method-button'
-        ).addEventListener(
-            'click',
-            () => {
-
-                if (
-                    registerMethod === 'phone'
-                ) {
-
-                    registerMethod =
-                        'email';
-
-
-                    document.getElementById(
-                        'register-phone-group'
-                    ).style.display =
-                        'none';
-
-
-                    document.getElementById(
-                        'register-email-group'
-                    ).style.display =
-                        'block';
-
-
-                    document.getElementById(
-                        'reg-phone'
-                    ).required =
-                        false;
-
-
-                    document.getElementById(
-                        'reg-email'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'register-method-button'
-                    ).textContent =
-                        'Utiliser un numéro de téléphone';
-
-                }
-
-                else {
-
-                    registerMethod =
-                        'phone';
-
-
-                    document.getElementById(
-                        'register-phone-group'
-                    ).style.display =
-                        'block';
-
-
-                    document.getElementById(
-                        'register-email-group'
-                    ).style.display =
-                        'none';
-
-
-                    document.getElementById(
-                        'reg-phone'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'reg-email'
-                    ).required =
-                        false;
-
-
-                    document.getElementById(
-                        'register-method-button'
                     ).textContent =
                         'Utiliser une adresse email';
 
@@ -3750,142 +3448,63 @@
                 }
 
 
-                let signupData;
+                const email =
+                    document.getElementById(
+                        'reg-email'
+                    );
+
+
+                clearError(
+                    email
+                );
 
 
                 if (
-                    registerMethod === 'phone'
+                    !validateEmail(
+                        email.value.trim()
+                    )
                 ) {
 
-                    const phone =
-                        document.getElementById(
-                            'reg-phone'
-                        );
-
-
-                    clearError(
-                        phone
+                    showError(
+                        email,
+                        'Veuillez entrer une adresse email valide.'
                     );
 
-
-                    if (
-                        phone.value
-                            .replace(/\D/g, '')
-                            .length < 6
-                    ) {
-
-                        showError(
-                            phone,
-                            'Veuillez entrer un numéro de téléphone valide.'
-                        );
-
-                        return;
-
-                    }
-
-
-                    const fullPhone =
-                        normalizePhone(
-                            phone.value,
-                            registerCountry.dial
-                        );
-
-
-                    signupData = {
-
-                        phone:
-                            fullPhone,
-
-                        password:
-                            password.value,
-
-                        options: {
-
-                            data: {
-
-                                full_name:
-                                    name.value.trim(),
-
-                                country:
-                                    registerCountry.code,
-
-                                phone_country:
-                                    registerCountry.code,
-
-                                referred_by:
-                                    localStorage.getItem(
-                                        'referredBy'
-                                    ) || null
-
-                            }
-
-                        }
-
-                    };
+                    return;
 
                 }
 
-                else {
 
-                    const email =
-                        document.getElementById(
-                            'reg-email'
-                        );
+                const signupData = {
 
+                    email:
+                        email.value.trim(),
 
-                    clearError(
-                        email
-                    );
+                    password:
+                        password.value,
 
+                    options: {
 
-                    if (
-                        !validateEmail(
-                            email.value.trim()
-                        )
-                    ) {
+                        data: {
 
-                        showError(
-                            email,
-                            'Veuillez entrer une adresse email valide.'
-                        );
+                            full_name:
+                                name.value.trim(),
 
-                        return;
+                            country:
+                                document.getElementById(
+                                    'reg-country'
+                                ).value,
 
-                    }
-
-
-                    signupData = {
-
-                        email:
-                            email.value.trim(),
-
-                        password:
-                            password.value,
-
-                        options: {
-
-                            data: {
-
-                                full_name:
-                                    name.value.trim(),
-
-                                country:
-                                    document.getElementById(
-                                        'reg-country'
-                                    ).value,
-
-                                referred_by:
-                                    localStorage.getItem(
-                                        'referredBy'
-                                    ) || null
-
-                            }
+                            referred_by:
+                                localStorage.getItem(
+                                    'referredBy'
+                                ) || null
 
                         }
 
-                    };
+                    }
 
-                }
+                };
 
 
                 if (
@@ -3953,31 +3572,10 @@
                     );
 
 
-                    /*
-                     * Avec le téléphone, Supabase
-                     * peut demander la confirmation
-                     * du code SMS.
-                     */
-
-                    if (
-                        registerMethod === 'phone'
-                    ) {
-
-                        showToast(
-                            'Compte créé. Un code SMS peut vous être demandé pour confirmer votre numéro.',
-                            'success'
-                        );
-
-                    }
-
-                    else {
-
-                        showToast(
-                            'Compte créé ! Vérifiez votre email si une confirmation est demandée.',
-                            'success'
-                        );
-
-                    }
+                    showToast(
+                        'Compte créé ! Vérifiez votre email si une confirmation est demandée.',
+                        'success'
+                    );
 
 
                     button.disabled =
