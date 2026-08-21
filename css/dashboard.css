@@ -202,9 +202,13 @@ svg { flex-shrink: 0; }
 
 .vip-section { margin-bottom: 24px; }
 .vip-section:last-child { margin-bottom: 0; }
-.vip-section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+.vip-section-title { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.vip-section-stats { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); padding: 3px 9px; border-radius: 999px; }
+.vip-section-stats.has-active { color: var(--success); background: rgba(16, 185, 129, 0.12); }
+.vip-section-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 12px; }
 .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.vip-card.is-owned { border-color: var(--success); box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25); }
 .vip-card-header { display: flex; align-items: center; gap: 8px; }
 .vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
 .vip-name { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
@@ -213,6 +217,9 @@ svg { flex-shrink: 0; }
 .vip-stat { background: var(--gray-50); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
 .vip-stat-label { display: block; font-size: 0.68rem; color: var(--text-secondary); margin-bottom: 2px; }
 .vip-stat-value { display: block; font-size: 0.85rem; font-weight: 700; color: var(--accent); }
+.vip-owned-box { background: rgba(16, 185, 129, 0.1); border: 1px dashed var(--success); border-radius: var(--radius-sm); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.vip-owned-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.72rem; color: var(--primary); font-weight: 600; }
+.vip-owned-row .val { color: var(--success); font-weight: 700; }
 @media (min-width: 480px) {
     .vip-grid { gap: 16px; }
     .vip-card { padding: 20px; }
