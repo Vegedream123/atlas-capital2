@@ -382,19 +382,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         ));
     });
 
+    let currentDetailUserId = null;
+
+    async function refreshUserDetailBlockUI(user) {
+        document.getElementById('user-detail-status').textContent = user.is_blocked ? 'Bloqué' : 'Actif';
+        const toggleBtn = document.getElementById('user-detail-toggle-block');
+        toggleBtn.textContent = user.is_blocked ? 'Réactiver' : 'Bloquer';
+        toggleBtn.style.display = user.is_super_admin ? 'none' : '';
+    }
+
     async function viewUserDetail(userId) {
         const user = allUsersData.find(u => u.id === userId);
         if (!user) return;
-        document.getElementById('user-detail-name').textContent = user.full_name || user.email;
-        document.getElementById('user-detail-summary').innerHTML = `
-            <div>Email<strong>${user.email || '—'}</strong></div>
-            <div>Solde<strong>${formatFCFA(user.balance)}</strong></div>
-            <div>Statut<strong>${user.is_blocked ? 'Bloqué' : 'Actif'}</strong></div>
-            <div>Inscrit le<strong>${formatDate(user.created_at)}</strong></div>`;
+        currentDetailUserId = userId;
 
-        const [{ data: deposits }, { data: withdrawals }] = await Promise.all([
+        document.getElementById('user-detail-name').textContent = user.full_name || user.email || 'Utilisateur';
+        document.getElementById('user-detail-phone').textContent = user.phone || user.email || '—';
+        document.getElementById('user-detail-registered').textContent = 'Inscrit le ' + formatDate(user.created_at);
+        document.getElementById('user-detail-balance').textContent = formatFCFA(user.balance);
+        await refreshUserDetailBlockUI(user);
+
+        const [{ data: deposits }, { data: withdrawals }, { count: referralCount }] = await Promise.all([
             window.supabaseClient.from('deposit_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
-            window.supabaseClient.from('withdrawal_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+            window.supabaseClient.from('withdrawal_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
+            user.referral_code
+                ? window.supabaseClient.from('profiles').select('id', { count: 'exact', head: true }).eq('referred_by', user.referral_code)
+                : Promise.resolve({ count: 0 })
         ]);
 
         const depositsBody = document.getElementById('user-detail-deposits');
@@ -407,8 +420,66 @@ document.addEventListener('DOMContentLoaded', async () => {
             <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun retrait.</td></tr>`;
 
+        document.getElementById('user-detail-deposits-count').textContent =
+            (deposits || []).filter(d => d.status === 'approved').length;
+        document.getElementById('user-detail-withdrawals-count').textContent =
+            (withdrawals || []).filter(w => w.status === 'approved').length;
+
+        document.getElementById('user-detail-referral-count').textContent = referralCount || 0;
+        document.getElementById('user-detail-sponsor').textContent = user.referred_by || 'Aucun';
+
+        let referralEarnings = 0;
+        const { data: wallet } = await window.supabaseClient.from('wallets').select('referral_earnings').eq('user_id', userId).maybeSingle();
+        if (wallet) referralEarnings = wallet.referral_earnings || 0;
+        document.getElementById('user-detail-referral-earnings').textContent = formatFCFA(referralEarnings);
+
         openModal('user-detail-modal');
     }
+
+    document.getElementById('user-detail-toggle-block').addEventListener('click', async () => {
+        if (!currentDetailUserId) return;
+        const user = allUsersData.find(u => u.id === currentDetailUserId);
+        if (!user) return;
+        await setBlocked(currentDetailUserId, !user.is_blocked);
+        const refreshed = allUsersData.find(u => u.id === currentDetailUserId);
+        if (refreshed) refreshUserDetailBlockUI(refreshed);
+    });
+
+    document.getElementById('user-detail-add-funds').addEventListener('click', () => adjustUserFunds(1));
+    document.getElementById('user-detail-remove-funds').addEventListener('click', () => adjustUserFunds(-1));
+
+    async function adjustUserFunds(sign) {
+        if (!currentDetailUserId) return;
+        const label = sign > 0 ? 'ajouter' : 'retirer';
+        const raw = prompt(`Montant à ${label} (FCFA) :`);
+        if (raw === null) return;
+        const amount = Number(raw);
+        if (!amount || amount <= 0) { window.showToast('Montant invalide.', 'error'); return; }
+
+        const { error } = await window.supabaseClient.rpc('admin_adjust_balance', {
+            p_user_id: currentDetailUserId,
+            p_amount: sign * amount,
+            p_reason: sign > 0 ? 'Ajout manuel par admin' : 'Retrait manuel par admin'
+        });
+        if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+        window.showToast('Solde mis à jour.', 'success');
+        await loadUsers();
+        viewUserDetail(currentDetailUserId);
+    }
+
+    document.getElementById('user-detail-change-password').addEventListener('click', async () => {
+        if (!currentDetailUserId) return;
+        const newPassword = prompt('Nouveau mot de passe pour ce compte :');
+        if (!newPassword) return;
+        if (newPassword.length < 6) { window.showToast('6 caractères minimum.', 'error'); return; }
+
+        const { error } = await window.supabaseClient.rpc('admin_reset_user_password', {
+            p_user_id: currentDetailUserId,
+            p_new_password: newPassword
+        });
+        if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+        window.showToast('Mot de passe mis à jour.', 'success');
+    });
 
     // ----------------------------------------------------------------
     // 7. Paramètres généraux
