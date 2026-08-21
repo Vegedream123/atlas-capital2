@@ -176,7 +176,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         { q: "Qu'est-ce que l'intérêt composé ?", options: ["Un intérêt calculé uniquement sur le capital de départ", "Un intérêt calculé sur le capital et les intérêts déjà accumulés", "Une taxe bancaire", "Un type de prêt étudiant"], correct: 1 },
         { q: "Quel est généralement le lien entre risque et rendement potentiel ?", options: ["Aucun lien", "Plus le risque est élevé, plus le rendement potentiel l'est aussi", "Le risque élevé garantit un rendement faible", "Le rendement est toujours fixe"], correct: 1 },
         { q: "Qu'est-ce qu'un budget mensuel permet de faire ?", options: ["Dépenser sans limite", "Suivre et planifier ses revenus et dépenses", "Éviter de payer ses factures", "Augmenter ses dettes"], correct: 1 },
-        { q: "Que signifie « liquidité » d'un actif ?", options: ["Sa couleur sur un graphique", "La facilité à le convertir rapidement en argent disponible", "Son ancienneté", "Le nombre de propriétaires précédents"], correct: 1 }
+        { q: "Que signifie « liquidité » d'un actif ?", options: ["Sa couleur sur un graphique", "La facilité à le convertir rapidement en argent disponible", "Son ancienneté", "Le nombre de propriétaires précédents"], correct: 1 },
+        { q: "Qu'est-ce qu'un dépôt bancaire ?", options: ["Un retrait d'argent", "De l'argent que l'on verse sur son compte", "Un prêt accordé par la banque", "Une facture impayée"], correct: 1 },
+        { q: "À quoi sert un mot de passe ou code PIN sur une application bancaire ?", options: ["À décorer l'application", "À sécuriser l'accès à son compte", "À augmenter le solde", "À payer des frais"], correct: 1 },
+        { q: "Qu'est-ce qu'un retrait bancaire ?", options: ["Ajouter de l'argent sur son compte", "Faire sortir de l'argent de son compte", "Créer un nouveau compte", "Changer de mot de passe"], correct: 1 }
     ];
 
     const tasksListEl = document.getElementById('daily-tasks-list');
