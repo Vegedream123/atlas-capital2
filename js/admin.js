@@ -634,7 +634,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="country-payment-methods">
                     ${(entry.methods || []).map((m, mi) => `
                         <div class="payment-method-row">
-                            <input type="text" placeholder="Numéro (ex: Orange Money)" value="${(m.number || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="number">
+                            <span class="payment-method-index">N°${mi + 1}</span>
+                            <input type="text" placeholder="Numéro de téléphone" value="${(m.number || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="number">
+                            <input type="text" placeholder="Réseau (ex: Orange Money)" value="${(m.network || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="network">
                             <input type="text" placeholder="Nom du titulaire" value="${(m.holder || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="holder">
                             <button type="button" class="payment-method-remove-btn" data-remove-method="${ci}:${mi}" title="Supprimer ce numéro">✕</button>
                         </div>
@@ -660,7 +662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const idx = Number(btn.getAttribute('data-add-method'));
                 if (!countryPaymentData[idx].methods) countryPaymentData[idx].methods = [];
                 if (countryPaymentData[idx].methods.length < 2) {
-                    countryPaymentData[idx].methods.push({ number: '', holder: '' });
+                    countryPaymentData[idx].methods.push({ number: '', network: '', holder: '' });
                     renderCountryPaymentLinks();
                 }
             });
@@ -683,7 +685,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (addCountryBtn) {
         addCountryBtn.addEventListener('click', () => {
-            countryPaymentData.push({ country: '', methods: [{ number: '', holder: '' }] });
+            countryPaymentData.push({ country: '', methods: [{ number: '', network: '', holder: '' }] });
             renderCountryPaymentLinks();
         });
     }
@@ -697,7 +699,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .filter(c => c.country)
             .map(c => ({
                 country: c.country,
-                methods: (c.methods || []).filter(m => (m.number || '').trim() || (m.holder || '').trim())
+                methods: (c.methods || []).filter(m => (m.number || '').trim() || (m.network || '').trim() || (m.holder || '').trim())
             }));
 
         const payload = {
