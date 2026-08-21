@@ -52,15 +52,15 @@
 
         :root {
 
-            --primary: #F97316;
-            --primary-dark: #C2410C;
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
 
-            --text: #292524;
-            --secondary: #78716C;
+            --text: #101828;
+            --secondary: #667085;
 
-            --border: #EAD9C8;
+            --border: #dbe3ef;
 
-            --background: #FFF9F2;
+            --background: #f7faff;
 
             --white: #ffffff;
 
@@ -86,8 +86,8 @@
             background:
                 linear-gradient(
                     180deg,
-                    #FFF9F2 0%,
-                    #FFF7ED 100%
+                    #f8fbff 0%,
+                    #f4f8ff 100%
                 );
 
         }
@@ -127,7 +127,7 @@
 
             text-decoration: none;
 
-            color: #7C2D12;
+            color: #102544;
 
             font-size: 25px;
 
@@ -200,7 +200,7 @@
 
             padding: 5px;
 
-            background: #FDF3E9;
+            background: #eef3f9;
 
             border-radius: 13px;
 
@@ -227,7 +227,7 @@
 
             font-weight: 600;
 
-            color: #57534E;
+            color: #607087;
 
             cursor: pointer;
 
@@ -240,7 +240,7 @@
 
             background: #ffffff;
 
-            color: #431407;
+            color: #0f2344;
 
             box-shadow:
                 0 3px 10px rgba(15,35,68,0.08);
@@ -278,7 +278,7 @@
 
             letter-spacing: -1px;
 
-            color: #431407;
+            color: #0f2344;
 
         }
 
@@ -300,7 +300,7 @@
 
             margin-bottom: 10px;
 
-            color: #7C2D12;
+            color: #102544;
 
             font-size: 18px;
 
@@ -315,7 +315,7 @@
 
             height: 64px;
 
-            border: 1.5px solid #E3D2BF;
+            border: 1.5px solid #cad6e5;
 
             border-radius: 13px;
 
@@ -327,7 +327,7 @@
 
             font-size: 17px;
 
-            color: #7C2D12;
+            color: #172b4d;
 
             outline: none;
 
@@ -338,17 +338,17 @@
 
         .form-control::placeholder {
 
-            color: #A8A29E;
+            color: #a6aeb9;
 
         }
 
 
         .form-control:focus {
 
-            border-color: #FB923C;
+            border-color: #6f9de8;
 
             box-shadow:
-                0 0 0 3px rgba(249,115,22,0.08);
+                0 0 0 3px rgba(59,130,246,0.08);
 
         }
 
@@ -405,7 +405,7 @@
 
             height: 64px;
 
-            border: 1.5px solid #EAD9C8;
+            border: 1.5px solid #dbe3ed;
 
             background: #ffffff;
 
@@ -423,7 +423,7 @@
 
             font-family: inherit;
 
-            color: #431407;
+            color: #172033;
 
         }
 
@@ -467,9 +467,9 @@
 
             height: 10px;
 
-            border-right: 2px solid #8B837A;
+            border-right: 2px solid #7a8493;
 
-            border-bottom: 2px solid #8B837A;
+            border-bottom: 2px solid #7a8493;
 
             transform: rotate(45deg);
 
@@ -504,7 +504,17 @@
 
             left: 0;
 
-            width: 100%;
+            /*
+             * Le bouton pays (+237) n'occupe qu'une petite
+             * colonne de la ligne téléphone. Avant, ce menu
+             * prenait "100%" de CETTE colonne étroite, donc
+             * les noms de pays et indicatifs se chevauchaient.
+             * On force une largeur confortable, plafonnée à la
+             * largeur de l'écran pour ne jamais déborder.
+             */
+            width: max(300px, 100%);
+
+            max-width: calc(100vw - 50px);
 
             max-height: 390px;
 
@@ -512,7 +522,7 @@
 
             background: #ffffff;
 
-            border: 1px solid #EFE2D3;
+            border: 1px solid #e1e7ef;
 
             border-radius: 18px;
 
@@ -544,7 +554,7 @@
 
             padding: 0 13px;
 
-            border: 1px solid #EAD9C8;
+            border: 1px solid #dbe3ed;
 
             border-radius: 10px;
 
@@ -559,7 +569,7 @@
 
         .country-search:focus {
 
-            border-color: #FDBA74;
+            border-color: #7ba4e9;
 
         }
 
@@ -595,7 +605,7 @@
 
         .country-option:hover {
 
-            background: #FEF6EE;
+            background: #f2f6fb;
 
         }
 
@@ -632,7 +642,7 @@
 
             font-weight: 500;
 
-            color: #431407;
+            color: #182033;
 
             text-align: left;
 
@@ -641,7 +651,7 @@
 
         .country-option-dial {
 
-            color: #78716C;
+            color: #68758a;
 
             font-size: 16px;
 
@@ -658,7 +668,7 @@
 
             text-align: center;
 
-            color: #8B837A;
+            color: #7b8798;
 
             font-size: 14px;
 
@@ -671,9 +681,9 @@
 
         .phone-input {
 
-            background: #FDF3E9;
+            background: #f0f4fa;
 
-            border-color: #EFE2D3;
+            border-color: #e0e7f0;
 
             font-size: 21px;
 
@@ -684,7 +694,7 @@
 
         .phone-input::placeholder {
 
-            color: #6B675F;
+            color: #6d788a;
 
             opacity: 1;
 
@@ -727,7 +737,7 @@
 
             background: transparent;
 
-            color: #78716C;
+            color: #667a96;
 
             cursor: pointer;
 
@@ -761,7 +771,7 @@
 
             background: transparent;
 
-            color: #C2410C;
+            color: #3577d4;
 
             font-family: inherit;
 
@@ -804,7 +814,7 @@
 
         .modal-actions a {
 
-            color: #57534E;
+            color: #55708f;
 
             text-decoration: none;
 
@@ -850,7 +860,7 @@
 
             margin: 2px 0 0;
 
-            accent-color: #F97316;
+            accent-color: #3b82f6;
 
             flex-shrink: 0;
 
@@ -865,7 +875,7 @@
 
             line-height: 1.55;
 
-            color: #78716C;
+            color: #66758a;
 
             font-weight: 400;
 
@@ -901,19 +911,19 @@
 
         .btn-primary {
 
-            background: #EA580C;
+            background: #367fe9;
 
             color: #ffffff;
 
             box-shadow:
-                0 8px 18px rgba(249,115,22,0.18);
+                0 8px 18px rgba(59,130,246,0.18);
 
         }
 
 
         .btn-primary:hover {
 
-            background: #EA580C;
+            background: #286fda;
 
             transform: translateY(-1px);
 
@@ -947,6 +957,86 @@
 
 
         /* =====================================================
+           FORCE DU MOT DE PASSE
+           ===================================================== */
+
+        .password-hint {
+
+            color: #7b8798;
+
+            font-size: 12.5px;
+
+            margin-top: 7px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .password-strength {
+
+            display: none;
+
+            align-items: center;
+
+            gap: 8px;
+
+            margin-top: 9px;
+
+        }
+
+
+        .password-strength.visible {
+
+            display: flex;
+
+        }
+
+
+        .password-strength-track {
+
+            flex: 1;
+
+            height: 6px;
+
+            border-radius: 4px;
+
+            background: #e6ebf2;
+
+            overflow: hidden;
+
+        }
+
+
+        .password-strength-fill {
+
+            height: 100%;
+
+            width: 0%;
+
+            border-radius: 4px;
+
+            background: #ef4444;
+
+            transition: width 0.2s ease, background-color 0.2s ease;
+
+        }
+
+
+        .password-strength-label {
+
+            font-size: 12.5px;
+
+            font-weight: 600;
+
+            color: #7b8798;
+
+            white-space: nowrap;
+
+        }
+
+
+        /* =====================================================
            TOAST
            ===================================================== */
 
@@ -975,7 +1065,7 @@
 
             background: #ffffff;
 
-            border: 1px solid #EAD9C8;
+            border: 1px solid #dce5ef;
 
             border-radius: 12px;
 
@@ -1186,7 +1276,7 @@
                 width="30"
                 height="30"
                 viewBox="0 0 24 24"
-                fill="#7C2D12"
+                fill="#102544"
             >
 
                 <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
@@ -1721,6 +1811,33 @@
 
                         </div>
 
+
+                        <div
+                            class="password-strength"
+                            id="reg-password-strength"
+                        >
+
+                            <div class="password-strength-track">
+
+                                <div
+                                    class="password-strength-fill"
+                                    id="reg-password-strength-fill"
+                                ></div>
+
+                            </div>
+
+                            <span
+                                class="password-strength-label"
+                                id="reg-password-strength-label"
+                            ></span>
+
+                        </div>
+
+
+                        <p class="password-hint">
+                            Au moins 8 caractères, avec une majuscule, une minuscule et un chiffre.
+                        </p>
+
                     </div>
 
 
@@ -1773,7 +1890,7 @@
                             style="
                                 display:block;
                                 margin-top:7px;
-                                color:#78716C;
+                                color:#66758a;
                                 font-size:13px;
                                 line-height:1.5;
                             "
@@ -1858,11 +1975,38 @@
             'sb_publishable_J42fuJ5ITrrRfgJ00JOS5g_U-GNXJmF';
 
 
-        window.supabaseClient =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_KEY
+        /*
+         * IMPORTANT : si le CDN Supabase ne charge pas
+         * (réseau lent, bloqueur de script, coupure momentanée),
+         * "window.supabase" est indéfini. Avant cette correction,
+         * l'appel ci-dessous plantait alors TOUT le script :
+         * plus aucun bouton (bascule email/téléphone, onglets,
+         * validation, etc.) ne répondait sur toute la page.
+         * On protège donc cet appel pour que le reste de
+         * l'interface continue de fonctionner même hors-ligne,
+         * et on affiche un message clair seulement au moment
+         * où l'utilisateur tente réellement de se connecter
+         * ou de s'inscrire.
+         */
+
+        window.supabaseClient = null;
+
+        try {
+
+            window.supabaseClient =
+                window.supabase.createClient(
+                    SUPABASE_URL,
+                    SUPABASE_KEY
+                );
+
+        } catch (err) {
+
+            console.error(
+                'Supabase n\'a pas pu être initialisé :',
+                err
             );
+
+        }
 
 
 
@@ -3174,6 +3318,20 @@
                 }
 
 
+                if (
+                    !window.supabaseClient
+                ) {
+
+                    showToast(
+                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
+                        'error'
+                    );
+
+                    return;
+
+                }
+
+
                 const originalText =
                     button.textContent;
 
@@ -3291,6 +3449,125 @@
 
 
         /* =========================================================
+           FORCE DU MOT DE PASSE (TEMPS REEL)
+           ========================================================= */
+
+        function evaluatePasswordStrength(
+            value
+        ) {
+
+            let score = 0;
+
+            if (value.length >= 8) score++;
+            if (value.length >= 12) score++;
+            if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+            if (/[0-9]/.test(value)) score++;
+            if (/[^A-Za-z0-9]/.test(value)) score++;
+
+            if (score <= 1) {
+
+                return {
+                    percent: 25,
+                    color: '#ef4444',
+                    label: 'Faible'
+                };
+
+            }
+
+            if (score <= 3) {
+
+                return {
+                    percent: 65,
+                    color: '#f59e0b',
+                    label: 'Moyen'
+                };
+
+            }
+
+            return {
+                percent: 100,
+                color: '#10b981',
+                label: 'Fort'
+            };
+
+        }
+
+
+        const regPasswordInput =
+            document.getElementById(
+                'reg-password'
+            );
+
+        const regPasswordStrength =
+            document.getElementById(
+                'reg-password-strength'
+            );
+
+        const regPasswordStrengthFill =
+            document.getElementById(
+                'reg-password-strength-fill'
+            );
+
+        const regPasswordStrengthLabel =
+            document.getElementById(
+                'reg-password-strength-label'
+            );
+
+
+        if (regPasswordInput) {
+
+            regPasswordInput.addEventListener(
+                'input',
+                () => {
+
+                    const value =
+                        regPasswordInput.value;
+
+
+                    if (
+                        value.length === 0
+                    ) {
+
+                        regPasswordStrength.classList.remove(
+                            'visible'
+                        );
+
+                        return;
+
+                    }
+
+
+                    regPasswordStrength.classList.add(
+                        'visible'
+                    );
+
+
+                    const result =
+                        evaluatePasswordStrength(
+                            value
+                        );
+
+
+                    regPasswordStrengthFill.style.width =
+                        result.percent + '%';
+
+                    regPasswordStrengthFill.style.background =
+                        result.color;
+
+                    regPasswordStrengthLabel.textContent =
+                        result.label;
+
+                    regPasswordStrengthLabel.style.color =
+                        result.color;
+
+                }
+            );
+
+        }
+
+
+
+        /* =========================================================
            INSCRIPTION
            ========================================================= */
 
@@ -3361,12 +3638,28 @@
                 /* MOT DE PASSE */
 
                 if (
-                    password.value.length < 6
+                    password.value.length < 8
                 ) {
 
                     showError(
                         password,
-                        'Le mot de passe doit contenir au moins 6 caractères.'
+                        'Le mot de passe doit contenir au moins 8 caractères.'
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    !/[a-z]/.test(password.value) ||
+                    !/[A-Z]/.test(password.value) ||
+                    !/[0-9]/.test(password.value)
+                ) {
+
+                    showError(
+                        password,
+                        'Le mot de passe doit contenir une majuscule, une minuscule et un chiffre.'
                     );
 
                     return;
@@ -3543,6 +3836,20 @@
                         }
 
                     };
+
+                }
+
+
+                if (
+                    !window.supabaseClient
+                ) {
+
+                    showToast(
+                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
+                        'error'
+                    );
+
+                    return;
 
                 }
 
