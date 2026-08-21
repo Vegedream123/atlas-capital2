@@ -336,27 +336,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderDashboardData = () => {
         // --- KPIs ---
-        // ⚠️ Chaque carte ne doit refléter QUE les revenus de sa propre
-        //    catégorie de produit, sans mélange :
-        //    - "Revenu Annuel"        -> uniquement les produits catégorie "atlas"
-        //    - "Investissements Actifs" -> uniquement les produits "constant" / "analyse"
-        //    - "Quêtes Journalières"  -> uniquement les gains de type "quest" du jour
         const activeInvestments = investments.filter(i => i.status === 'active');
-        const productCategory = (i) => (i.investment_products && i.investment_products.category) || '';
 
-        // --- Revenu Annuel (catégorie "atlas" uniquement) ---
-        const atlasInvestments = activeInvestments.filter(i => productCategory(i) === 'atlas');
-        const atlasInvested = atlasInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
-        const weightedDailyRate = atlasInvested > 0
-            ? atlasInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / atlasInvested
+        const totalInvested = activeInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
+        const weightedDailyRate = totalInvested > 0
+            ? activeInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / totalInvested
             : 0;
         const annualRate = weightedDailyRate * 365 / 100 * 100; // % annuel équivalent (taux/jour * 365)
 
-        // --- Investissements Actifs (catégories "constant" et "analyse" uniquement) ---
-        const activeCategoryInvestments = activeInvestments.filter(i => ['constant', 'analyse'].includes(productCategory(i)));
-        const totalInvested = activeCategoryInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
-
-        // --- Quêtes Journalières (transactions de type "quest" du jour uniquement) ---
         const todayStr = new Date().toISOString().slice(0, 10);
         const dailyQuestGains = transactions
             .filter(t => t.type === 'quest' && t.created_at && t.created_at.slice(0, 10) === todayStr)
@@ -368,14 +355,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         setKpi('kpi-balance', wallet.balance);
         setKpi('kpi-annual-rate', annualRate.toFixed(1));
-        setKpi('kpi-active-investments', activeCategoryInvestments.length);
+        setKpi('kpi-active-investments', activeInvestments.length);
         setKpi('kpi-daily-quest', dailyQuestGains);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
-        changeEl('kpi-rate-change', atlasInvestments.length ? `${atlasInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
-        changeEl('kpi-active-change', activeCategoryInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
-        changeEl('kpi-quest-change', dailyQuestGains > 0 ? 'Quête validée' : 'Pas encore réclamé');
+        changeEl('kpi-rate-change', activeInvestments.length ? `${activeInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
+        changeEl('kpi-active-change', activeInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
+        // Ce montant correspond aux gains de type "quête" réellement crédités
+        // aujourd'hui (transactions), ce qui peut inclure un placement arrivé
+        // à échéance dans la journée — d'où le libellé explicite ci-dessous,
+        // pour ne pas laisser croire à un placement encore actif s'il n'y en a
+        // plus (voir "Investissements Actifs" pour l'état actuel réel).
+        changeEl('kpi-quest-change', dailyQuestGains > 0 ? 'Crédité aujourd\'hui' : 'Pas encore réclamé');
 
         // Animation des compteurs (réutilise data-target désormais réel)
         document.querySelectorAll('.stat-number').forEach(counter => {
@@ -425,13 +417,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // --- Produits disponibles par catégorie (Revenu Annuel / Actif / Quête) ---
+        // Chaque produit reste affiché en permanence dans sa case (grille) de
+        // catégorie, qu'il soit possédé ou non. Une fois acheté, le nombre de
+        // placements actifs sur CE produit précis et le gain journalier qui en
+        // découle s'affichent directement sous sa carte, tant que
+        // l'investissement est actif (statut 'active' dans user_investments).
         const gridIds = { atlas: 'vip-grid-atlas', constant: 'vip-grid-constant', analyse: 'vip-grid-analyse', quete: 'vip-grid-quete' };
+        const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete' };
+
+        const dailyGainOf = (inv) => Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
 
         const renderProductCard = (p) => {
             const dailyGain = Math.round(Number(p.price) * Number(p.daily_rate) / 100);
             const affordable = wallet.balance >= Number(p.price);
+
+            // Placements actifs de l'utilisateur sur CE produit précis (pas la catégorie entière)
+            const ownedActive = activeInvestments.filter(i => i.product_id === p.id);
+            const ownedCount = ownedActive.length;
+            const ownedDailyGain = ownedActive.reduce((sum, i) => sum + dailyGainOf(i), 0);
+
             return `
-                <div class="vip-card">
+                <div class="vip-card${ownedCount > 0 ? ' is-owned' : ''}">
                     <div class="vip-card-header">
                         <div class="vip-icon">★</div>
                         <span class="vip-name">${p.name}</span>
@@ -447,6 +453,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span class="vip-stat-value">${p.duration_days} j</span>
                         </div>
                     </div>
+                    ${ownedCount > 0 ? `
+                    <div class="vip-owned-box">
+                        <div class="vip-owned-row"><span>Placements actifs</span><span class="val">${ownedCount}</span></div>
+                        <div class="vip-owned-row"><span>Gain journalier en cours</span><span class="val">+${formatFCFA(ownedDailyGain)}</span></div>
+                    </div>` : ''}
                     <button class="btn btn-primary btn-full buy-product-btn"
                         data-product-id="${p.id}"
                         data-product-name="${p.name}"
@@ -454,7 +465,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         data-daily-gain="${dailyGain}"
                         data-duration="${p.duration_days}"
                         ${affordable ? '' : 'disabled title="Solde insuffisant"'}>
-                        ${affordable ? 'Acheter' : 'Solde insuffisant'}
+                        ${affordable ? (ownedCount > 0 ? 'Investir à nouveau' : 'Acheter') : 'Solde insuffisant'}
                     </button>
                 </div>`;
         };
@@ -466,6 +477,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             grid.innerHTML = items.length
                 ? items.map(renderProductCard).join('')
                 : '<p class="text-secondary" style="padding:12px 2px;">Aucun produit disponible pour le moment.</p>';
+        });
+
+        // --- Résumé par section (catégorie) : X placement(s) actif(s) + gain/jour réel ---
+        Object.entries(sectionStatsIds).forEach(([category, elId]) => {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const active = activeInvestments.filter(i => i.investment_products && i.investment_products.category === category);
+            const gain = active.reduce((sum, i) => sum + dailyGainOf(i), 0);
+            if (active.length) {
+                el.textContent = `${active.length} placement(s) actif(s) · +${formatFCFA(gain)}/jour`;
+                el.classList.add('has-active');
+            } else {
+                el.textContent = 'Aucun placement actif';
+                el.classList.remove('has-active');
+            }
         });
 
         // --- Portefeuille : solde réel ---
