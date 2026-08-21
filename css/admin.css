@@ -104,6 +104,14 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
 .admin-user-referral h4 { margin: 0 0 8px; }
 .admin-user-referral .admin-user-label { margin-bottom: 4px; }
 
+/* ---- Liens de paiement par pays ---- */
+.country-link-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; background: var(--gray-50); }
+.country-link-card-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.country-link-select { flex: 1; padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-weight: 600; }
+.country-link-number-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 8px; margin-bottom: 8px; }
+.country-link-number-row input { padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.85rem; }
+@media (max-width: 700px) { .country-link-number-row { grid-template-columns: 1fr 1fr; } }
+
 @media (max-width: 860px) {
     .admin-layout { flex-direction: column; }
     .admin-sidebar { width: 100%; height: auto; position: relative; flex-direction: row; overflow-x: auto; }
