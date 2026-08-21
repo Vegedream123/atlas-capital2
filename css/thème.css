@@ -1,0 +1,52 @@
+/* ==========================================================================
+   ATLAS CAPITAL — Thème Banque d'Investissement & Management (Pro Theme)
+   Palette Institutionnelle Premium: Bleu Marine, Doré Mât, Émeraude & Slate
+   ========================================================================== */
+
+:root {
+    /* Couleurs Principales Institutionnelles */
+    --primary: #0F172A;            /* Bleu Nuit / Slate Profond */
+    --primary-light: #1E293B;      /* Bleu Acier Sombre */
+    --primary-hover: #334155;      /* Bleu Acier Moyen */
+
+    /* Accents Luxe & Capital */
+    --accent: #2563EB;             /* Bleu Royal Finance */
+    --accent-hover: #1D4ED8;       /* Bleu Royal Intensa */
+    --gold: #D97706;               /* Doré Mât / Champagne */
+    --gold-light: #FBBF24;         /* Doré Clair */
+    --gold-dark: #B45309;          /* Bronze */
+    --gold-gradient: linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #B45309 100%);
+
+    /* États & Indicateurs Financiers */
+    --success: #10B981;            /* Vert Émeraude (Gains / Hausse) */
+    --warning: #F59E0B;            /* Orange Ambré (En attente) */
+    --danger: #EF4444;             /* Rouge Profond (Retrait / Baisse) */
+
+    /* Fonds & Neutres */
+    --white: #FFFFFF;
+    --gray-50: #F8FAFC;           /* Fond Général Ultra Pro */
+    --gray-100: #F1F5F9;          /* Fond Carte / Contrôles */
+    --gray-200: #E2E8F0;          /* Bordures & Séparateurs */
+    --gray-300: #CBD5E1;          /* Désactivé / Lignes secondaires */
+    --gray-500: #64748B;          /* Subtitles / Textes secondaires */
+    --gray-700: #334155;          /* Titres secondaires */
+
+    /* Textes */
+    --text-primary: #0F172A;        /* Texte Sombre / Titres */
+    --text-secondary: #475569;      /* Texte Paragraphe */
+
+    /* Ombrages Soignés */
+    --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+    --shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.1), 0 4px 6px -4px rgba(15, 23, 42, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+
+    /* Arrondis Standardisés */
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Transitions */
+    --transition: all 0.25s ease-in-out;
+}
