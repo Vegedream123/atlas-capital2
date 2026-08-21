@@ -336,14 +336,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderDashboardData = () => {
         // --- KPIs ---
+        // ⚠️ Chaque carte ne doit refléter QUE les revenus de sa propre
+        //    catégorie de produit, sans mélange :
+        //    - "Revenu Annuel"        -> uniquement les produits catégorie "atlas"
+        //    - "Investissements Actifs" -> uniquement les produits "constant" / "analyse"
+        //    - "Quêtes Journalières"  -> uniquement les gains de type "quest" du jour
         const activeInvestments = investments.filter(i => i.status === 'active');
+        const productCategory = (i) => (i.investment_products && i.investment_products.category) || '';
 
-        const totalInvested = activeInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
-        const weightedDailyRate = totalInvested > 0
-            ? activeInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / totalInvested
+        // --- Revenu Annuel (catégorie "atlas" uniquement) ---
+        const atlasInvestments = activeInvestments.filter(i => productCategory(i) === 'atlas');
+        const atlasInvested = atlasInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
+        const weightedDailyRate = atlasInvested > 0
+            ? atlasInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / atlasInvested
             : 0;
         const annualRate = weightedDailyRate * 365 / 100 * 100; // % annuel équivalent (taux/jour * 365)
 
+        // --- Investissements Actifs (catégories "constant" et "analyse" uniquement) ---
+        const activeCategoryInvestments = activeInvestments.filter(i => ['constant', 'analyse'].includes(productCategory(i)));
+        const totalInvested = activeCategoryInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
+
+        // --- Quêtes Journalières (transactions de type "quest" du jour uniquement) ---
         const todayStr = new Date().toISOString().slice(0, 10);
         const dailyQuestGains = transactions
             .filter(t => t.type === 'quest' && t.created_at && t.created_at.slice(0, 10) === todayStr)
@@ -355,13 +368,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         setKpi('kpi-balance', wallet.balance);
         setKpi('kpi-annual-rate', annualRate.toFixed(1));
-        setKpi('kpi-active-investments', activeInvestments.length);
+        setKpi('kpi-active-investments', activeCategoryInvestments.length);
         setKpi('kpi-daily-quest', dailyQuestGains);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
-        changeEl('kpi-rate-change', activeInvestments.length ? `${activeInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
-        changeEl('kpi-active-change', activeInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
+        changeEl('kpi-rate-change', atlasInvestments.length ? `${atlasInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
+        changeEl('kpi-active-change', activeCategoryInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
         changeEl('kpi-quest-change', dailyQuestGains > 0 ? 'Quête validée' : 'Pas encore réclamé');
 
         // Animation des compteurs (réutilise data-target désormais réel)
