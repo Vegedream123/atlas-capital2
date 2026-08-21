@@ -160,6 +160,15 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
     padding: 10px;
     max-width: 100%;
 }
+.payment-method-index {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--gray-100);
+    padding: 4px 8px;
+    border-radius: 999px;
+}
 .payment-method-row input {
     flex: 1 1 160px;
     min-width: 0;
