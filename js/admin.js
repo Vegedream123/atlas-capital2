@@ -482,89 +482,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
-    // 7ter. Liens de paiement par pays
-    // ----------------------------------------------------------------
-    let countryPaymentLinks = [];
-    const countryListEl = document.getElementById('country-payment-links-list');
-    const addCountryBtn = document.getElementById('add-country-payment-link-btn');
-    const ALL_COUNTRIES = window.AtlasCountries || [{ code: 'XX', name: 'Autre pays' }];
-
-    function renderCountryPaymentLinks() {
-        if (!countryListEl) return;
-        if (!countryPaymentLinks.length) {
-            countryListEl.innerHTML = `<p class="text-secondary" style="margin-bottom:14px;">Aucun pays configuré.</p>`;
-            return;
-        }
-        countryListEl.innerHTML = countryPaymentLinks.map((entry, ci) => `
-            <div class="country-link-card" data-ci="${ci}">
-                <div class="country-link-card-header">
-                    <select class="country-link-select" data-ci="${ci}">
-                        ${ALL_COUNTRIES.map(c => `<option value="${c.code}" ${c.code === entry.country ? 'selected' : ''}>${c.name}</option>`).join('')}
-                    </select>
-                    <button type="button" class="admin-btn-sm admin-btn-reject" data-remove-country="${ci}">Supprimer le pays</button>
-                </div>
-                ${(entry.numbers || []).map((n, ni) => `
-                    <div class="country-link-number-row" data-ci="${ci}" data-ni="${ni}">
-                        <input type="text" placeholder="Numéro" class="cl-number" value="${n.number || ''}">
-                        <input type="text" placeholder="Nom du titulaire" class="cl-holder" value="${n.holder || ''}">
-                        <input type="text" placeholder="Réseau (ex: Orange Money)" class="cl-network" value="${n.network || ''}">
-                        <button type="button" class="admin-btn-sm admin-btn-reject" data-remove-number data-ci="${ci}" data-ni="${ni}">✕</button>
-                    </div>
-                `).join('')}
-                ${(entry.numbers || []).length < 2
-                    ? `<button type="button" class="admin-btn-sm admin-btn-edit" data-add-number="${ci}">+ Ajouter un numéro</button>`
-                    : ''}
-            </div>
-        `).join('');
-
-        countryListEl.querySelectorAll('.country-link-select').forEach(sel => {
-            sel.addEventListener('change', () => {
-                countryPaymentLinks[Number(sel.getAttribute('data-ci'))].country = sel.value;
-            });
-        });
-        countryListEl.querySelectorAll('[data-remove-country]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                countryPaymentLinks.splice(Number(btn.getAttribute('data-remove-country')), 1);
-                renderCountryPaymentLinks();
-            });
-        });
-        countryListEl.querySelectorAll('[data-add-number]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const ci = Number(btn.getAttribute('data-add-number'));
-                countryPaymentLinks[ci].numbers = countryPaymentLinks[ci].numbers || [];
-                if (countryPaymentLinks[ci].numbers.length < 2) {
-                    countryPaymentLinks[ci].numbers.push({ number: '', holder: '', network: '' });
-                    renderCountryPaymentLinks();
-                }
-            });
-        });
-        countryListEl.querySelectorAll('[data-remove-number]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const ci = Number(btn.getAttribute('data-ci'));
-                const ni = Number(btn.getAttribute('data-ni'));
-                countryPaymentLinks[ci].numbers.splice(ni, 1);
-                renderCountryPaymentLinks();
-            });
-        });
-        countryListEl.querySelectorAll('.country-link-number-row').forEach(row => {
-            const ci = Number(row.getAttribute('data-ci'));
-            const ni = Number(row.getAttribute('data-ni'));
-            row.querySelector('.cl-number').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].number = e.target.value);
-            row.querySelector('.cl-holder').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].holder = e.target.value);
-            row.querySelector('.cl-network').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].network = e.target.value);
-        });
-    }
-
-    if (addCountryBtn) {
-        addCountryBtn.addEventListener('click', () => {
-            const usedCodes = countryPaymentLinks.map(e => e.country);
-            const nextCountry = ALL_COUNTRIES.find(c => !usedCodes.includes(c.code)) || ALL_COUNTRIES[0];
-            countryPaymentLinks.push({ country: nextCountry.code, numbers: [{ number: '', holder: '', network: '' }] });
-            renderCountryPaymentLinks();
-        });
-    }
-
-    // ----------------------------------------------------------------
     // 7. Paramètres généraux
     // ----------------------------------------------------------------
     const settingsForm = document.getElementById('settings-form');
@@ -659,9 +576,116 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-withdrawal-methods').value = linesFromValue(data.withdrawal_methods);
         document.getElementById('setting-deposit-usdt-address').value = data.deposit_usdt_address || '';
         document.getElementById('setting-deposit-amounts').value = linesFromValue(data.deposit_amounts);
-        countryPaymentLinks = Array.isArray(data.country_payment_links) ? data.country_payment_links : [];
+
+        countryPaymentData = parseCountryPaymentMethods(data.country_payment_methods);
         renderCountryPaymentLinks();
+
         paymentSettingsSubmitBtn.disabled = false;
+    }
+
+    // ----------------------------------------------------------------
+    // 7ter. Paiement par pays (numéros Mobile Money éditables par pays)
+    // ----------------------------------------------------------------
+    const countryPaymentListEl = document.getElementById('country-payment-links-list');
+    const addCountryBtn = document.getElementById('add-country-payment-link-btn');
+    // Structure : [{ country: 'CM', methods: [{ number: '', holder: '' }, ...] }]
+    let countryPaymentData = [];
+
+    function parseCountryPaymentMethods(value) {
+        if (Array.isArray(value)) return value;
+        if (typeof value === 'string' && value) {
+            try {
+                const parsed = JSON.parse(value);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) { return []; }
+        }
+        return [];
+    }
+
+    function usedCountryCodes(excludeIndex) {
+        return countryPaymentData
+            .map((c, i) => (i === excludeIndex ? null : c.country))
+            .filter(Boolean);
+    }
+
+    function countryOptionsHtml(selected, excludeIndex) {
+        const used = usedCountryCodes(excludeIndex);
+        const list = window.AtlasCountries || [];
+        return list.map(c =>
+            `<option value="${c.code}" ${c.code === selected ? 'selected' : ''} ${used.includes(c.code) && c.code !== selected ? 'disabled' : ''}>${c.name}</option>`
+        ).join('');
+    }
+
+    function renderCountryPaymentLinks() {
+        if (!countryPaymentListEl) return;
+        if (!countryPaymentData.length) {
+            countryPaymentListEl.innerHTML = `<p class="country-payment-empty">Aucun pays configuré pour le moment. Cliquez sur "Ajouter un pays" ci-dessous.</p>`;
+            return;
+        }
+        countryPaymentListEl.innerHTML = countryPaymentData.map((entry, ci) => `
+            <div class="country-payment-item">
+                <div class="country-payment-header">
+                    <select class="country-select" data-country-index="${ci}">
+                        <option value="">Sélectionner un pays</option>
+                        ${countryOptionsHtml(entry.country, ci)}
+                    </select>
+                    <button type="button" class="remove-country-btn" data-remove-country="${ci}">Supprimer le pays</button>
+                </div>
+                <div class="country-payment-methods">
+                    ${(entry.methods || []).map((m, mi) => `
+                        <div class="payment-method-row">
+                            <input type="text" placeholder="Numéro (ex: Orange Money)" value="${(m.number || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="number">
+                            <input type="text" placeholder="Nom du titulaire" value="${(m.holder || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-method-index="${mi}" data-field="holder">
+                            <button type="button" class="payment-method-remove-btn" data-remove-method="${ci}:${mi}" title="Supprimer ce numéro">✕</button>
+                        </div>
+                    `).join('')}
+                </div>
+                ${(entry.methods || []).length < 2 ? `<button type="button" class="add-method-btn" data-add-method="${ci}" style="margin-top:10px;">+ Ajouter un numéro</button>` : ''}
+            </div>
+        `).join('');
+
+        countryPaymentListEl.querySelectorAll('.country-select').forEach(sel => {
+            sel.addEventListener('change', () => {
+                countryPaymentData[Number(sel.getAttribute('data-country-index'))].country = sel.value;
+            });
+        });
+        countryPaymentListEl.querySelectorAll('[data-remove-country]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                countryPaymentData.splice(Number(btn.getAttribute('data-remove-country')), 1);
+                renderCountryPaymentLinks();
+            });
+        });
+        countryPaymentListEl.querySelectorAll('[data-add-method]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = Number(btn.getAttribute('data-add-method'));
+                if (!countryPaymentData[idx].methods) countryPaymentData[idx].methods = [];
+                if (countryPaymentData[idx].methods.length < 2) {
+                    countryPaymentData[idx].methods.push({ number: '', holder: '' });
+                    renderCountryPaymentLinks();
+                }
+            });
+        });
+        countryPaymentListEl.querySelectorAll('[data-remove-method]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const [ci, mi] = btn.getAttribute('data-remove-method').split(':').map(Number);
+                countryPaymentData[ci].methods.splice(mi, 1);
+                renderCountryPaymentLinks();
+            });
+        });
+        countryPaymentListEl.querySelectorAll('input[data-field]').forEach(input => {
+            input.addEventListener('input', () => {
+                const ci = Number(input.getAttribute('data-country-index'));
+                const mi = Number(input.getAttribute('data-method-index'));
+                countryPaymentData[ci].methods[mi][input.getAttribute('data-field')] = input.value;
+            });
+        });
+    }
+
+    if (addCountryBtn) {
+        addCountryBtn.addEventListener('click', () => {
+            countryPaymentData.push({ country: '', methods: [{ number: '', holder: '' }] });
+            renderCountryPaymentLinks();
+        });
     }
 
     paymentSettingsForm.addEventListener('submit', async (e) => {
@@ -669,14 +693,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         paymentSettingsSubmitBtn.disabled = true;
         paymentSettingsSubmitBtn.textContent = 'Enregistrement…';
 
+        const cleanCountryPayments = countryPaymentData
+            .filter(c => c.country)
+            .map(c => ({
+                country: c.country,
+                methods: (c.methods || []).filter(m => (m.number || '').trim() || (m.holder || '').trim())
+            }));
+
         const payload = {
             id: 1,
             withdrawal_methods: linesToArray(document.getElementById('setting-withdrawal-methods').value),
             deposit_usdt_address: document.getElementById('setting-deposit-usdt-address').value.trim(),
             deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n)),
-            country_payment_links: countryPaymentLinks
-                .map(e => ({ country: e.country, numbers: (e.numbers || []).filter(n => n.number || n.holder || n.network) }))
-                .filter(e => e.numbers.length > 0)
+            country_payment_methods: cleanCountryPayments
         };
 
         const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
