@@ -482,6 +482,89 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
+    // 7ter. Liens de paiement par pays
+    // ----------------------------------------------------------------
+    let countryPaymentLinks = [];
+    const countryListEl = document.getElementById('country-payment-links-list');
+    const addCountryBtn = document.getElementById('add-country-payment-link-btn');
+    const ALL_COUNTRIES = window.AtlasCountries || [{ code: 'XX', name: 'Autre pays' }];
+
+    function renderCountryPaymentLinks() {
+        if (!countryListEl) return;
+        if (!countryPaymentLinks.length) {
+            countryListEl.innerHTML = `<p class="text-secondary" style="margin-bottom:14px;">Aucun pays configuré.</p>`;
+            return;
+        }
+        countryListEl.innerHTML = countryPaymentLinks.map((entry, ci) => `
+            <div class="country-link-card" data-ci="${ci}">
+                <div class="country-link-card-header">
+                    <select class="country-link-select" data-ci="${ci}">
+                        ${ALL_COUNTRIES.map(c => `<option value="${c.code}" ${c.code === entry.country ? 'selected' : ''}>${c.name}</option>`).join('')}
+                    </select>
+                    <button type="button" class="admin-btn-sm admin-btn-reject" data-remove-country="${ci}">Supprimer le pays</button>
+                </div>
+                ${(entry.numbers || []).map((n, ni) => `
+                    <div class="country-link-number-row" data-ci="${ci}" data-ni="${ni}">
+                        <input type="text" placeholder="Numéro" class="cl-number" value="${n.number || ''}">
+                        <input type="text" placeholder="Nom du titulaire" class="cl-holder" value="${n.holder || ''}">
+                        <input type="text" placeholder="Réseau (ex: Orange Money)" class="cl-network" value="${n.network || ''}">
+                        <button type="button" class="admin-btn-sm admin-btn-reject" data-remove-number data-ci="${ci}" data-ni="${ni}">✕</button>
+                    </div>
+                `).join('')}
+                ${(entry.numbers || []).length < 2
+                    ? `<button type="button" class="admin-btn-sm admin-btn-edit" data-add-number="${ci}">+ Ajouter un numéro</button>`
+                    : ''}
+            </div>
+        `).join('');
+
+        countryListEl.querySelectorAll('.country-link-select').forEach(sel => {
+            sel.addEventListener('change', () => {
+                countryPaymentLinks[Number(sel.getAttribute('data-ci'))].country = sel.value;
+            });
+        });
+        countryListEl.querySelectorAll('[data-remove-country]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                countryPaymentLinks.splice(Number(btn.getAttribute('data-remove-country')), 1);
+                renderCountryPaymentLinks();
+            });
+        });
+        countryListEl.querySelectorAll('[data-add-number]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const ci = Number(btn.getAttribute('data-add-number'));
+                countryPaymentLinks[ci].numbers = countryPaymentLinks[ci].numbers || [];
+                if (countryPaymentLinks[ci].numbers.length < 2) {
+                    countryPaymentLinks[ci].numbers.push({ number: '', holder: '', network: '' });
+                    renderCountryPaymentLinks();
+                }
+            });
+        });
+        countryListEl.querySelectorAll('[data-remove-number]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const ci = Number(btn.getAttribute('data-ci'));
+                const ni = Number(btn.getAttribute('data-ni'));
+                countryPaymentLinks[ci].numbers.splice(ni, 1);
+                renderCountryPaymentLinks();
+            });
+        });
+        countryListEl.querySelectorAll('.country-link-number-row').forEach(row => {
+            const ci = Number(row.getAttribute('data-ci'));
+            const ni = Number(row.getAttribute('data-ni'));
+            row.querySelector('.cl-number').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].number = e.target.value);
+            row.querySelector('.cl-holder').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].holder = e.target.value);
+            row.querySelector('.cl-network').addEventListener('input', (e) => countryPaymentLinks[ci].numbers[ni].network = e.target.value);
+        });
+    }
+
+    if (addCountryBtn) {
+        addCountryBtn.addEventListener('click', () => {
+            const usedCodes = countryPaymentLinks.map(e => e.country);
+            const nextCountry = ALL_COUNTRIES.find(c => !usedCodes.includes(c.code)) || ALL_COUNTRIES[0];
+            countryPaymentLinks.push({ country: nextCountry.code, numbers: [{ number: '', holder: '', network: '' }] });
+            renderCountryPaymentLinks();
+        });
+    }
+
+    // ----------------------------------------------------------------
     // 7. Paramètres généraux
     // ----------------------------------------------------------------
     const settingsForm = document.getElementById('settings-form');
@@ -576,6 +659,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-withdrawal-methods').value = linesFromValue(data.withdrawal_methods);
         document.getElementById('setting-deposit-usdt-address').value = data.deposit_usdt_address || '';
         document.getElementById('setting-deposit-amounts').value = linesFromValue(data.deposit_amounts);
+        countryPaymentLinks = Array.isArray(data.country_payment_links) ? data.country_payment_links : [];
+        renderCountryPaymentLinks();
         paymentSettingsSubmitBtn.disabled = false;
     }
 
@@ -588,7 +673,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: 1,
             withdrawal_methods: linesToArray(document.getElementById('setting-withdrawal-methods').value),
             deposit_usdt_address: document.getElementById('setting-deposit-usdt-address').value.trim(),
-            deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n))
+            deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n)),
+            country_payment_links: countryPaymentLinks
+                .map(e => ({ country: e.country, numbers: (e.numbers || []).filter(n => n.number || n.holder || n.network) }))
+                .filter(e => e.numbers.length > 0)
         };
 
         const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
