@@ -68,13 +68,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
-    // Injecte l'adresse USDT (TRC-20) définie dans l'admin (site_settings)
-    // dans le module des moyens de paiement, avant tout rendu des modals
-    // de dépôt/retrait.
-    if (window.AtlasPaymentMethods) {
-        window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address);
-    }
-
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
@@ -564,20 +557,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('selected');
                 const method = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 selectedDepositMethod = method;
-                depositModalOverlay.querySelector('#deposit-method-details').innerHTML = method ? (
-                    method.type === 'usdt' ? `
-                    <div class="deposit-method-details-box">
-                        <p><strong>${method.name}</strong></p>
-                        <p>Adresse de réception : <strong style="word-break:break-all;">${method.number}</strong></p>
-                        <p class="text-secondary" style="font-size:0.82rem;">${method.note}</p>
-                    </div>` : `
+                depositModalOverlay.querySelector('#deposit-method-details').innerHTML = method ? `
                     <div class="deposit-method-details-box">
                         <p><strong>${method.name}</strong></p>
                         <p>Numéro / Référence : <strong>${method.number}</strong></p>
                         <p>Bénéficiaire : ${method.holder}</p>
                         <p class="text-secondary" style="font-size:0.82rem;">${method.note}</p>
-                    </div>`
-                ) : '';
+                    </div>` : '';
                 depositModalOverlay.querySelector('#deposit-submit-btn').disabled = false;
             });
         });
@@ -737,16 +723,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('selected');
                 selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
-
-                const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
-                const destinationLabel = withdrawModalOverlay.querySelector('#withdraw-destination-label');
-                if (destinationInput && selectedWithdrawMethod && selectedWithdrawMethod.type === 'usdt') {
-                    if (destinationLabel) destinationLabel.textContent = 'Votre adresse USDT (réseau TRC-20)';
-                    destinationInput.placeholder = 'Ex : TXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
-                } else {
-                    if (destinationLabel) destinationLabel.textContent = 'Numéro / compte de réception';
-                    destinationInput.placeholder = 'Ex : +237 6XX XXX XXX';
-                }
             });
         });
     };
@@ -774,7 +750,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
             <div class="form-group">
-                <label class="form-label" id="withdraw-destination-label" for="withdraw-destination-input">Numéro / compte de réception</label>
+                <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
                 <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
             </div>
 
