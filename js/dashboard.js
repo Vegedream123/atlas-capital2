@@ -148,20 +148,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     //
     //       alter table user_investments add column if not exists last_task_at timestamptz;
     //
+    //       -- IMPORTANT : le type de transaction dépend de la catégorie du
+    //       -- produit, afin que "Revenu Annuel" (atlas), "Investissement Actif"
+    //       -- (constant / analyse) et "Quêtes Journalières" (quete) restent
+    //       -- des compteurs bien séparés côté tableau de bord.
     //       create or replace function claim_daily_task(p_investment_id uuid)
     //       returns void language plpgsql security definer as $$
     //       declare v_user_id uuid := auth.uid(); v_amount numeric; v_last timestamptz;
+    //               v_category text; v_type text; v_desc text;
     //       begin
-    //         select ui.amount * ip.daily_rate / 100, ui.last_task_at into v_amount, v_last
+    //         select ui.amount * ip.daily_rate / 100, ui.last_task_at, ip.category
+    //           into v_amount, v_last, v_category
     //         from user_investments ui join investment_products ip on ip.id = ui.product_id
     //         where ui.id = p_investment_id and ui.user_id = v_user_id and ui.status = 'active';
     //         if v_amount is null then raise exception 'Investissement introuvable ou inactif.'; end if;
     //         if v_last is not null and v_last > now() - interval '24 hours' then
     //           raise exception 'Tâche déjà effectuée aujourd''hui.'; end if;
+    //
+    //         if v_category = 'quete' then
+    //           v_type := 'quest'; v_desc := 'Quête quotidienne validée';
+    //         else
+    //           v_type := 'gain'; v_desc := 'Gain quotidien débloqué';
+    //         end if;
+    //
     //         update user_investments set last_task_at = now() where id = p_investment_id;
     //         update wallets set balance = balance + v_amount, total_income = total_income + v_amount where user_id = v_user_id;
     //         insert into transactions (user_id, type, amount, description)
-    //           values (v_user_id, 'quest', v_amount, 'Tâche quotidienne validée');
+    //           values (v_user_id, v_type, v_amount, v_desc);
     //       end; $$;
     //
     //       Tant que cette fonction n'existe pas côté Supabase, la tâche
