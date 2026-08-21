@@ -70,6 +70,28 @@
         usdtAddress = (address || '').trim();
     }
 
+    // Liens de paiement par pays configurés depuis le panneau admin
+    // (site_settings.country_payment_links). Prioritaires sur la liste
+    // statique PAYMENT_METHODS_BY_COUNTRY ci-dessous si présents pour un pays.
+    let dynamicMethodsByCountry = {};
+
+    function setCountryPaymentLinks(links) {
+        dynamicMethodsByCountry = {};
+        (links || []).forEach(entry => {
+            if (!entry || !entry.country) return;
+            const methods = (entry.numbers || [])
+                .filter(n => n && n.number)
+                .map((n, i) => mobileMoney(
+                    `${entry.country}_admin_${i}`,
+                    n.network || 'Mobile Money',
+                    ICONS.mtn,
+                    n.number,
+                    n.holder || 'ATLAS CAPITAL'
+                ));
+            if (methods.length) dynamicMethodsByCountry[entry.country] = methods;
+        });
+    }
+
     // Moyen de paiement universel ajouté à TOUS les pays : l'USDT (réseau
     // TRC-20). L'adresse vient uniquement du panneau admin.
     function getUsdtMethod() {
@@ -168,7 +190,7 @@
     }
 
     function getPaymentMethods(countryCode) {
-        const specific = PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
+        const specific = dynamicMethodsByCountry[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
         const usdt = getUsdtMethod();
         return usdt ? [...specific, usdt] : [...specific];
     }
@@ -177,7 +199,8 @@
     global.AtlasPaymentMethods = {
         getCountryName,
         getPaymentMethods,
-        setUsdtAddress
+        setUsdtAddress,
+        setCountryPaymentLinks
     };
 
 })(window);
