@@ -68,6 +68,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
+    if (window.AtlasPaymentMethods) {
+        window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address || '');
+        window.AtlasPaymentMethods.setCountryPaymentLinks(siteSettings.country_payment_links || []);
+    }
+
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
