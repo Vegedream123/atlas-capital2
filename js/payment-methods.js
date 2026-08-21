@@ -70,28 +70,6 @@
         usdtAddress = (address || '').trim();
     }
 
-    // Liens de paiement par pays configurés depuis le panneau admin
-    // (site_settings.country_payment_links). Prioritaires sur la liste
-    // statique PAYMENT_METHODS_BY_COUNTRY ci-dessous si présents pour un pays.
-    let dynamicMethodsByCountry = {};
-
-    function setCountryPaymentLinks(links) {
-        dynamicMethodsByCountry = {};
-        (links || []).forEach(entry => {
-            if (!entry || !entry.country) return;
-            const methods = (entry.numbers || [])
-                .filter(n => n && n.number)
-                .map((n, i) => mobileMoney(
-                    `${entry.country}_admin_${i}`,
-                    n.network || 'Mobile Money',
-                    ICONS.mtn,
-                    n.number,
-                    n.holder || 'ATLAS CAPITAL'
-                ));
-            if (methods.length) dynamicMethodsByCountry[entry.country] = methods;
-        });
-    }
-
     // Moyen de paiement universel ajouté à TOUS les pays : l'USDT (réseau
     // TRC-20). L'adresse vient uniquement du panneau admin.
     function getUsdtMethod() {
@@ -189,8 +167,44 @@
         return c ? c.name : code;
     }
 
+    // Numéros saisis depuis le panel admin (site_settings.country_payment_methods,
+    // configuré dans admin.html → "Paiement par pays"). Dès qu'un pays a au moins
+    // un numéro configuré côté admin, il REMPLACE entièrement les numéros
+    // d'exemple codés en dur ci-dessus pour ce pays.
+    let countryOverrides = {};
+
+    function guessIcon(network) {
+        const n = (network || '').toLowerCase();
+        if (n.includes('orange')) return ICONS.orange;
+        if (n.includes('mtn')) return ICONS.mtn;
+        if (n.includes('moov') || n.includes('flooz')) return ICONS.moov;
+        if (n.includes('wave')) return ICONS.wave;
+        if (n.includes('airtel')) return ICONS.airtel;
+        if (n.includes('pesa')) return ICONS.mpesa;
+        return '💳';
+    }
+
+    function setCountryOverrides(list) {
+        countryOverrides = {};
+        (Array.isArray(list) ? list : []).forEach(entry => {
+            if (!entry || !entry.country) return;
+            const methods = (entry.methods || [])
+                .filter(m => m && (m.number || '').trim())
+                .map((m, i) => ({
+                    id: `admin_${entry.country}_${i}`,
+                    type: 'mobile_money',
+                    name: (m.network || 'Mobile Money').trim(),
+                    icon: guessIcon(m.network),
+                    number: (m.number || '').trim(),
+                    holder: (m.holder || '').trim() || 'ATLAS CAPITAL',
+                    note: 'Envoyez le montant exact à ce numéro puis joignez la capture de la confirmation.'
+                }));
+            if (methods.length) countryOverrides[entry.country] = methods;
+        });
+    }
+
     function getPaymentMethods(countryCode) {
-        const specific = dynamicMethodsByCountry[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
+        const specific = countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
         const usdt = getUsdtMethod();
         return usdt ? [...specific, usdt] : [...specific];
     }
@@ -200,7 +214,7 @@
         getCountryName,
         getPaymentMethods,
         setUsdtAddress,
-        setCountryPaymentLinks
+        setCountryOverrides
     };
 
 })(window);
