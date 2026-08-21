@@ -68,14 +68,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
-    if (window.AtlasPaymentMethods) {
-        window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address || '');
-        window.AtlasPaymentMethods.setCountryPaymentLinks(siteSettings.country_payment_links || []);
-    }
-
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
     if (productsRes.error) console.error('Erreur produits :', productsRes.error);
+
+    // Injecte les moyens de paiement configurés dans l'admin (adresse USDT +
+    // numéros par pays) dans AtlasPaymentMethods, pour que la page de dépôt
+    // affiche les vraies infos au lieu des valeurs d'exemple.
+    if (window.AtlasPaymentMethods) {
+        window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address);
+        window.AtlasPaymentMethods.setCountryOverrides(siteSettings.country_payment_methods);
+    }
 
     // Bouton "Rejoindre le groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
     const whatsappGroupBtn = document.getElementById('support-whatsapp-group-btn');
@@ -544,60 +547,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const depositBtn = document.getElementById('wallet-deposit-btn');
     const withdrawBtn = document.getElementById('wallet-withdraw-btn');
-
-    // ------------------------------------------------------------------
-    // 6bis. Téléchargement PDF de l'historique des transactions
-    // ------------------------------------------------------------------
-    const downloadTransactionsBtn = document.getElementById('download-transactions-btn');
-    if (downloadTransactionsBtn) {
-        downloadTransactionsBtn.addEventListener('click', () => {
-            if (!transactions.length) {
-                window.showToast('Aucune transaction à exporter.', 'info');
-                return;
-            }
-            if (!window.jspdf) {
-                window.showToast("Impossible de générer le PDF (bibliothèque non chargée).", 'error');
-                return;
-            }
-
-            const labelFor = (type) => ({
-                deposit: 'Dépôt', withdrawal: 'Retrait', investment: 'Investissement',
-                gain: 'Gain généré', referral_commission: 'Commission de parrainage', quest: 'Quête journalière'
-            }[type] || type);
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            doc.setFontSize(16);
-            doc.text('Atlas Capital — Historique des transactions', 14, 18);
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text(`Compte : ${profile.full_name || profile.email || ''}`, 14, 25);
-            doc.text(`Généré le : ${new Date().toLocaleString('fr-FR')}`, 14, 30);
-
-            const rows = transactions.map(t => {
-                const amount = Number(t.amount) || 0;
-                const date = t.created_at ? new Date(t.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-                return [
-                    date,
-                    labelFor(t.type),
-                    t.description || '—',
-                    (amount >= 0 ? '+' : '') + formatFCFA(amount)
-                ];
-            });
-
-            doc.autoTable({
-                startY: 36,
-                head: [['Date', 'Type', 'Description', 'Montant']],
-                body: rows,
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [200, 60, 30] }
-            });
-
-            const fileDate = new Date().toISOString().slice(0, 10);
-            doc.save(`atlas-capital-transactions-${fileDate}.pdf`);
-        });
-    }
 
     // ------------------------------------------------------------------
     // 7bis. Modal de dépôt : pays -> moyen de paiement -> montant -> preuve
