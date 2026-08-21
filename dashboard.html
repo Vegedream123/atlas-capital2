@@ -1,3623 +1,576 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="description"
-        content="Connexion et inscription - Atlas Capital"
-    >
-
-    <title>Connexion | Atlas Capital</title>
-
-
-    <!-- =========================================================
-         POLICE
-         ========================================================= -->
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-        rel="stylesheet"
-    >
-
-
-    <!-- =========================================================
-         STYLE
-         ========================================================= -->
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-
-        :root {
-
-            --primary: #3b82f6;
-            --primary-dark: #2563eb;
-
-            --text: #101828;
-            --secondary: #667085;
-
-            --border: #dbe3ef;
-
-            --background: #f7faff;
-
-            --white: #ffffff;
-
-            --danger: #ef4444;
-
-            --success: #10b981;
-
-        }
-
-
-        html,
-        body {
-
-            margin: 0;
-            padding: 0;
-
-            min-height: 100%;
-
-            font-family: Inter, Arial, sans-serif;
-
-            color: var(--text);
-
-            background:
-                linear-gradient(
-                    180deg,
-                    #f8fbff 0%,
-                    #f4f8ff 100%
-                );
-
-        }
-
-
-        body {
-
-            min-height: 100vh;
-
-        }
-
-
-        /* =====================================================
-           HEADER
-           ===================================================== */
-
-        .auth-header {
-
-            width: 100%;
-
-            padding: 30px 42px;
-
-            display: flex;
-
-            align-items: center;
-
-        }
-
-
-        .brand {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            text-decoration: none;
-
-            color: #102544;
-
-            font-size: 25px;
-
-            font-weight: 700;
-
-        }
-
-
-        .brand svg {
-
-            width: 30px;
-
-            height: 30px;
-
-        }
-
-
-        /* =====================================================
-           PAGE
-           ===================================================== */
-
-        .auth-page {
-
-            width: 100%;
-
-            min-height: calc(100vh - 90px);
-
-            display: flex;
-
-            justify-content: center;
-
-            align-items: flex-start;
-
-            padding: 45px 20px 70px;
-
-        }
-
-
-        /* =====================================================
-           CARTE
-           ===================================================== */
-
-        .auth-card {
-
-            width: 100%;
-
-            max-width: 740px;
-
-            background: rgba(255,255,255,0.96);
-
-            border-radius: 26px;
-
-            padding: 30px 42px 45px;
-
-            box-shadow:
-                0 20px 60px rgba(32, 64, 110, 0.10);
-
-        }
-
-
-        /* =====================================================
-           ONGLETS
-           ===================================================== */
-
-        .auth-tabs {
-
-            width: 100%;
-
-            display: flex;
-
-            padding: 5px;
-
-            background: #eef3f9;
-
-            border-radius: 13px;
-
-            margin-bottom: 42px;
-
-        }
-
-
-        .auth-tab {
-
-            flex: 1;
-
-            border: 0;
-
-            background: transparent;
-
-            padding: 16px 12px;
-
-            border-radius: 10px;
-
-            font-family: inherit;
-
-            font-size: 19px;
-
-            font-weight: 600;
-
-            color: #607087;
-
-            cursor: pointer;
-
-            transition: 0.2s ease;
-
-        }
-
-
-        .auth-tab.active {
-
-            background: #ffffff;
-
-            color: #0f2344;
-
-            box-shadow:
-                0 3px 10px rgba(15,35,68,0.08);
-
-        }
-
-
-        /* =====================================================
-           PANNEAUX
-           ===================================================== */
-
-        .auth-panel {
-
-            display: none;
-
-        }
-
-
-        .auth-panel.active {
-
-            display: block;
-
-        }
-
-
-        .auth-panel h2 {
-
-            margin: 0 0 36px;
-
-            font-size: 42px;
-
-            line-height: 1.15;
-
-            font-weight: 700;
-
-            letter-spacing: -1px;
-
-            color: #0f2344;
-
-        }
-
-
-        /* =====================================================
-           FORMULAIRE
-           ===================================================== */
-
-        .form-group {
-
-            margin-bottom: 24px;
-
-        }
-
-
-        label {
-
-            display: block;
-
-            margin-bottom: 10px;
-
-            color: #102544;
-
-            font-size: 18px;
-
-            font-weight: 600;
-
-        }
-
-
-        .form-control {
-
-            width: 100%;
-
-            height: 64px;
-
-            border: 1.5px solid #cad6e5;
-
-            border-radius: 13px;
-
-            background: #ffffff;
-
-            padding: 0 18px;
-
-            font-family: inherit;
-
-            font-size: 17px;
-
-            color: #172b4d;
-
-            outline: none;
-
-            transition: 0.2s ease;
-
-        }
-
-
-        .form-control::placeholder {
-
-            color: #a6aeb9;
-
-        }
-
-
-        .form-control:focus {
-
-            border-color: #6f9de8;
-
-            box-shadow:
-                0 0 0 3px rgba(59,130,246,0.08);
-
-        }
-
-
-        /* =====================================================
-           TELEPHONE
-           ===================================================== */
-
-        .phone-label {
-
-            margin-bottom: 11px;
-
-        }
-
-
-        .phone-wrapper {
-
-            position: relative;
-
-            width: 100%;
-
-        }
-
-
-        .phone-row {
-
-            display: grid;
-
-            grid-template-columns: 235px 1fr;
-
-            gap: 10px;
-
-            width: 100%;
-
-        }
-
-
-        /* =====================================================
-           SELECTEUR PAYS
-           ===================================================== */
-
-        .country-selector {
-
-            position: relative;
-
-            width: 100%;
-
-        }
-
-
-        .country-button {
-
-            width: 100%;
-
-            height: 64px;
-
-            border: 1.5px solid #dbe3ed;
-
-            background: #ffffff;
-
-            border-radius: 15px;
-
-            padding: 0 17px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            cursor: pointer;
-
-            font-family: inherit;
-
-            color: #172033;
-
-        }
-
-
-        .country-button-left {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            min-width: 0;
-
-        }
-
-
-        .country-flag {
-
-            font-size: 27px;
-
-            line-height: 1;
-
-        }
-
-
-        .country-dial {
-
-            font-size: 20px;
-
-            font-weight: 600;
-
-            white-space: nowrap;
-
-        }
-
-
-        .country-arrow {
-
-            width: 10px;
-
-            height: 10px;
-
-            border-right: 2px solid #7a8493;
-
-            border-bottom: 2px solid #7a8493;
-
-            transform: rotate(45deg);
-
-            margin-top: -5px;
-
-            transition: 0.2s ease;
-
-        }
-
-
-        .country-selector.open
-        .country-arrow {
-
-            transform: rotate(225deg);
-
-            margin-top: 5px;
-
-        }
-
-
-        /* =====================================================
-           LISTE DES PAYS
-           ===================================================== */
-
-        .country-menu {
-
-            position: absolute;
-
-            z-index: 1000;
-
-            top: calc(100% + 9px);
-
-            left: 0;
-
-            /*
-             * Le bouton pays (+237) n'occupe qu'une petite
-             * colonne de la ligne téléphone. Avant, ce menu
-             * prenait "100%" de CETTE colonne étroite, donc
-             * les noms de pays et indicatifs se chevauchaient.
-             * On force une largeur confortable, plafonnée à la
-             * largeur de l'écran pour ne jamais déborder.
-             */
-            width: max(300px, 100%);
-
-            max-width: calc(100vw - 50px);
-
-            max-height: 390px;
-
-            overflow-y: auto;
-
-            background: #ffffff;
-
-            border: 1px solid #e1e7ef;
-
-            border-radius: 18px;
-
-            box-shadow:
-                0 18px 45px rgba(15,35,68,0.16);
-
-            padding: 7px;
-
-            display: none;
-
-        }
-
-
-        .country-selector.open
-        .country-menu {
-
-            display: block;
-
-        }
-
-
-        .country-search {
-
-            width: calc(100% - 12px);
-
-            height: 45px;
-
-            margin: 6px;
-
-            padding: 0 13px;
-
-            border: 1px solid #dbe3ed;
-
-            border-radius: 10px;
-
-            outline: none;
-
-            font-family: inherit;
-
-            font-size: 14px;
-
-        }
-
-
-        .country-search:focus {
-
-            border-color: #7ba4e9;
-
-        }
-
-
-        .country-option {
-
-            width: 100%;
-
-            min-height: 59px;
-
-            border: 0;
-
-            background: transparent;
-
-            border-radius: 12px;
-
-            padding: 9px 13px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            cursor: pointer;
-
-            font-family: inherit;
-
-            transition: 0.15s ease;
-
-        }
-
-
-        .country-option:hover {
-
-            background: #f2f6fb;
-
-        }
-
-
-        .country-option-left {
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 13px;
-
-            min-width: 0;
-
-        }
-
-
-        .country-option-flag {
-
-            font-size: 25px;
-
-            width: 32px;
-
-            text-align: center;
-
-            flex-shrink: 0;
-
-        }
-
-
-        .country-option-name {
-
-            font-size: 16px;
-
-            font-weight: 500;
-
-            color: #182033;
-
-            text-align: left;
-
-        }
-
-
-        .country-option-dial {
-
-            color: #68758a;
-
-            font-size: 16px;
-
-            font-weight: 500;
-
-            white-space: nowrap;
-
-        }
-
-
-        .country-no-result {
-
-            padding: 20px;
-
-            text-align: center;
-
-            color: #7b8798;
-
-            font-size: 14px;
-
-        }
-
-
-        /* =====================================================
-           NUMERO TELEPHONE
-           ===================================================== */
-
-        .phone-input {
-
-            background: #f0f4fa;
-
-            border-color: #e0e7f0;
-
-            font-size: 21px;
-
-            letter-spacing: 0.5px;
-
-        }
-
-
-        .phone-input::placeholder {
-
-            color: #6d788a;
-
-            opacity: 1;
-
-        }
-
-
-        /* =====================================================
-           PASSWORD
-           ===================================================== */
-
-        .password-input {
-
-            position: relative;
-
-        }
-
-
-        .password-input .form-control {
-
-            padding-right: 58px;
-
-        }
-
-
-        .password-toggle {
-
-            position: absolute;
-
-            right: 15px;
-
-            top: 50%;
-
-            transform: translateY(-50%);
-
-            width: 40px;
-
-            height: 40px;
-
-            border: 0;
-
-            background: transparent;
-
-            color: #667a96;
-
-            cursor: pointer;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-        }
-
-
-        /* =====================================================
-           EMAIL / TELEPHONE SWITCH
-           ===================================================== */
-
-        .alternative-login {
-
-            margin-top: -9px;
-
-            margin-bottom: 24px;
-
-            text-align: right;
-
-        }
-
-
-        .alternative-login button {
-
-            border: 0;
-
-            background: transparent;
-
-            color: #3577d4;
-
-            font-family: inherit;
-
-            font-size: 14px;
-
-            font-weight: 600;
-
-            cursor: pointer;
-
-            padding: 4px 0;
-
-        }
-
-
-        .alternative-login button:hover {
-
-            text-decoration: underline;
-
-        }
-
-
-        /* =====================================================
-           ACTIONS
-           ===================================================== */
-
-        .modal-actions {
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            gap: 15px;
-
-            margin: 4px 0 28px;
-
-        }
-
-
-        .modal-actions a {
-
-            color: #55708f;
-
-            text-decoration: none;
-
-            font-size: 14px;
-
-            font-weight: 500;
-
-        }
-
-
-        .modal-actions a:hover {
-
-            text-decoration: underline;
-
-        }
-
-
-        .checkbox-group {
-
-            display: flex;
-
-            align-items: flex-start;
-
-            gap: 10px;
-
-            margin: 0 0 27px;
-
-        }
-
-
-        .modal-actions .checkbox-group {
-
-            margin: 0;
-
-        }
-
-
-        .checkbox-group input {
-
-            width: 18px;
-
-            height: 18px;
-
-            margin: 2px 0 0;
-
-            accent-color: #3b82f6;
-
-            flex-shrink: 0;
-
-        }
-
-
-        .checkbox-group label {
-
-            margin: 0;
-
-            font-size: 15px;
-
-            line-height: 1.55;
-
-            color: #66758a;
-
-            font-weight: 400;
-
-        }
-
-
-        /* =====================================================
-           BOUTON
-           ===================================================== */
-
-        .btn {
-
-            width: 100%;
-
-            height: 64px;
-
-            border: 0;
-
-            border-radius: 13px;
-
-            font-family: inherit;
-
-            font-size: 19px;
-
-            font-weight: 700;
-
-            cursor: pointer;
-
-            transition: 0.2s ease;
-
-        }
-
-
-        .btn-primary {
-
-            background: #367fe9;
-
-            color: #ffffff;
-
-            box-shadow:
-                0 8px 18px rgba(59,130,246,0.18);
-
-        }
-
-
-        .btn-primary:hover {
-
-            background: #286fda;
-
-            transform: translateY(-1px);
-
-        }
-
-
-        .btn:disabled {
-
-            opacity: 0.65;
-
-            cursor: not-allowed;
-
-            transform: none;
-
-        }
-
-
-        /* =====================================================
-           ERREUR
-           ===================================================== */
-
-        .error-message {
-
-            color: #ef4444;
-
-            font-size: 13px;
-
-            margin-top: 6px;
-
-        }
-
-
-        /* =====================================================
-           FORCE DU MOT DE PASSE
-           ===================================================== */
-
-        .password-hint {
-
-            color: #7b8798;
-
-            font-size: 12.5px;
-
-            margin-top: 7px;
-
-            line-height: 1.5;
-
-        }
-
-
-        .password-strength {
-
-            display: none;
-
-            align-items: center;
-
-            gap: 8px;
-
-            margin-top: 9px;
-
-        }
-
-
-        .password-strength.visible {
-
-            display: flex;
-
-        }
-
-
-        .password-strength-track {
-
-            flex: 1;
-
-            height: 6px;
-
-            border-radius: 4px;
-
-            background: #e6ebf2;
-
-            overflow: hidden;
-
-        }
-
-
-        .password-strength-fill {
-
-            height: 100%;
-
-            width: 0%;
-
-            border-radius: 4px;
-
-            background: #ef4444;
-
-            transition: width 0.2s ease, background-color 0.2s ease;
-
-        }
-
-
-        .password-strength-label {
-
-            font-size: 12.5px;
-
-            font-weight: 600;
-
-            color: #7b8798;
-
-            white-space: nowrap;
-
-        }
-
-
-        /* =====================================================
-           TOAST
-           ===================================================== */
-
-        .toast-container {
-
-            position: fixed;
-
-            right: 20px;
-
-            bottom: 20px;
-
-            z-index: 5000;
-
-            display: flex;
-
-            flex-direction: column;
-
-            gap: 10px;
-
-            max-width: calc(100vw - 40px);
-
-        }
-
-
-        .toast {
-
-            background: #ffffff;
-
-            border: 1px solid #dce5ef;
-
-            border-radius: 12px;
-
-            padding: 14px 17px;
-
-            min-width: 260px;
-
-            box-shadow:
-                0 10px 30px rgba(0,0,0,0.12);
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 10px;
-
-            transform: translateY(20px);
-
-            opacity: 0;
-
-            transition: 0.25s ease;
-
-        }
-
-
-        .toast.show {
-
-            transform: translateY(0);
-
-            opacity: 1;
-
-        }
-
-
-        .toast-message {
-
-            font-size: 14px;
-
-            line-height: 1.4;
-
-        }
-
-
-        /* =====================================================
-           RESPONSIVE
-           ===================================================== */
-
-        @media (max-width: 700px) {
-
-            .auth-header {
-
-                padding: 22px 22px;
-
-            }
-
-
-            .brand {
-
-                font-size: 22px;
-
-            }
-
-
-            .auth-page {
-
-                padding: 20px 12px 40px;
-
-            }
-
-
-            .auth-card {
-
-                max-width: 100%;
-
-                border-radius: 24px;
-
-                padding: 22px 22px 34px;
-
-            }
-
-
-            .auth-panel h2 {
-
-                font-size: 34px;
-
-                margin-bottom: 30px;
-
-            }
-
-
-            .phone-row {
-
-                grid-template-columns: 43% 57%;
-
-                gap: 7px;
-
-            }
-
-
-            .country-button {
-
-                padding: 0 11px;
-
-            }
-
-
-            .country-button-left {
-
-                gap: 8px;
-
-            }
-
-
-            .country-flag {
-
-                font-size: 23px;
-
-            }
-
-
-            .country-dial {
-
-                font-size: 17px;
-
-            }
-
-
-            .phone-input {
-
-                font-size: 18px;
-
-                padding-left: 14px;
-
-                padding-right: 10px;
-
-            }
-
-
-            .auth-tab {
-
-                font-size: 17px;
-
-            }
-
-        }
-
-
-        @media (max-width: 420px) {
-
-            .auth-card {
-
-                padding-left: 17px;
-
-                padding-right: 17px;
-
-            }
-
-
-            .phone-row {
-
-                grid-template-columns: 42% 58%;
-
-            }
-
-
-            .country-dial {
-
-                font-size: 16px;
-
-            }
-
-
-            .phone-input {
-
-                font-size: 16px;
-
-            }
-
-
-            .auth-panel h2 {
-
-                font-size: 31px;
-
-            }
-
-        }
-
-    </style>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Client - Atlas Capital</title>
+    <meta name="description" content="Gérez vos investissements avec Atlas Capital.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+<script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
 </head>
-
-
 <body>
-
-
-    <!-- =========================================================
-         HEADER
-         ========================================================= -->
-
-    <header class="auth-header">
-
-        <a
-            href="index.html"
-            class="brand"
-        >
-
-            <svg
-                width="30"
-                height="30"
-                viewBox="0 0 24 24"
-                fill="#102544"
-            >
-
-                <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
-
-                <path d="M4 10h2v9H4v-9zm5 0h2v9H9v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"></path>
-
-                <path d="M2 20h20v2H2v-2z"></path>
-
-            </svg>
-
-            Atlas Capital
-
-        </a>
-
-    </header>
-
-
-    <!-- =========================================================
-         CONTENU
-         ========================================================= -->
-
-    <main class="auth-page">
-
-
-        <div class="auth-card">
-
-
-            <!-- =====================================================
-                 ONGLETS
-                 ===================================================== -->
-
-            <div class="auth-tabs">
-
-                <button
-                    type="button"
-                    class="auth-tab active"
-                    id="tab-login"
-                >
-                    Connexion
-                </button>
-
-
-                <button
-                    type="button"
-                    class="auth-tab"
-                    id="tab-register"
-                >
-                    Inscription
-                </button>
-
-            </div>
-
-
-
-            <!-- =====================================================
-                 CONNEXION
-                 ===================================================== -->
-
-            <div
-                class="auth-panel active"
-                id="login-panel"
-            >
-
-                <h2>
-                    Content de vous revoir
-                </h2>
-
-
-                <form id="login-form">
-
-
-                    <!-- TELEPHONE -->
-
-                    <div
-                        class="form-group"
-                        id="login-phone-group"
-                    >
-
-                        <label class="phone-label">
-                            Téléphone
-                        </label>
-
-
-                        <div class="phone-wrapper">
-
-                            <div class="phone-row">
-
-
-                                <!-- PAYS -->
-
-                                <div
-                                    class="country-selector"
-                                    id="login-country-selector"
-                                >
-
-                                    <button
-                                        type="button"
-                                        class="country-button"
-                                        id="login-country-button"
-                                    >
-
-                                        <span
-                                            class="country-button-left"
-                                        >
-
-                                            <span
-                                                class="country-flag"
-                                                id="login-selected-flag"
-                                            >
-                                                🇨🇲
-                                            </span>
-
-                                            <span
-                                                class="country-dial"
-                                                id="login-selected-dial"
-                                            >
-                                                +237
-                                            </span>
-
-                                        </span>
-
-
-                                        <span
-                                            class="country-arrow"
-                                        ></span>
-
-                                    </button>
-
-
-                                    <div
-                                        class="country-menu"
-                                        id="login-country-menu"
-                                    >
-
-                                        <input
-                                            type="text"
-                                            class="country-search"
-                                            id="login-country-search"
-                                            placeholder="Rechercher un pays..."
-                                            autocomplete="off"
-                                        >
-
-                                        <div
-                                            id="login-country-options"
-                                        ></div>
-
-                                    </div>
-
-                                </div>
-
-
-                                <!-- NUMERO -->
-
-                                <input
-                                    type="tel"
-                                    id="login-phone"
-                                    class="form-control phone-input"
-                                    placeholder="6XX XXX XXX"
-                                    inputmode="tel"
-                                    autocomplete="tel"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- EMAIL -->
-
-                    <div
-                        class="form-group"
-                        id="login-email-group"
-                        style="display:none;"
-                    >
-
-                        <label for="login-email">
-                            Email
-                        </label>
-
-                        <input
-                            type="email"
-                            id="login-email"
-                            class="form-control"
-                            placeholder="jean.dupont@email.com"
-                            autocomplete="email"
-                        >
-
-                    </div>
-
-
-                    <!-- CHANGEMENT TELEPHONE / EMAIL -->
-
-                    <div class="alternative-login">
-
-                        <button
-                            type="button"
-                            id="login-method-button"
-                        >
-                            Utiliser une adresse email
+    <div class="dashboard-layout">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="var(--primary)" stroke="none">
+                        <path d="M12 2L2 7l1 1h18l1-1-10-5z"></path>
+                        <path d="M4 10h2v9H4v-9zm5 0h2v9H9v-9zm5 0h2v9h-2v-9zm5 0h2v9h-2v-9z"></path>
+                        <path d="M2 20h20v2H2v-2z"></path>
+                    </svg>
+                    <span>Atlas Capital</span>
+                </div>
+                
+                <nav class="main-nav">
+                    <a href="#" class="nav-link active" data-target="dashboard">Tableau de bord</a>
+                    <a href="#" class="nav-link" data-target="finances">Finances</a>
+                    <a href="#" class="nav-link" data-target="portefeuille">Portefeuille</a>
+                    <a href="#" class="nav-link" data-target="transactions">Transactions</a>
+                    <a href="#" class="nav-link" data-target="compte">Compte</a>
+                </nav>
+
+                <div class="nav-actions">
+                    <!-- Notification Wrapper -->
+                    <div class="notification-wrapper">
+                        <button class="icon-btn notification-btn" id="notif-btn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="badge" id="notif-badge" style="display:none;">0</span>
                         </button>
-
-                    </div>
-
-
-                    <!-- MOT DE PASSE -->
-
-                    <div class="form-group">
-
-                        <label for="login-password">
-                            Mot de passe
-                        </label>
-
-
-                        <div class="password-input">
-
-                            <input
-                                type="password"
-                                id="login-password"
-                                class="form-control"
-                                placeholder="••••••••"
-                                required
-                            >
-
-
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                data-target="login-password"
-                                aria-label="Afficher ou masquer le mot de passe"
-                            >
-
-                                <svg
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                >
-
-                                    <path
-                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                    ></path>
-
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="3"
-                                    ></circle>
-
-                                </svg>
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- OPTIONS -->
-
-                    <div class="modal-actions">
-
-                        <div class="checkbox-group">
-
-                            <input
-                                type="checkbox"
-                                id="remember-me"
-                            >
-
-                            <label
-                                for="remember-me"
-                            >
-                                Se souvenir de moi
-                            </label>
-
-                        </div>
-
-
-                        <a href="#">
-                            Mot de passe oublié ?
-                        </a>
-
-                    </div>
-
-
-                    <!-- BOUTON -->
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary"
-                    >
-                        Se connecter
-                    </button>
-
-
-                </form>
-
-            </div>
-
-
-
-            <!-- =====================================================
-                 INSCRIPTION
-                 ===================================================== -->
-
-            <div
-                class="auth-panel"
-                id="register-panel"
-            >
-
-                <h2>
-                    Créez votre compte
-                </h2>
-
-
-                <form id="register-form">
-
-
-                    <!-- NOM -->
-
-                    <div class="form-group">
-
-                        <label for="reg-name">
-                            Nom complet
-                        </label>
-
-                        <input
-                            type="text"
-                            id="reg-name"
-                            class="form-control"
-                            placeholder="Jean Dupont"
-                            autocomplete="name"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- EMAIL -->
-
-                    <div
-                        class="form-group"
-                        id="register-email-group"
-                    >
-
-                        <label for="reg-email">
-                            Email
-                        </label>
-
-                        <input
-                            type="email"
-                            id="reg-email"
-                            class="form-control"
-                            placeholder="jean.dupont@email.com"
-                            autocomplete="email"
-                            required
-                        >
-
-                    </div>
-
-
-                    <!-- MOT DE PASSE -->
-
-                    <div class="form-group">
-
-                        <label for="reg-password">
-                            Mot de passe
-                        </label>
-
-
-                        <div class="password-input">
-
-                            <input
-                                type="password"
-                                id="reg-password"
-                                class="form-control"
-                                placeholder="••••••••"
-                                required
-                            >
-
-
-                            <button
-                                type="button"
-                                class="password-toggle"
-                                data-target="reg-password"
-                                aria-label="Afficher ou masquer le mot de passe"
-                            >
-
-                                <svg
-                                    width="22"
-                                    height="22"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                >
-
-                                    <path
-                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-                                    ></path>
-
-                                    <circle
-                                        cx="12"
-                                        cy="12"
-                                        r="3"
-                                    ></circle>
-
-                                </svg>
-
-                            </button>
-
-                        </div>
-
-
-                        <div
-                            class="password-strength"
-                            id="reg-password-strength"
-                        >
-
-                            <div class="password-strength-track">
-
-                                <div
-                                    class="password-strength-fill"
-                                    id="reg-password-strength-fill"
-                                ></div>
-
+                        <div class="notification-panel" id="notif-panel">
+                            <div class="notif-header">
+                                <span>Centre de notifications</span>
+                                <button type="button" class="notif-mark-all" id="notif-mark-all">Tout marquer lu</button>
                             </div>
-
-                            <span
-                                class="password-strength-label"
-                                id="reg-password-strength-label"
-                            ></span>
-
+                            <div class="notif-list" id="notif-list">
+                                <p class="text-secondary" style="padding:16px;">Chargement…</p>
+                            </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
+        <!-- Main Content -->
+        <main class="dashboard-main">
+            <!-- VIEW: TABLEAU DE BORD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Vue d'ensemble</h1>
+                        <p class="page-subtitle">Bienvenue, <span class="user-name skeleton-text">&nbsp;</span> 👋</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="document.querySelector('[data-target=\'investissements\']').click()">+ Nouvel Investissement</button>
+                    </div>
+                </div>
 
-                        <p class="password-hint">
-                            Au moins 8 caractères, avec une majuscule, une minuscule et un chiffre.
-                        </p>
-
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card accent-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Solde Total</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" id="kpi-balance" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive" id="kpi-balance-change">—</span>
+                            <span class="kpi-period">cumul des revenus</span>
+                        </div>
                     </div>
 
-
-                    <!-- CONFIRMATION -->
-
-                    <div class="form-group">
-
-                        <label for="reg-confirm">
-                            Confirmer le mot de passe
-                        </label>
-
-                        <input
-                            type="password"
-                            id="reg-confirm"
-                            class="form-control"
-                            placeholder="••••••••"
-                            required
-                        >
-
+                    <div class="kpi-card success-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Revenu Annuel</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" id="kpi-annual-rate" data-target="0" data-suffix="%">0%</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive" id="kpi-rate-change">—</span>
+                            <span class="kpi-period">taux moyen pondéré</span>
+                        </div>
                     </div>
 
-
-                    <!-- PAYS DE RESIDENCE -->
-
-                    <div class="form-group">
-
-                        <label for="reg-country">
-                            Pays de résidence
-                        </label>
-
-
-                        <select
-                            id="reg-country"
-                            class="form-control"
-                            required
-                        >
-
-                            <option
-                                value=""
-                                disabled
-                                selected
-                            >
-                                Sélectionnez votre pays
-                            </option>
-
-                        </select>
-
-
-                        <small
-                            style="
-                                display:block;
-                                margin-top:7px;
-                                color:#66758a;
-                                font-size:13px;
-                                line-height:1.5;
-                            "
-                        >
-                            Détermine les moyens de paiement disponibles pour vos dépôts et retraits.
-                        </small>
-
+                    <div class="kpi-card primary-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Investissements Actifs</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" id="kpi-active-investments" data-target="0" data-suffix="">0</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive" id="kpi-active-change">—</span>
+                            <span class="kpi-period">en cours</span>
+                        </div>
                     </div>
 
-
-                    <!-- CONDITIONS -->
-
-                    <div class="checkbox-group">
-
-                        <input
-                            type="checkbox"
-                            id="terms"
-                            required
-                        >
-
-                        <label for="terms">
-
-                            J'accepte les conditions générales
-                            d'utilisation et la politique de
-                            confidentialité
-
-                        </label>
-
+                    <div class="kpi-card warning-border">
+                        <div class="kpi-header">
+                            <span class="kpi-label">Quêtes Journalières</span>
+                            <div class="kpi-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            </div>
+                        </div>
+                        <div class="kpi-value stat-number" id="kpi-daily-quest" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-footer">
+                            <span class="kpi-change positive" id="kpi-quest-change">—</span>
+                            <span class="kpi-period">gagné aujourd'hui</span>
+                        </div>
                     </div>
+                </div>
 
+                <!-- Tâches Quotidiennes (24h) — liées aux produits achetés -->
+                <div class="chart-card daily-tasks-card" id="daily-tasks-card" style="display:none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Tâches Quotidiennes</h2>
+                        <span class="text-secondary" style="font-size:0.8rem;">1 tâche financière à valider toutes les 24h, par produit actif</span>
+                    </div>
+                    <div class="daily-tasks-list" id="daily-tasks-list"></div>
+                </div>
 
-                    <!-- BOUTON -->
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary"
-                    >
-                        Créer mon compte
-                    </button>
-
-
-                </form>
-
+                <!-- Chart Section -->
+                <div class="chart-card">
+                    <div class="card-header">
+                        <h2 class="card-title">Évolution des Cumuls (FCFA)</h2>
+                        <div class="period-tabs">
+                            <button class="tab-btn">1M</button>
+                            <button class="tab-btn">3M</button>
+                            <button class="tab-btn">6M</button>
+                            <button class="tab-btn active">1A</button>
+                            <button class="tab-btn">Tout</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="y-axis">
+                            <span>250K</span>
+                            <span>200K</span>
+                            <span>150K</span>
+                            <span>100K</span>
+                            <span>50K</span>
+                            <span>0</span>
+                        </div>
+                        <div class="chart-area" id="mainChart">
+                            <div class="bar-group"><div class="bar" style="height: 30%;"></div><span class="x-label">Jan</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 45%;"></div><span class="x-label">Fév</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 40%;"></div><span class="x-label">Mar</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 55%;"></div><span class="x-label">Avr</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 50%;"></div><span class="x-label">Mai</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 65%;"></div><span class="x-label">Juin</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 70%;"></div><span class="x-label">Juil</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 68%;"></div><span class="x-label">Aoû</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 80%;"></div><span class="x-label">Sep</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 85%;"></div><span class="x-label">Oct</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 90%;"></div><span class="x-label">Nov</span></div>
+                            <div class="bar-group"><div class="bar" style="height: 100%;"></div><span class="x-label">Déc</span></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-
-        </div>
-
-    </main>
-
-
-    <!-- =========================================================
-         TOAST
-         ========================================================= -->
-
-    <div
-        class="toast-container"
-        id="toast-container"
-    ></div>
-
-
-
-    <!-- =========================================================
-         SUPABASE
-         ========================================================= -->
-
-    <script
-        src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-    ></script>
-
-
-    <script>
-
-        /* =========================================================
-           SUPABASE
-           ========================================================= */
-
-        const SUPABASE_URL =
-            'https://lpgcnhycveliaxnkwgig.supabase.co';
-
-        const SUPABASE_KEY =
-            'sb_publishable_J42fuJ5ITrrRfgJ00JOS5g_U-GNXJmF';
-
-
-        /*
-         * IMPORTANT : si le CDN Supabase ne charge pas
-         * (réseau lent, bloqueur de script, coupure momentanée),
-         * "window.supabase" est indéfini. Avant cette correction,
-         * l'appel ci-dessous plantait alors TOUT le script :
-         * plus aucun bouton (bascule email/téléphone, onglets,
-         * validation, etc.) ne répondait sur toute la page.
-         * On protège donc cet appel pour que le reste de
-         * l'interface continue de fonctionner même hors-ligne,
-         * et on affiche un message clair seulement au moment
-         * où l'utilisateur tente réellement de se connecter
-         * ou de s'inscrire.
-         */
-
-        window.supabaseClient = null;
-
-        try {
-
-            window.supabaseClient =
-                window.supabase.createClient(
-                    SUPABASE_URL,
-                    SUPABASE_KEY
-                );
-
-        } catch (err) {
-
-            console.error(
-                'Supabase n\'a pas pu être initialisé :',
-                err
-            );
-
-        }
-
-
-
-        /* =========================================================
-           LISTE DES PAYS
-           ========================================================= */
-
-        const PHONE_COUNTRIES = [
-
-            {
-                code: 'BJ',
-                name: 'Bénin',
-                dial: '+229',
-                flag: '🇧🇯'
-            },
-
-            {
-                code: 'BF',
-                name: 'Burkina Faso',
-                dial: '+226',
-                flag: '🇧🇫'
-            },
-
-            {
-                code: 'CV',
-                name: 'Cap-Vert',
-                dial: '+238',
-                flag: '🇨🇻'
-            },
-
-            {
-                code: 'CI',
-                name: "Côte d’Ivoire",
-                dial: '+225',
-                flag: '🇨🇮'
-            },
-
-            {
-                code: 'GM',
-                name: 'Gambie',
-                dial: '+220',
-                flag: '🇬🇲'
-            },
-
-            {
-                code: 'GH',
-                name: 'Ghana',
-                dial: '+233',
-                flag: '🇬🇭'
-            },
-
-            {
-                code: 'GN',
-                name: 'Guinée',
-                dial: '+224',
-                flag: '🇬🇳'
-            },
-
-            {
-                code: 'GW',
-                name: 'Guinée-Bissau',
-                dial: '+245',
-                flag: '🇬🇼'
-            },
-
-            {
-                code: 'LR',
-                name: 'Libéria',
-                dial: '+231',
-                flag: '🇱🇷'
-            },
-
-            {
-                code: 'ML',
-                name: 'Mali',
-                dial: '+223',
-                flag: '🇲🇱'
-            },
-
-            {
-                code: 'MR',
-                name: 'Mauritanie',
-                dial: '+222',
-                flag: '🇲🇷'
-            },
-
-            {
-                code: 'NE',
-                name: 'Niger',
-                dial: '+227',
-                flag: '🇳🇪'
-            },
-
-            {
-                code: 'NG',
-                name: 'Nigeria',
-                dial: '+234',
-                flag: '🇳🇬'
-            },
-
-            {
-                code: 'SN',
-                name: 'Sénégal',
-                dial: '+221',
-                flag: '🇸🇳'
-            },
-
-            {
-                code: 'SL',
-                name: 'Sierra Leone',
-                dial: '+232',
-                flag: '🇸🇱'
-            },
-
-            {
-                code: 'TG',
-                name: 'Togo',
-                dial: '+228',
-                flag: '🇹🇬'
-            },
-
-            {
-                code: 'CM',
-                name: 'Cameroun',
-                dial: '+237',
-                flag: '🇨🇲'
-            },
-
-            {
-                code: 'CF',
-                name: 'Centrafrique',
-                dial: '+236',
-                flag: '🇨🇫'
-            },
-
-            {
-                code: 'CG',
-                name: 'Congo-Brazzaville',
-                dial: '+242',
-                flag: '🇨🇬'
-            },
-
-            {
-                code: 'CD',
-                name: 'RD Congo',
-                dial: '+243',
-                flag: '🇨🇩'
-            },
-
-            {
-                code: 'GA',
-                name: 'Gabon',
-                dial: '+241',
-                flag: '🇬🇦'
-            },
-
-            {
-                code: 'GQ',
-                name: 'Guinée Équatoriale',
-                dial: '+240',
-                flag: '🇬🇶'
-            },
-
-            {
-                code: 'TD',
-                name: 'Tchad',
-                dial: '+235',
-                flag: '🇹🇩'
-            },
-
-            {
-                code: 'RW',
-                name: 'Rwanda',
-                dial: '+250',
-                flag: '🇷🇼'
-            },
-
-            {
-                code: 'KE',
-                name: 'Kenya',
-                dial: '+254',
-                flag: '🇰🇪'
-            },
-
-            {
-                code: 'TZ',
-                name: 'Tanzanie',
-                dial: '+255',
-                flag: '🇹🇿'
-            },
-
-            {
-                code: 'UG',
-                name: 'Ouganda',
-                dial: '+256',
-                flag: '🇺🇬'
-            },
-
-            {
-                code: 'ZA',
-                name: 'Afrique du Sud',
-                dial: '+27',
-                flag: '🇿🇦'
-            },
-
-            {
-                code: 'FR',
-                name: 'France',
-                dial: '+33',
-                flag: '🇫🇷'
-            },
-
-            {
-                code: 'BE',
-                name: 'Belgique',
-                dial: '+32',
-                flag: '🇧🇪'
-            },
-
-            {
-                code: 'CA',
-                name: 'Canada',
-                dial: '+1',
-                flag: '🇨🇦'
-            },
-
-            {
-                code: 'US',
-                name: 'États-Unis',
-                dial: '+1',
-                flag: '🇺🇸'
-            },
-
-            {
-                code: 'GB',
-                name: 'Royaume-Uni',
-                dial: '+44',
-                flag: '🇬🇧'
-            }
-
-        ];
-
-
-
-        /* =========================================================
-           PAYS DE RESIDENCE
-           ========================================================= */
-
-        const residenceCountries = [
-
-            ['CM', 'Cameroun'],
-            ['CI', "Côte d'Ivoire"],
-            ['SN', 'Sénégal'],
-            ['GA', 'Gabon'],
-            ['CG', 'Congo-Brazzaville'],
-            ['CD', 'RD Congo'],
-            ['TD', 'Tchad'],
-            ['CF', 'Centrafrique'],
-            ['GQ', 'Guinée Équatoriale'],
-            ['BF', 'Burkina Faso'],
-            ['ML', 'Mali'],
-            ['NE', 'Niger'],
-            ['TG', 'Togo'],
-            ['BJ', 'Bénin'],
-            ['GW', 'Guinée-Bissau'],
-            ['GN', 'Guinée'],
-            ['RW', 'Rwanda'],
-            ['FR', 'France'],
-            ['BE', 'Belgique'],
-            ['CA', 'Canada'],
-            ['US', 'États-Unis'],
-            ['KE', 'Kenya'],
-            ['NG', 'Nigeria'],
-            ['GH', 'Ghana'],
-            ['ZA', 'Afrique du Sud']
-
-        ];
-
-
-
-        const residenceSelect =
-            document.getElementById(
-                'reg-country'
-            );
-
-
-        residenceCountries.forEach(
-            country => {
-
-                const option =
-                    document.createElement(
-                        'option'
-                    );
-
-                option.value =
-                    country[0];
-
-                option.textContent =
-                    country[1];
-
-                residenceSelect.appendChild(
-                    option
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           ETAT
-           ========================================================= */
-
-        let loginMethod = 'phone';
-
-
-        let loginCountry =
-            PHONE_COUNTRIES.find(
-                c => c.code === 'CM'
-            );
-
-
-
-        /* =========================================================
-           UTILITAIRES
-           ========================================================= */
-
-        function showToast(
-            message,
-            type = 'info'
-        ) {
-
-            const container =
-                document.getElementById(
-                    'toast-container'
-                );
-
-
-            const toast =
-                document.createElement(
-                    'div'
-                );
-
-
-            toast.className =
-                'toast';
-
-
-            if (
-                type === 'error'
-            ) {
-
-                toast.style.borderColor =
-                    '#ef4444';
-
-            }
-
-
-            if (
-                type === 'success'
-            ) {
-
-                toast.style.borderColor =
-                    '#10b981';
-
-            }
-
-
-            toast.innerHTML =
-                `<span class="toast-message">${message}</span>`;
-
-
-            container.appendChild(
-                toast
-            );
-
-
-            requestAnimationFrame(
-                () => {
-
-                    toast.classList.add(
-                        'show'
-                    );
-
-                }
-            );
-
-
-            setTimeout(
-                () => {
-
-                    toast.classList.remove(
-                        'show'
-                    );
-
-                    setTimeout(
-                        () => toast.remove(),
-                        300
-                    );
-
-                },
-                4000
-            );
-
-        }
-
-
-
-        function showError(
-            input,
-            message
-        ) {
-
-            clearError(input);
-
-
-            const error =
-                document.createElement(
-                    'div'
-                );
-
-
-            error.className =
-                'error-message';
-
-
-            error.textContent =
-                message;
-
-
-            input.parentElement.appendChild(
-                error
-            );
-
-
-            input.style.borderColor =
-                '#ef4444';
-
-        }
-
-
-
-        function clearError(
-            input
-        ) {
-
-            if (!input)
-                return;
-
-
-            const old =
-                input.parentElement
-                    .querySelector(
-                        '.error-message'
-                    );
-
-
-            if (old)
-                old.remove();
-
-
-            input.style.borderColor =
-                '';
-
-        }
-
-
-
-        function validateEmail(
-            email
-        ) {
-
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-                .test(email);
-
-        }
-
-
-
-        function normalizePhone(
-            number,
-            dial
-        ) {
-
-            let digits =
-                String(number || '')
-                    .replace(/\D/g, '');
-
-
-            let countryDial =
-                String(dial || '')
-                    .replace(/\D/g, '');
-
-
-            if (!digits)
-                return '';
-
-
-            /*
-             * 00237690123456
-             */
-
-            if (
-                digits.startsWith('00')
-            ) {
-
-                digits =
-                    digits.substring(2);
-
-            }
-
-
-            /*
-             * Si le numéro contient déjà
-             * l'indicatif
-             */
-
-            if (
-                countryDial &&
-                digits.startsWith(
-                    countryDial
-                )
-            ) {
-
-                return '+' + digits;
-
-            }
-
-
-            /*
-             * Numéro local
-             * 690123456
-             */
-
-            if (
-                digits.startsWith('0')
-            ) {
-
-                digits =
-                    digits.substring(1);
-
-            }
-
-
-            return (
-                '+' +
-                countryDial +
-                digits
-            );
-
-        }
-
-
-
-        /* =========================================================
-           CREATION DU MENU PAYS (CONNEXION)
-           ========================================================= */
-
-        function renderCountryMenu(
-            search = ''
-        ) {
-
-            const options =
-                document.getElementById(
-                    'login-country-options'
-                );
-
-
-            const query =
-                search
-                    .trim()
-                    .toLowerCase();
-
-
-            const filtered =
-                PHONE_COUNTRIES.filter(
-                    country => {
-
-                        return (
-                            country.name
-                                .toLowerCase()
-                                .includes(query)
-                            ||
-                            country.dial
-                                .includes(query)
-                            ||
-                            country.code
-                                .toLowerCase()
-                                .includes(query)
-                        );
-
-                    }
-                );
-
-
-            options.innerHTML = '';
-
-
-            if (
-                filtered.length === 0
-            ) {
-
-                options.innerHTML =
-                    `<div class="country-no-result">
-                        Aucun pays trouvé
-                    </div>`;
-
-                return;
-
-            }
-
-
-            filtered.forEach(
-                country => {
-
-                    const button =
-                        document.createElement(
-                            'button'
-                        );
-
-
-                    button.type =
-                        'button';
-
-
-                    button.className =
-                        'country-option';
-
-
-                    button.innerHTML = `
-
-                        <span class="country-option-left">
-
-                            <span class="country-option-flag">
-                                ${country.flag}
+            <!-- VIEW: FINANCES -->
+            <div id="view-finances" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mes Finances</h1>
+                        <p class="page-subtitle">Gérez vos revenus, analysez vos actifs et participez aux quêtes.</p>
+                    </div>
+                </div>
+                
+                <!-- Sous-onglets Finances -->
+                <div class="finances-subnav">
+                    <button class="subnav-btn active" data-sub="revenu">Revenu Annuel</button>
+                    <button class="subnav-btn" data-sub="actifs">Actifs</button>
+                    <button class="subnav-btn" data-sub="quetes">Quêtes Quotidiennes</button>
+                </div>
+
+                <div class="finances-content">
+                    
+                    <!-- Sous-onglet 1: Revenu Annuel -->
+                    <div id="sub-revenu" class="sub-view active">
+                        <div class="vip-section">
+                            <h4 class="vip-section-title">Atlas</h4>
+                            <div class="vip-grid" id="vip-grid-atlas">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sous-onglet 2: Investissements Actifs (2 colonnes: Constant et Analyse) -->
+                    <div id="sub-actifs" class="sub-view">
+                        <div class="vip-section">
+                            <h4 class="vip-section-title">Constant</h4>
+                            <div class="vip-grid" id="vip-grid-constant">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
+                            </div>
+                        </div>
+
+                        <div class="vip-section">
+                            <h4 class="vip-section-title">Analyse</h4>
+                            <div class="vip-grid" id="vip-grid-analyse">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sous-onglet 3: Quêtes Quotidiennes -->
+                    <div id="sub-quetes" class="sub-view">
+                        <div class="vip-section">
+                            <h4 class="vip-section-title">VIP 0</h4>
+                            <div class="vip-grid" id="vip-grid-quete">
+                                <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+
+            <!-- VIEW: PORTEFEUILLE -->
+            <div id="view-portefeuille" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mon Portefeuille</h1>
+                        <p class="page-subtitle">Gérez vos dépôts, retraits et méthodes de paiement.</p>
+                    </div>
+                </div>
+                
+                <div class="wallet-overview">
+                    <div class="wallet-balance-card">
+                        <div class="wallet-label">Solde Disponible</div>
+                        <div class="wallet-amount" id="wallet-balance-amount">0 FCFA</div>
+                        <div class="wallet-actions">
+                            <button class="btn btn-primary" id="wallet-deposit-btn">Faire un dépôt</button>
+                            <button class="btn btn-outline" id="wallet-withdraw-btn">Retirer des fonds</button>
+                        </div>
+                    </div>
+                    
+                    <div class="wallet-info-card">
+                        <h3>Moyens de paiement</h3>
+                        <p class="text-secondary mb-4">Ajoutez un moyen de paiement pour faciliter vos futures transactions. (Mobile Money, Carte Bancaire)</p>
+                        <button class="btn btn-outline" style="width:100%">+ Ajouter un moyen de paiement</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: TRANSACTIONS -->
+            <div id="view-transactions" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Historique des Transactions</h1>
+                        <p class="page-subtitle">Retrouvez l'intégralité de vos opérations financières.</p>
+                    </div>
+                    <button class="btn btn-outline">Télécharger PDF</button>
+                </div>
+                
+                <div class="transactions-card full-width">
+                    <div class="transactions-list" id="transactions-list">
+                        <p class="text-secondary" style="padding:12px 2px;">Chargement des transactions…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: COMPTE -->
+            <div id="view-compte" class="view-section">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Mon Compte</h1>
+                        <p class="page-subtitle">Gérez votre profil, votre sécurité et votre équipe de parrainage.</p>
+                    </div>
+                </div>
+
+                <!-- Bannière Récompense : saisie d'un code de parrainage reçu -->
+                <div class="redeem-card">
+                    <div class="redeem-content">
+                        <span class="redeem-emoji">🎁</span>
+                        <div class="redeem-text">
+                            <span class="redeem-title">Récompense</span>
+                            <span class="redeem-subtitle">Saisissez le code pour débloquer votre bonus</span>
+                        </div>
+                    </div>
+                    <button type="button" class="redeem-cta" id="redeem-toggle-btn">
+                        Échanger maintenant
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+                <div class="redeem-input-row" id="redeem-input-row">
+                    <input type="text" id="redeem-code-input" placeholder="Entrez votre code de parrainage" autocomplete="off">
+                    <button class="btn btn-primary" id="redeem-code-btn" type="button">Valider</button>
+                </div>
+
+                <!-- Menu principal du compte -->
+                <div class="account-menu" id="account-menu-root">
+                    <div class="account-profile-card">
+                        <div class="account-profile-avatar avatar">&nbsp;</div>
+                        <div class="account-profile-info">
+                            <div class="account-profile-name user-name skeleton-text">&nbsp;</div>
+                            <div class="account-profile-email user-email skeleton-text">&nbsp;</div>
+                            <span class="account-verified-badge" id="account-verified-badge" style="display:none;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Compte vérifié
                             </span>
-
-                            <span class="country-option-name">
-                                ${country.name}
-                            </span>
-
-                        </span>
-
-                        <span class="country-option-dial">
-                            ${country.dial}
-                        </span>
-
-                    `;
-
-
-                    button.addEventListener(
-                        'click',
-                        () => {
-
-                            selectCountry(
-                                country
-                            );
-
-                        }
-                    );
-
-
-                    options.appendChild(
-                        button
-                    );
-
-                }
-            );
-
-        }
-
-
-
-        /* =========================================================
-           SELECTION PAYS (CONNEXION)
-           ========================================================= */
-
-        function selectCountry(
-            country
-        ) {
-
-            document.getElementById(
-                'login-selected-flag'
-            ).textContent =
-                country.flag;
-
-
-            document.getElementById(
-                'login-selected-dial'
-            ).textContent =
-                country.dial;
-
-
-            loginCountry =
-                country;
-
-
-            document.getElementById(
-                'login-country-selector'
-            ).classList.remove(
-                'open'
-            );
-
-
-            document.getElementById(
-                'login-country-search'
-            ).value =
-                '';
-
-
-            renderCountryMenu();
-
-        }
-
-
-
-        /* =========================================================
-           INITIALISATION MENUS
-           ========================================================= */
-
-        renderCountryMenu();
-
-
-
-        /* =========================================================
-           OUVERTURE PAYS
-           ========================================================= */
-
-        document.getElementById(
-            'login-country-button'
-        ).addEventListener(
-            'click',
-            event => {
-
-                event.stopPropagation();
-
-
-                document.getElementById(
-                    'login-country-selector'
-                ).classList.toggle(
-                    'open'
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           RECHERCHE PAYS
-           ========================================================= */
-
-        document.getElementById(
-            'login-country-search'
-        ).addEventListener(
-            'input',
-            event => {
-
-                renderCountryMenu(
-                    event.target.value
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           FERMER MENU EN CLIQUANT AILLEURS
-           ========================================================= */
-
-        document.addEventListener(
-            'click',
-            () => {
-
-                document.getElementById(
-                    'login-country-selector'
-                ).classList.remove(
-                    'open'
-                );
-
-            }
-        );
-
-
-        /* =========================================================
-           MOT DE PASSE
-           ========================================================= */
-
-        document.querySelectorAll(
-            '.password-toggle'
-        ).forEach(
-            button => {
-
-                button.addEventListener(
-                    'click',
-                    () => {
-
-                        const input =
-                            document.getElementById(
-                                button.dataset.target
-                            );
-
-
-                        input.type =
-                            input.type === 'password'
-                                ? 'text'
-                                : 'password';
-
-                    }
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           ONGLET CONNEXION / INSCRIPTION
-           ========================================================= */
-
-        document.getElementById(
-            'tab-login'
-        ).addEventListener(
-            'click',
-            () => {
-
-                document.getElementById(
-                    'tab-login'
-                ).classList.add(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'tab-register'
-                ).classList.remove(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'login-panel'
-                ).classList.add(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'register-panel'
-                ).classList.remove(
-                    'active'
-                );
-
-            }
-        );
-
-
-        document.getElementById(
-            'tab-register'
-        ).addEventListener(
-            'click',
-            () => {
-
-                document.getElementById(
-                    'tab-register'
-                ).classList.add(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'tab-login'
-                ).classList.remove(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'register-panel'
-                ).classList.add(
-                    'active'
-                );
-
-
-                document.getElementById(
-                    'login-panel'
-                ).classList.remove(
-                    'active'
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           BASCULER TELEPHONE / EMAIL — CONNEXION
-           ========================================================= */
-
-        document.getElementById(
-            'login-method-button'
-        ).addEventListener(
-            'click',
-            () => {
-
-                if (
-                    loginMethod === 'phone'
-                ) {
-
-                    loginMethod =
-                        'email';
-
-
-                    document.getElementById(
-                        'login-phone-group'
-                    ).style.display =
-                        'none';
-
-
-                    document.getElementById(
-                        'login-email-group'
-                    ).style.display =
-                        'block';
-
-
-                    document.getElementById(
-                        'login-phone'
-                    ).required =
-                        false;
-
-
-                    document.getElementById(
-                        'login-email'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'login-method-button'
-                    ).textContent =
-                        'Utiliser un numéro de téléphone';
-
-                }
-
-                else {
-
-                    loginMethod =
-                        'phone';
-
-
-                    document.getElementById(
-                        'login-phone-group'
-                    ).style.display =
-                        'block';
-
-
-                    document.getElementById(
-                        'login-email-group'
-                    ).style.display =
-                        'none';
-
-
-                    document.getElementById(
-                        'login-phone'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'login-email'
-                    ).required =
-                        false;
-
-
-                    document.getElementById(
-                        'login-method-button'
-                    ).textContent =
-                        'Utiliser une adresse email';
-
-                }
-
-            }
-        );
-
-
-
-        /* =========================================================
-           CONNEXION
-           ========================================================= */
-
-        document.getElementById(
-            'login-form'
-        ).addEventListener(
-            'submit',
-            async event => {
-
-                event.preventDefault();
-
-
-                const password =
-                    document.getElementById(
-                        'login-password'
-                    );
-
-
-                const button =
-                    document.querySelector(
-                        '#login-form button[type="submit"]'
-                    );
-
-
-                clearError(
-                    password
-                );
-
-
-                if (
-                    password.value.length < 6
-                ) {
-
-                    showError(
-                        password,
-                        'Le mot de passe doit contenir au moins 6 caractères.'
-                    );
-
-                    return;
-
-                }
-
-
-                let credentials;
-
-
-                if (
-                    loginMethod === 'phone'
-                ) {
-
-                    const phone =
-                        document.getElementById(
-                            'login-phone'
-                        );
-
-
-                    clearError(
-                        phone
-                    );
-
-
-                    if (
-                        phone.value
-                            .replace(/\D/g, '')
-                            .length < 6
-                    ) {
-
-                        showError(
-                            phone,
-                            'Veuillez entrer un numéro de téléphone valide.'
-                        );
-
-                        return;
-
-                    }
-
-
-                    credentials = {
-
-                        phone:
-                            normalizePhone(
-                                phone.value,
-                                loginCountry.dial
-                            ),
-
-                        password:
-                            password.value
-
-                    };
-
-                }
-
-                else {
-
-                    const email =
-                        document.getElementById(
-                            'login-email'
-                        );
-
-
-                    clearError(
-                        email
-                    );
-
-
-                    if (
-                        !validateEmail(
-                            email.value.trim()
-                        )
-                    ) {
-
-                        showError(
-                            email,
-                            'Veuillez entrer une adresse email valide.'
-                        );
-
-                        return;
-
-                    }
-
-
-                    credentials = {
-
-                        email:
-                            email.value.trim(),
-
-                        password:
-                            password.value
-
-                    };
-
-                }
-
-
-                if (
-                    !window.supabaseClient
-                ) {
-
-                    showToast(
-                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
-                        'error'
-                    );
-
-                    return;
-
-                }
-
-
-                const originalText =
-                    button.textContent;
-
-
-                button.disabled =
-                    true;
-
-
-                button.textContent =
-                    'Connexion...';
-
-
-                try {
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await window.supabaseClient
-                            .auth
-                            .signInWithPassword(
-                                credentials
-                            );
-
-
-                    if (error) {
-
-                        showToast(
-                            error.message,
-                            'error'
-                        );
-
-
-                        button.disabled =
-                            false;
-
-
-                        button.textContent =
-                            originalText;
-
-
-                        return;
-
-                    }
-
-
-                    const user =
-                        data.user;
-
-
-                    localStorage.setItem(
-                        'isLoggedIn',
-                        'true'
-                    );
-
-
-                    localStorage.setItem(
-                        'userEmail',
-                        user.email ||
-                        user.phone ||
-                        ''
-                    );
-
-
-                    localStorage.setItem(
-                        'userName',
-                        user.user_metadata?.full_name ||
-                        user.email ||
-                        user.phone ||
-                        'Utilisateur'
-                    );
-
-
-                    showToast(
-                        'Connexion réussie !',
-                        'success'
-                    );
-
-
-                    setTimeout(
-                        () => {
-
-                            window.location.href =
-                                'dashboard.html';
-
-                        },
-                        600
-                    );
-
-                }
-
-                catch (
-                    error
-                ) {
-
-                    showToast(
-                        error.message ||
-                        'Une erreur est survenue.',
-                        'error'
-                    );
-
-
-                    button.disabled =
-                        false;
-
-
-                    button.textContent =
-                        originalText;
-
-                }
-
-            }
-        );
-
-
-
-        /* =========================================================
-           FORCE DU MOT DE PASSE (TEMPS REEL)
-           ========================================================= */
-
-        function evaluatePasswordStrength(
-            value
-        ) {
-
-            let score = 0;
-
-            if (value.length >= 8) score++;
-            if (value.length >= 12) score++;
-            if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
-            if (/[0-9]/.test(value)) score++;
-            if (/[^A-Za-z0-9]/.test(value)) score++;
-
-            if (score <= 1) {
-
-                return {
-                    percent: 25,
-                    color: '#ef4444',
-                    label: 'Faible'
-                };
-
-            }
-
-            if (score <= 3) {
-
-                return {
-                    percent: 65,
-                    color: '#f59e0b',
-                    label: 'Moyen'
-                };
-
-            }
-
-            return {
-                percent: 100,
-                color: '#10b981',
-                label: 'Fort'
-            };
-
-        }
-
-
-        const regPasswordInput =
-            document.getElementById(
-                'reg-password'
-            );
-
-        const regPasswordStrength =
-            document.getElementById(
-                'reg-password-strength'
-            );
-
-        const regPasswordStrengthFill =
-            document.getElementById(
-                'reg-password-strength-fill'
-            );
-
-        const regPasswordStrengthLabel =
-            document.getElementById(
-                'reg-password-strength-label'
-            );
-
-
-        if (regPasswordInput) {
-
-            regPasswordInput.addEventListener(
-                'input',
-                () => {
-
-                    const value =
-                        regPasswordInput.value;
-
-
-                    if (
-                        value.length === 0
-                    ) {
-
-                        regPasswordStrength.classList.remove(
-                            'visible'
-                        );
-
-                        return;
-
-                    }
-
-
-                    regPasswordStrength.classList.add(
-                        'visible'
-                    );
-
-
-                    const result =
-                        evaluatePasswordStrength(
-                            value
-                        );
-
-
-                    regPasswordStrengthFill.style.width =
-                        result.percent + '%';
-
-                    regPasswordStrengthFill.style.background =
-                        result.color;
-
-                    regPasswordStrengthLabel.textContent =
-                        result.label;
-
-                    regPasswordStrengthLabel.style.color =
-                        result.color;
-
-                }
-            );
-
-        }
-
-
-
-        /* =========================================================
-           INSCRIPTION
-           ========================================================= */
-
-        document.getElementById(
-            'register-form'
-        ).addEventListener(
-            'submit',
-            async event => {
-
-                event.preventDefault();
-
-
-                const name =
-                    document.getElementById(
-                        'reg-name'
-                    );
-
-
-                const password =
-                    document.getElementById(
-                        'reg-password'
-                    );
-
-
-                const confirm =
-                    document.getElementById(
-                        'reg-confirm'
-                    );
-
-
-                const terms =
-                    document.getElementById(
-                        'terms'
-                    );
-
-
-                const button =
-                    document.querySelector(
-                        '#register-form button[type="submit"]'
-                    );
-
-
-                clearError(name);
-
-                clearError(password);
-
-                clearError(confirm);
-
-
-
-                /* NOM */
-
-                if (
-                    name.value.trim().length < 2
-                ) {
-
-                    showError(
-                        name,
-                        'Veuillez entrer votre nom complet.'
-                    );
-
-                    return;
-
-                }
-
-
-
-                /* MOT DE PASSE */
-
-                if (
-                    password.value.length < 8
-                ) {
-
-                    showError(
-                        password,
-                        'Le mot de passe doit contenir au moins 8 caractères.'
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    !/[a-z]/.test(password.value) ||
-                    !/[A-Z]/.test(password.value) ||
-                    !/[0-9]/.test(password.value)
-                ) {
-
-                    showError(
-                        password,
-                        'Le mot de passe doit contenir une majuscule, une minuscule et un chiffre.'
-                    );
-
-                    return;
-
-                }
-
-
-
-                /* CONFIRMATION */
-
-                if (
-                    password.value !==
-                    confirm.value
-                ) {
-
-                    showError(
-                        confirm,
-                        'Les mots de passe ne correspondent pas.'
-                    );
-
-                    return;
-
-                }
-
-
-
-                /* CONDITIONS */
-
-                if (
-                    !terms.checked
-                ) {
-
-                    showToast(
-                        'Vous devez accepter les conditions générales.',
-                        'error'
-                    );
-
-                    return;
-
-                }
-
-
-                const email =
-                    document.getElementById(
-                        'reg-email'
-                    );
-
-
-                clearError(
-                    email
-                );
-
-
-                if (
-                    !validateEmail(
-                        email.value.trim()
-                    )
-                ) {
-
-                    showError(
-                        email,
-                        'Veuillez entrer une adresse email valide.'
-                    );
-
-                    return;
-
-                }
-
-
-                const signupData = {
-
-                    email:
-                        email.value.trim(),
-
-                    password:
-                        password.value,
-
-                    options: {
-
-                        data: {
-
-                            full_name:
-                                name.value.trim(),
-
-                            country:
-                                document.getElementById(
-                                    'reg-country'
-                                ).value,
-
-                            referred_by:
-                                localStorage.getItem(
-                                    'referredBy'
-                                ) || null
-
-                        }
-
-                    }
-
-                };
-
-
-                if (
-                    !window.supabaseClient
-                ) {
-
-                    showToast(
-                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
-                        'error'
-                    );
-
-                    return;
-
-                }
-
-
-                const originalText =
-                    button.textContent;
-
-
-                button.disabled =
-                    true;
-
-
-                button.textContent =
-                    'Création en cours...';
-
-
-                try {
-
-                    const {
-                        data,
-                        error
-                    } =
-                        await window.supabaseClient
-                            .auth
-                            .signUp(
-                                signupData
-                            );
-
-
-                    if (error) {
-
-                        showToast(
-                            error.message,
-                            'error'
-                        );
-
-
-                        button.disabled =
-                            false;
-
-
-                        button.textContent =
-                            originalText;
-
-
-                        return;
-
-                    }
-
-
-                    localStorage.removeItem(
-                        'referredBy'
-                    );
-
-
-                    showToast(
-                        'Compte créé ! Vérifiez votre email si une confirmation est demandée.',
-                        'success'
-                    );
-
-
-                    button.disabled =
-                        false;
-
-
-                    button.textContent =
-                        originalText;
-
-
-                    /*
-                     * Retour vers Connexion
-                     */
-
-                    document.getElementById(
-                        'tab-login'
-                    ).click();
-
-                }
-
-                catch (
-                    error
-                ) {
-
-                    showToast(
-                        error.message ||
-                        'Une erreur est survenue.',
-                        'error'
-                    );
-
-
-                    button.disabled =
-                        false;
-
-
-                    button.textContent =
-                        originalText;
-
-                }
-
-            }
-        );
-
-
-
-        /* =========================================================
-           CODE DE PARRAINAGE
-           ========================================================= */
-
-        const ref =
-            new URLSearchParams(
-                window.location.search
-            ).get('ref');
-
-
-        if (ref) {
-
-            localStorage.setItem(
-                'referredBy',
-                ref
-            );
-
-        }
-
-
-
-        /* =========================================================
-           OUVRIR INSCRIPTION SI ?tab=register
-           ========================================================= */
-
-        const params =
-            new URLSearchParams(
-                window.location.search
-            );
-
-
-        if (
-            params.get('tab') ===
-            'register'
-        ) {
-
-            document.getElementById(
-                'tab-register'
-            ).click();
-
-        }
-
-    </script>
-
-
+                        </div>
+                    </div>
+
+                    <div class="account-section-label">Paramètres du compte</div>
+
+                    <button type="button" class="account-menu-item" data-account-target="info">
+                        <div class="account-menu-icon">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Mes informations</span>
+                            <span class="account-menu-subtitle">Nom, numéro de téléphone et mot de passe</span>
+                        </div>
+                        <div class="account-menu-chevron-wrap">
+                            <svg class="account-menu-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" class="account-menu-item" data-account-target="securite">
+                        <div class="account-menu-icon security">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Sécurité & Code PIN</span>
+                            <span class="account-menu-subtitle">Code PIN de retrait à 5 chiffres</span>
+                        </div>
+                        <div class="account-menu-chevron-wrap">
+                            <svg class="account-menu-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    <div class="account-section-label">Parrainage</div>
+
+                    <button type="button" class="account-menu-item" data-account-target="equipe">
+                        <div class="account-menu-icon team">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Mon Équipe <span class="account-menu-badge">10-5-2%</span></span>
+                            <span class="account-menu-subtitle">Lien de parrainage et commissions sur 3 niveaux</span>
+                        </div>
+                        <div class="account-menu-chevron-wrap">
+                            <svg class="account-menu-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    <div class="account-section-label">Assistance</div>
+
+                    <button type="button" class="account-menu-item" data-account-target="support">
+                        <div class="account-menu-icon support">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Support & À propos</span>
+                            <span class="account-menu-subtitle">Assistance 24/7 et l'équipe Atlas Capital</span>
+                        </div>
+                        <div class="account-menu-chevron-wrap">
+                            <svg class="account-menu-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" class="account-menu-item admin-item" id="admin-menu-item" style="display:none;">
+                        <div class="account-menu-icon admin">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Accéder à l'admin</span>
+                            <span class="account-menu-subtitle">Espace réservé aux administrateurs</span>
+                        </div>
+                        <div class="account-menu-chevron-wrap">
+                            <svg class="account-menu-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </button>
+
+                    <button type="button" class="account-menu-item danger logout-btn">
+                        <div class="account-menu-icon danger">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </div>
+                        <div class="account-menu-text">
+                            <span class="account-menu-title">Déconnexion</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Sous-vue : Mes informations -->
+                <div class="account-subview" id="account-sub-info">
+                    <button type="button" class="account-back-btn" data-account-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Mon Compte
+                    </button>
+                    <div class="invest-card">
+                        <div class="card-header"><h2 class="card-title">Mes informations</h2></div>
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" class="form-control" id="profile-name-input" placeholder="Votre nom">
+                        </div>
+                        <div class="form-group">
+                            <label>Numéro de téléphone</label>
+                            <input type="tel" class="form-control" id="profile-phone-input" placeholder="+237 6 XX XX XX XX">
+                        </div>
+                        <div class="form-group">
+                            <label>Adresse e-mail</label>
+                            <input type="email" class="form-control" id="profile-email-input" disabled>
+                        </div>
+                        <button class="btn btn-primary btn-full" id="profile-save-btn" type="button">Enregistrer les modifications</button>
+                    </div>
+                </div>
+
+                <!-- Sous-vue : Sécurité / Code PIN -->
+                <div class="account-subview" id="account-sub-securite">
+                    <button type="button" class="account-back-btn" data-account-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Mon Compte
+                    </button>
+                    <div class="invest-card">
+                        <div class="card-header"><h2 class="card-title">Code PIN de retrait</h2></div>
+                        <p class="text-secondary" style="margin-bottom:16px;">Ce code à 5 chiffres vous sera demandé pour confirmer chaque retrait.</p>
+                        <div class="form-group">
+                            <label>Nouveau code PIN</label>
+                            <input type="password" class="form-control" id="pin-input" maxlength="5" inputmode="numeric" placeholder="•••••">
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmer le code PIN</label>
+                            <input type="password" class="form-control" id="pin-confirm-input" maxlength="5" inputmode="numeric" placeholder="•••••">
+                        </div>
+                        <button class="btn btn-primary btn-full" id="pin-save-btn" type="button">Enregistrer le code PIN</button>
+                    </div>
+                    <div class="invest-card" style="margin-top:16px;">
+                        <div class="card-header"><h2 class="card-title">Mot de passe</h2></div>
+                        <button class="btn btn-outline btn-full">Modifier mon mot de passe</button>
+                    </div>
+                </div>
+
+                <!-- Sous-vue : Mon Équipe / Parrainage -->
+                <div class="account-subview" id="account-sub-equipe">
+                    <button type="button" class="account-back-btn" data-account-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Mon Compte
+                    </button>
+
+                    <div class="referral-card">
+                        <div class="referral-header">
+                            <div class="referral-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            </div>
+                            <span class="referral-title">Programme de Parrainage</span>
+                        </div>
+                        <p class="referral-subtitle">Invitez vos proches à investir avec Atlas Capital et touchez une commission sur 3 niveaux, à vie.</p>
+
+                        <div class="referral-stats">
+                            <div class="referral-stat">
+                                <span class="referral-stat-value" id="referral-count">0</span>
+                                <span class="referral-stat-label">Filleuls</span>
+                            </div>
+                            <div class="referral-stat">
+                                <span class="referral-stat-value" id="referral-earnings">0 FCFA</span>
+                                <span class="referral-stat-label">Gains parrainage</span>
+                            </div>
+                            <div class="referral-stat">
+                                <span class="referral-stat-value">3</span>
+                                <span class="referral-stat-label">Niveaux actifs</span>
+                            </div>
+                        </div>
+
+                        <div class="referral-link-box">
+                            <input type="text" id="referral-link" readonly value="Chargement...">
+                            <button class="referral-copy-btn" id="referral-copy-btn" type="button">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Copier
+                            </button>
+                        </div>
+
+                        <div class="referral-share-row">
+                            <button class="referral-share-btn" id="referral-share-btn" type="button">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                                Partager
+                            </button>
+                            <a class="referral-share-btn" id="referral-whatsapp-btn" href="#" target="_blank" rel="noopener">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"></path></svg>
+                                WhatsApp
+                            </a>
+                        </div>
+
+                        <div class="referral-tiers">
+                            <div class="referral-tier">
+                                <div class="referral-tier-rate">10%</div>
+                                <div class="referral-tier-label">Niveau 1 — parrainage direct</div>
+                            </div>
+                            <div class="referral-tier">
+                                <div class="referral-tier-rate">5%</div>
+                                <div class="referral-tier-label">Niveau 2 — filleuls de vos filleuls</div>
+                            </div>
+                            <div class="referral-tier">
+                                <div class="referral-tier-rate">2%</div>
+                                <div class="referral-tier-label">Niveau 3 — 3ème génération</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sous-vue : Support & À propos -->
+                <div class="account-subview" id="account-sub-support">
+                    <button type="button" class="account-back-btn" data-account-back>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        Mon Compte
+                    </button>
+                    <div style="display:flex; flex-direction:column; gap:16px;">
+                        <div class="investments-card">
+                            <h2 class="card-title" style="margin-bottom:15px;">Support Technique</h2>
+                            <p class="text-secondary" style="margin-bottom:15px;">Besoin d'aide avec vos investissements ? Notre équipe est disponible 24/7 pour vous accompagner.</p>
+                            <button class="btn btn-primary">Contacter le support</button>
+                        </div>
+
+                        <div class="investments-card">
+                            <h2 class="card-title" style="margin-bottom:15px;">L'équipe Atlas Capital</h2>
+                            <p class="text-secondary" style="margin-bottom:15px;">Atlas Capital est composé d'experts financiers et d'ingénieurs dévoués à maximiser vos revenus en toute sécurité.</p>
+                            <a href="#" class="view-all">En savoir plus sur notre mission</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+        <!-- Bottom Navigation for Mobile -->
+        <nav class="bottom-nav">
+            <a href="#" class="bottom-nav-item active" data-target="dashboard">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <span>Accueil</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="finances">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>Investir</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="portefeuille">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <span>Wallet</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="transactions">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <span>Historique</span>
+            </a>
+            <a href="#" class="bottom-nav-item" data-target="compte">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <span>Compte</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/payment-methods.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
-
 </html>
