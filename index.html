@@ -1348,111 +1348,11 @@
                 <form id="login-form">
 
 
-                    <!-- TELEPHONE -->
-
-                    <div
-                        class="form-group"
-                        id="login-phone-group"
-                    >
-
-                        <label class="phone-label">
-                            Téléphone
-                        </label>
-
-
-                        <div class="phone-wrapper">
-
-                            <div class="phone-row">
-
-
-                                <!-- PAYS -->
-
-                                <div
-                                    class="country-selector"
-                                    id="login-country-selector"
-                                >
-
-                                    <button
-                                        type="button"
-                                        class="country-button"
-                                        id="login-country-button"
-                                    >
-
-                                        <span
-                                            class="country-button-left"
-                                        >
-
-                                            <span
-                                                class="country-flag"
-                                                id="login-selected-flag"
-                                            >
-                                                🇨🇲
-                                            </span>
-
-                                            <span
-                                                class="country-dial"
-                                                id="login-selected-dial"
-                                            >
-                                                +237
-                                            </span>
-
-                                        </span>
-
-
-                                        <span
-                                            class="country-arrow"
-                                        ></span>
-
-                                    </button>
-
-
-                                    <div
-                                        class="country-menu"
-                                        id="login-country-menu"
-                                    >
-
-                                        <input
-                                            type="text"
-                                            class="country-search"
-                                            id="login-country-search"
-                                            placeholder="Rechercher un pays..."
-                                            autocomplete="off"
-                                        >
-
-                                        <div
-                                            id="login-country-options"
-                                        ></div>
-
-                                    </div>
-
-                                </div>
-
-
-                                <!-- NUMERO -->
-
-                                <input
-                                    type="tel"
-                                    id="login-phone"
-                                    class="form-control phone-input"
-                                    placeholder="6XX XXX XXX"
-                                    inputmode="tel"
-                                    autocomplete="tel"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
                     <!-- EMAIL -->
 
                     <div
                         class="form-group"
                         id="login-email-group"
-                        style="display:none;"
                     >
 
                         <label for="login-email">
@@ -1465,21 +1365,8 @@
                             class="form-control"
                             placeholder="jean.dupont@email.com"
                             autocomplete="email"
+                            required
                         >
-
-                    </div>
-
-
-                    <!-- CHANGEMENT TELEPHONE / EMAIL -->
-
-                    <div class="alternative-login">
-
-                        <button
-                            type="button"
-                            id="login-method-button"
-                        >
-                            Utiliser une adresse email
-                        </button>
 
                     </div>
 
@@ -2207,9 +2094,6 @@
            ETAT
            ========================================================= */
 
-        let loginMethod = 'phone';
-
-
         let loginCountry =
             PHONE_COUNTRIES.find(
                 c => c.code === 'CM'
@@ -2449,237 +2333,6 @@
 
 
         /* =========================================================
-           CREATION DU MENU PAYS (CONNEXION)
-           ========================================================= */
-
-        function renderCountryMenu(
-            search = ''
-        ) {
-
-            const options =
-                document.getElementById(
-                    'login-country-options'
-                );
-
-
-            const query =
-                search
-                    .trim()
-                    .toLowerCase();
-
-
-            const filtered =
-                PHONE_COUNTRIES.filter(
-                    country => {
-
-                        return (
-                            country.name
-                                .toLowerCase()
-                                .includes(query)
-                            ||
-                            country.dial
-                                .includes(query)
-                            ||
-                            country.code
-                                .toLowerCase()
-                                .includes(query)
-                        );
-
-                    }
-                );
-
-
-            options.innerHTML = '';
-
-
-            if (
-                filtered.length === 0
-            ) {
-
-                options.innerHTML =
-                    `<div class="country-no-result">
-                        Aucun pays trouvé
-                    </div>`;
-
-                return;
-
-            }
-
-
-            filtered.forEach(
-                country => {
-
-                    const button =
-                        document.createElement(
-                            'button'
-                        );
-
-
-                    button.type =
-                        'button';
-
-
-                    button.className =
-                        'country-option';
-
-
-                    button.innerHTML = `
-
-                        <span class="country-option-left">
-
-                            <span class="country-option-flag">
-                                ${country.flag}
-                            </span>
-
-                            <span class="country-option-name">
-                                ${country.name}
-                            </span>
-
-                        </span>
-
-                        <span class="country-option-dial">
-                            ${country.dial}
-                        </span>
-
-                    `;
-
-
-                    button.addEventListener(
-                        'click',
-                        () => {
-
-                            selectCountry(
-                                country
-                            );
-
-                        }
-                    );
-
-
-                    options.appendChild(
-                        button
-                    );
-
-                }
-            );
-
-        }
-
-
-
-        /* =========================================================
-           SELECTION PAYS (CONNEXION)
-           ========================================================= */
-
-        function selectCountry(
-            country
-        ) {
-
-            document.getElementById(
-                'login-selected-flag'
-            ).textContent =
-                country.flag;
-
-
-            document.getElementById(
-                'login-selected-dial'
-            ).textContent =
-                country.dial;
-
-
-            loginCountry =
-                country;
-
-
-            document.getElementById(
-                'login-country-selector'
-            ).classList.remove(
-                'open'
-            );
-
-
-            document.getElementById(
-                'login-country-search'
-            ).value =
-                '';
-
-
-            renderCountryMenu();
-
-        }
-
-
-
-        /* =========================================================
-           INITIALISATION MENUS
-           ========================================================= */
-
-        renderCountryMenu();
-
-
-
-        /* =========================================================
-           OUVERTURE PAYS
-           ========================================================= */
-
-        document.getElementById(
-            'login-country-button'
-        ).addEventListener(
-            'click',
-            event => {
-
-                event.stopPropagation();
-
-
-                document.getElementById(
-                    'login-country-selector'
-                ).classList.toggle(
-                    'open'
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           RECHERCHE PAYS
-           ========================================================= */
-
-        document.getElementById(
-            'login-country-search'
-        ).addEventListener(
-            'input',
-            event => {
-
-                renderCountryMenu(
-                    event.target.value
-                );
-
-            }
-        );
-
-
-
-        /* =========================================================
-           FERMER MENU EN CLIQUANT AILLEURS
-           ========================================================= */
-
-        document.addEventListener(
-            'click',
-            () => {
-
-                document.getElementById(
-                    'login-country-selector'
-                ).classList.remove(
-                    'open'
-                );
-
-            }
-        );
-
-
-        /* =========================================================
            MOT DE PASSE
            ========================================================= */
 
@@ -2791,93 +2444,50 @@
 
 
         /* =========================================================
-           BASCULER TELEPHONE / EMAIL — CONNEXION
+           PRE-REMPLISSAGE — SE SOUVENIR DE MOI
            ========================================================= */
 
-        document.getElementById(
-            'login-method-button'
-        ).addEventListener(
-            'click',
-            () => {
+        (function prefillRememberedLogin() {
 
-                if (
-                    loginMethod === 'phone'
-                ) {
-
-                    loginMethod =
-                        'email';
+            const rememberedEmail =
+                localStorage.getItem(
+                    'rememberedEmail'
+                );
 
 
-                    document.getElementById(
-                        'login-phone-group'
-                    ).style.display =
-                        'none';
+            const rememberedPassword =
+                localStorage.getItem(
+                    'rememberedPassword'
+                );
 
 
-                    document.getElementById(
-                        'login-email-group'
-                    ).style.display =
-                        'block';
+            if (
+                rememberedEmail &&
+                rememberedPassword
+            ) {
+
+                document.getElementById(
+                    'login-email'
+                ).value =
+                    rememberedEmail;
 
 
-                    document.getElementById(
-                        'login-phone'
-                    ).required =
-                        false;
+                document.getElementById(
+                    'login-password'
+                ).value =
+                    atob(
+                        rememberedPassword
+                    );
 
 
-                    document.getElementById(
-                        'login-email'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'login-method-button'
-                    ).textContent =
-                        'Utiliser un numéro de téléphone';
-
-                }
-
-                else {
-
-                    loginMethod =
-                        'phone';
-
-
-                    document.getElementById(
-                        'login-phone-group'
-                    ).style.display =
-                        'block';
-
-
-                    document.getElementById(
-                        'login-email-group'
-                    ).style.display =
-                        'none';
-
-
-                    document.getElementById(
-                        'login-phone'
-                    ).required =
-                        true;
-
-
-                    document.getElementById(
-                        'login-email'
-                    ).required =
-                        false;
-
-
-                    document.getElementById(
-                        'login-method-button'
-                    ).textContent =
-                        'Utiliser une adresse email';
-
-                }
+                document.getElementById(
+                    'remember-me'
+                ).checked =
+                    true;
 
             }
-        );
+
+        })();
 
 
 
@@ -2925,95 +2535,48 @@
                 }
 
 
-                let credentials;
+                const email =
+                    document.getElementById(
+                        'login-email'
+                    );
+
+
+                clearError(
+                    email
+                );
 
 
                 if (
-                    loginMethod === 'phone'
+                    !validateEmail(
+                        email.value.trim()
+                    )
                 ) {
 
-                    const phone =
-                        document.getElementById(
-                            'login-phone'
-                        );
-
-
-                    clearError(
-                        phone
+                    showError(
+                        email,
+                        'Veuillez entrer une adresse email valide.'
                     );
 
-
-                    if (
-                        phone.value
-                            .replace(/\D/g, '')
-                            .length < 6
-                    ) {
-
-                        showError(
-                            phone,
-                            'Veuillez entrer un numéro de téléphone valide.'
-                        );
-
-                        return;
-
-                    }
-
-
-                    credentials = {
-
-                        phone:
-                            normalizePhone(
-                                phone.value,
-                                loginCountry.dial
-                            ),
-
-                        password:
-                            password.value
-
-                    };
+                    return;
 
                 }
 
-                else {
 
-                    const email =
-                        document.getElementById(
-                            'login-email'
-                        );
+                const credentials = {
 
+                    email:
+                        email.value.trim(),
 
-                    clearError(
-                        email
-                    );
+                    password:
+                        password.value
 
-
-                    if (
-                        !validateEmail(
-                            email.value.trim()
-                        )
-                    ) {
-
-                        showError(
-                            email,
-                            'Veuillez entrer une adresse email valide.'
-                        );
-
-                        return;
-
-                    }
+                };
 
 
-                    credentials = {
-
-                        email:
-                            email.value.trim(),
-
-                        password:
-                            password.value
-
-                    };
-
-                }
+                const rememberMe =
+                    document.getElementById(
+                        'remember-me'
+                    ).checked;
 
 
                 if (
@@ -3101,6 +2664,39 @@
                         user.phone ||
                         'Utilisateur'
                     );
+
+
+                    if (
+                        rememberMe
+                    ) {
+
+                        localStorage.setItem(
+                            'rememberedEmail',
+                            credentials.email
+                        );
+
+
+                        localStorage.setItem(
+                            'rememberedPassword',
+                            btoa(
+                                credentials.password
+                            )
+                        );
+
+                    }
+
+                    else {
+
+                        localStorage.removeItem(
+                            'rememberedEmail'
+                        );
+
+
+                        localStorage.removeItem(
+                            'rememberedPassword'
+                        );
+
+                    }
 
 
                     showToast(
