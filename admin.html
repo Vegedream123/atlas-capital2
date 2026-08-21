@@ -288,11 +288,47 @@
 <div class="modal-overlay" id="user-detail-modal">
     <div class="modal admin-user-modal">
         <div class="modal-header">
-            <h3 id="user-detail-name">Utilisateur</h3>
+            <div>
+                <h3 id="user-detail-name">Utilisateur</h3>
+                <div id="user-detail-phone" class="admin-user-subtitle"></div>
+                <div id="user-detail-registered" class="admin-user-subtitle"></div>
+            </div>
             <button class="modal-close" data-close-modal="user-detail-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="admin-user-summary" id="user-detail-summary"></div>
+            <div class="admin-user-stats-row">
+                <div class="admin-user-stat"><span>Solde</span><strong id="user-detail-balance">0</strong></div>
+                <div class="admin-user-stat"><span>Dépôts validés</span><strong id="user-detail-deposits-count">0</strong></div>
+                <div class="admin-user-stat"><span>Retraits validés</span><strong id="user-detail-withdrawals-count">0</strong></div>
+            </div>
+
+            <div class="admin-user-actions-row">
+                <button type="button" class="btn btn-fund-add" id="user-detail-add-funds">+ Ajouter des fonds</button>
+                <button type="button" class="btn btn-fund-remove" id="user-detail-remove-funds">− Retirer des fonds</button>
+            </div>
+
+            <div class="admin-user-row-line">
+                <div>
+                    <div class="admin-user-label">Statut du compte</div>
+                    <div id="user-detail-status" class="admin-user-value">Actif</div>
+                </div>
+                <button type="button" class="btn btn-danger-soft" id="user-detail-toggle-block">Bloquer</button>
+            </div>
+
+            <div class="admin-user-row-line">
+                <div>
+                    <div class="admin-user-label">Mot de passe</div>
+                    <div class="admin-user-value admin-user-value-muted">Définir un nouveau mot de passe pour ce compte</div>
+                </div>
+                <button type="button" class="btn btn-outline" id="user-detail-change-password">🔑 Changer</button>
+            </div>
+
+            <div class="admin-user-referral">
+                <h4>👥 Parrainage (<span id="user-detail-referral-count">0</span> recruté(s))</h4>
+                <div class="admin-user-label">Parrain : <span id="user-detail-sponsor">Aucun</span></div>
+                <div class="admin-user-label">Commissions gagnées : <span id="user-detail-referral-earnings">0 FCFA</span></div>
+            </div>
+
             <h4>Dépôts</h4>
             <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-deposits"></tbody></table></div>
             <h4>Retraits</h4>
