@@ -957,6 +957,86 @@
 
 
         /* =====================================================
+           FORCE DU MOT DE PASSE
+           ===================================================== */
+
+        .password-hint {
+
+            color: #7b8798;
+
+            font-size: 12.5px;
+
+            margin-top: 7px;
+
+            line-height: 1.5;
+
+        }
+
+
+        .password-strength {
+
+            display: none;
+
+            align-items: center;
+
+            gap: 8px;
+
+            margin-top: 9px;
+
+        }
+
+
+        .password-strength.visible {
+
+            display: flex;
+
+        }
+
+
+        .password-strength-track {
+
+            flex: 1;
+
+            height: 6px;
+
+            border-radius: 4px;
+
+            background: #e6ebf2;
+
+            overflow: hidden;
+
+        }
+
+
+        .password-strength-fill {
+
+            height: 100%;
+
+            width: 0%;
+
+            border-radius: 4px;
+
+            background: #ef4444;
+
+            transition: width 0.2s ease, background-color 0.2s ease;
+
+        }
+
+
+        .password-strength-label {
+
+            font-size: 12.5px;
+
+            font-weight: 600;
+
+            color: #7b8798;
+
+            white-space: nowrap;
+
+        }
+
+
+        /* =====================================================
            TOAST
            ===================================================== */
 
@@ -1481,7 +1561,7 @@
                         </div>
 
 
-                        <a href="#">
+                        <a href="#" id="forgot-password-link">
                             Mot de passe oublié ?
                         </a>
 
@@ -1730,6 +1810,33 @@
                             </button>
 
                         </div>
+
+
+                        <div
+                            class="password-strength"
+                            id="reg-password-strength"
+                        >
+
+                            <div class="password-strength-track">
+
+                                <div
+                                    class="password-strength-fill"
+                                    id="reg-password-strength-fill"
+                                ></div>
+
+                            </div>
+
+                            <span
+                                class="password-strength-label"
+                                id="reg-password-strength-label"
+                            ></span>
+
+                        </div>
+
+
+                        <p class="password-hint">
+                            Au moins 10 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial (ex. ! ? # @ %).
+                        </p>
 
                     </div>
 
@@ -3308,7 +3415,7 @@
                         () => {
 
                             window.location.href =
-                                'dashboard.html';
+                                'index.html';
 
                         },
                         600
@@ -3338,6 +3445,153 @@
 
             }
         );
+
+
+
+        /* =========================================================
+           FORCE DU MOT DE PASSE (TEMPS REEL)
+           ========================================================= */
+
+        function evaluatePasswordStrength(
+            value
+        ) {
+
+            let score = 0;
+
+            if (value.length >= 8) score++;
+            if (value.length >= 12) score++;
+            if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+            if (/[0-9]/.test(value)) score++;
+            if (/[^A-Za-z0-9]/.test(value)) score++;
+
+            if (score <= 1) {
+
+                return {
+                    percent: 25,
+                    color: '#ef4444',
+                    label: 'Faible'
+                };
+
+            }
+
+            if (score <= 3) {
+
+                return {
+                    percent: 65,
+                    color: '#f59e0b',
+                    label: 'Moyen'
+                };
+
+            }
+
+            return {
+                percent: 100,
+                color: '#10b981',
+                label: 'Fort'
+            };
+
+        }
+
+
+        const regPasswordInput =
+            document.getElementById(
+                'reg-password'
+            );
+
+        const regPasswordStrength =
+            document.getElementById(
+                'reg-password-strength'
+            );
+
+        const regPasswordStrengthFill =
+            document.getElementById(
+                'reg-password-strength-fill'
+            );
+
+        const regPasswordStrengthLabel =
+            document.getElementById(
+                'reg-password-strength-label'
+            );
+
+
+        if (regPasswordInput) {
+
+            regPasswordInput.addEventListener(
+                'input',
+                () => {
+
+                    const value =
+                        regPasswordInput.value;
+
+
+                    if (
+                        value.length === 0
+                    ) {
+
+                        regPasswordStrength.classList.remove(
+                            'visible'
+                        );
+
+                        return;
+
+                    }
+
+
+                    regPasswordStrength.classList.add(
+                        'visible'
+                    );
+
+
+                    const result =
+                        evaluatePasswordStrength(
+                            value
+                        );
+
+
+                    regPasswordStrengthFill.style.width =
+                        result.percent + '%';
+
+                    regPasswordStrengthFill.style.background =
+                        result.color;
+
+                    regPasswordStrengthLabel.textContent =
+                        result.label;
+
+                    regPasswordStrengthLabel.style.color =
+                        result.color;
+
+                }
+            );
+
+        }
+
+
+
+        /* =========================================================
+           MOT DE PASSE OUBLIÉ
+           ========================================================= */
+
+        const forgotPasswordLink =
+            document.getElementById(
+                'forgot-password-link'
+            );
+
+        if (forgotPasswordLink) {
+
+            forgotPasswordLink.addEventListener(
+                'click',
+                event => {
+
+                    event.preventDefault();
+
+                    alert(
+                        'La réinitialisation du mot de passe n\'est pas disponible ici. Veuillez contacter votre responsable de recrutement pour obtenir de l\'aide.'
+                    );
+
+                }
+            );
+
+        }
 
 
 
@@ -3412,12 +3666,48 @@
                 /* MOT DE PASSE */
 
                 if (
-                    password.value.length < 6
+                    password.value.length < 10
                 ) {
 
                     showError(
                         password,
-                        'Le mot de passe doit contenir au moins 6 caractères.'
+                        'Le mot de passe doit contenir au moins 10 caractères.'
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    !/[a-z]/.test(password.value) ||
+                    !/[A-Z]/.test(password.value) ||
+                    !/[0-9]/.test(password.value) ||
+                    !/[^A-Za-z0-9]/.test(password.value)
+                ) {
+
+                    showError(
+                        password,
+                        'Le mot de passe doit contenir une majuscule, une minuscule, un chiffre et un caractère spécial.'
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    name.value.trim().length > 0 &&
+                    password.value
+                        .toLowerCase()
+                        .includes(
+                            name.value.trim().toLowerCase()
+                        )
+                ) {
+
+                    showError(
+                        password,
+                        'Le mot de passe ne doit pas contenir votre nom.'
                     );
 
                     return;
