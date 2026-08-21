@@ -17,13 +17,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
     };
 
-    const openModal = (id) => document.getElementById(id).classList.add('open');
-    const closeModal = (id) => document.getElementById(id).classList.remove('open');
+    const openModal = (id) => document.getElementById(id).classList.add('active');
+    const closeModal = (id) => document.getElementById(id).classList.remove('active');
     document.querySelectorAll('[data-close-modal]').forEach(btn => {
         btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
     });
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('open'); });
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
     });
 
     // ----------------------------------------------------------------
