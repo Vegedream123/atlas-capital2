@@ -1539,41 +1539,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Saisie du code d'un parrain (utilisateur déjà inscrit sans lien de
-    // parrainage) — déplacé ici, dans "Mon Équipe", distinct des bonus.
-    const sponsorCodeInput = document.getElementById('sponsor-code-input');
-    const sponsorCodeBtn = document.getElementById('sponsor-code-btn');
-    if (sponsorCodeBtn) {
-        sponsorCodeBtn.addEventListener('click', async () => {
-            const code = sponsorCodeInput.value.trim().toUpperCase();
-            if (!code) {
-                window.showToast('Veuillez entrer un code.', 'error');
-                return;
-            }
-            if (profile.referral_code === code) {
-                window.showToast('Vous ne pouvez pas utiliser votre propre code.', 'error');
-                return;
-            }
-            if (profile.referred_by) {
-                window.showToast('Un code de parrainage est déjà associé à votre compte.', 'error');
-                return;
-            }
-            const { data: sponsor } = await window.supabaseClient.from('profiles').select('id').eq('referral_code', code).maybeSingle();
-            if (!sponsor) {
-                window.showToast('Code de parrainage invalide.', 'error');
-                return;
-            }
-            const { error } = await window.supabaseClient.from('profiles').update({ referred_by: code }).eq('id', authUser.id);
-            if (error) {
-                window.showToast("Impossible d'enregistrer ce code pour le moment.", 'error');
-                return;
-            }
-            profile.referred_by = code;
-            sponsorCodeInput.value = '';
-            window.showToast('Code de parrainage validé !', 'success');
-        });
-    }
-
     // Bonus personnel (case du haut "Mon Compte") : code à usage unique
     // attribué par l'admin à CET utilisateur précis (voir redeem_promo_code
     // côté serveur, qui vérifie que assigned_to correspond bien au compte
