@@ -46,6 +46,11 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
 .admin-form-actions { display: flex; gap: 10px; margin-top: 6px; }
 .admin-computed { padding: 10px 12px; background: var(--gray-50); border-radius: var(--radius-sm); font-weight: 600; color: var(--primary); }
 .admin-image-preview { margin-top: 10px; max-width: 160px; max-height: 160px; border-radius: var(--radius-sm); object-fit: cover; border: 1px solid var(--gray-200); }
+.admin-monthly-revenues-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
+.admin-monthly-revenue-field label { display: block; font-size: 0.72rem; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary,#666); }
+.admin-monthly-revenue-field input { width: 100%; padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.85rem; font-family: inherit; }
+.admin-monthly-revenues-view { display: flex; flex-wrap: wrap; gap: 4px; max-width: 260px; }
+.admin-monthly-revenues-view span { background: var(--gray-50); border-radius: 999px; padding: 2px 8px; font-size: 0.7rem; white-space: nowrap; }
 .admin-search-input { padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); font-size: 0.85rem; min-width: 220px; }
 
 /* ---- Tables ---- */
