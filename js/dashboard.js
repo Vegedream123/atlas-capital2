@@ -470,38 +470,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, duration / steps);
         });
 
-        // --- Graphique d'évolution (12 derniers mois, REVENUS réels de
-        //     l'utilisateur connecté uniquement : gains, commissions de
-        //     parrainage, récompenses de quêtes. Les dépôts ne sont pas
-        //     des revenus et ne sont donc pas comptabilisés ici). ---
-        const chartArea = document.getElementById('mainChart');
-        if (chartArea) {
-            const REVENUE_TYPES = new Set(['gain', 'referral_commission', 'quest']);
-            const now = new Date();
-            const months = [];
-            for (let i = 11; i >= 0; i--) {
-                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-                months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
-            }
-            const totalsByMonth = {};
-            months.forEach(m => totalsByMonth[m.key] = 0);
-            transactions.forEach(t => {
-                if (!t.created_at) return;
-                if (!REVENUE_TYPES.has(t.type)) return;
-                const d = new Date(t.created_at);
-                const key = `${d.getFullYear()}-${d.getMonth()}`;
-                if (key in totalsByMonth && Number(t.amount) > 0) {
-                    totalsByMonth[key] += Number(t.amount);
-                }
-            });
-            const maxVal = Math.max(1, ...Object.values(totalsByMonth));
-            chartArea.innerHTML = months.map(m => {
-                const val = totalsByMonth[m.key];
-                const heightPct = Math.max(4, Math.round((val / maxVal) * 100));
-                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatFCFA(val)}"></div><span class="x-label">${m.label}</span></div>`;
-            }).join('');
-        }
-
         // --- Produits disponibles par catégorie (Revenu Annuel / Actif / Quête) ---
         // Chaque produit reste affiché en permanence dans sa case (grille) de
         // catégorie, qu'il soit possédé ou non. Une fois acheté, le nombre de
