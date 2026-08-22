@@ -279,13 +279,14 @@
                     </div>
                 </div>
 
-                <!-- Bannière Récompense : saisie d'un code bonus / promo -->
+                <!-- Bonus personnel : code attribué par l'admin à UN utilisateur précis
+                     (usage unique, réservé exclusivement à son destinataire) -->
                 <div class="redeem-card">
                     <div class="redeem-content">
                         <span class="redeem-emoji">🎁</span>
                         <div class="redeem-text">
-                            <span class="redeem-title">Récompense</span>
-                            <span class="redeem-subtitle">Saisissez le code pour débloquer votre bonus</span>
+                            <span class="redeem-title">Bonus personnel</span>
+                            <span class="redeem-subtitle">Code reçu de l'administration, réservé à votre compte</span>
                         </div>
                     </div>
                     <button type="button" class="redeem-cta" id="redeem-toggle-btn">
@@ -294,17 +295,18 @@
                     </button>
                 </div>
                 <div class="redeem-input-row" id="redeem-input-row">
-                    <input type="text" id="redeem-code-input" placeholder="Entrez votre code bonus" autocomplete="off">
+                    <input type="text" id="redeem-code-input" placeholder="Entrez votre code de bonus personnel" autocomplete="off">
                     <button class="btn btn-primary" id="redeem-code-btn" type="button">Valider</button>
                 </div>
 
-                <!-- Code promo (bonus aléatoire, distinct du code de parrainage ci-dessus) -->
+                <!-- Code promo général : accessible à tous, mais premier arrivé premier
+                     servi — une fois pris par quelqu'un, il ne fonctionne plus pour les autres -->
                 <div class="redeem-card">
                     <div class="redeem-content">
                         <span class="redeem-emoji">🎉</span>
                         <div class="redeem-text">
-                            <span class="redeem-title">Code promo</span>
-                            <span class="redeem-subtitle">Recevez un bonus surprise avec un code promo</span>
+                            <span class="redeem-title">Code promo général</span>
+                            <span class="redeem-subtitle">Ouvert à tous — premier arrivé, premier servi</span>
                         </div>
                     </div>
                     <button type="button" class="redeem-cta" id="promo-redeem-toggle-btn">
@@ -313,7 +315,7 @@
                     </button>
                 </div>
                 <div class="redeem-input-row" id="promo-redeem-input-row">
-                    <input type="text" id="promo-redeem-code-input" placeholder="Entrez votre code promo" autocomplete="off">
+                    <input type="text" id="promo-redeem-code-input" placeholder="Entrez votre code promo / bonus" autocomplete="off">
                     <button class="btn btn-primary" id="promo-redeem-code-btn" type="button">Valider</button>
                 </div>
 
@@ -522,6 +524,13 @@
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2z"></path></svg>
                                 WhatsApp
                             </a>
+                        </div>
+
+                        <!-- Vous avez été parrainé par quelqu'un et vous n'avez pas utilisé son
+                             lien à l'inscription ? Vous pouvez rattacher son code ici. -->
+                        <div class="referral-link-box" style="margin-top:14px;">
+                            <input type="text" id="sponsor-code-input" placeholder="Code de votre parrain (si vous n'avez pas de lien)" autocomplete="off">
+                            <button class="referral-copy-btn" id="sponsor-code-btn" type="button">Valider</button>
                         </div>
 
                         <div class="referral-tiers">
