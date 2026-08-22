@@ -111,6 +111,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedImageFile = null;
     let editingImageUrl = null;
 
+    // ----------------------------------------------------------------
+    // 4a. Revenu mensuel (12 mois) — uniquement catégorie "atlas"
+    // ----------------------------------------------------------------
+    const MONTHLY_REVENUE_COUNT = 12;
+    const monthlyRevenuesGroup = document.getElementById('product-monthly-revenues-group');
+    const monthlyRevenuesGrid = document.getElementById('product-monthly-revenues-grid');
+
+    if (monthlyRevenuesGrid) {
+        monthlyRevenuesGrid.innerHTML = Array.from({ length: MONTHLY_REVENUE_COUNT }, (_, i) => `
+            <div class="admin-monthly-revenue-field">
+                <label>Mois ${i + 1}</label>
+                <input type="number" min="0" step="1" class="product-monthly-revenue-input" data-month="${i + 1}">
+            </div>`).join('');
+    }
+
+    function toggleMonthlyRevenuesVisibility() {
+        if (!monthlyRevenuesGroup) return;
+        monthlyRevenuesGroup.style.display = productCategoryInput.value === 'atlas' ? 'block' : 'none';
+    }
+    productCategoryInput.addEventListener('change', toggleMonthlyRevenuesVisibility);
+
+    function getMonthlyRevenuesFromForm() {
+        return Array.from(document.querySelectorAll('.product-monthly-revenue-input'))
+            .map(input => Number(input.value) || 0);
+    }
+
+    function setMonthlyRevenuesInForm(values) {
+        const arr = Array.isArray(values) ? values : [];
+        document.querySelectorAll('.product-monthly-revenue-input').forEach(input => {
+            const month = Number(input.getAttribute('data-month'));
+            input.value = arr[month - 1] != null ? arr[month - 1] : '';
+        });
+    }
+
+    function resetMonthlyRevenuesInForm() {
+        document.querySelectorAll('.product-monthly-revenue-input').forEach(input => { input.value = ''; });
+    }
+
     productImageInput.addEventListener('change', () => {
         selectedImageFile = productImageInput.files[0] || null;
         if (selectedImageFile) {
@@ -137,8 +175,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         productSubmitBtn.textContent = 'Ajouter le produit';
         productFormTitle.textContent = 'Ajouter un produit';
         productCancelEditBtn.style.display = 'none';
+        resetMonthlyRevenuesInForm();
+        toggleMonthlyRevenuesVisibility();
     };
     productCancelEditBtn.addEventListener('click', resetProductForm);
+    toggleMonthlyRevenuesVisibility();
 
     async function uploadProductImage(file) {
         const ext = file.name.split('.').pop();
@@ -168,7 +209,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 p_duration_days: Number(productDurationInput.value),
                 p_image_url: imageUrl,
                 p_sort_order: 0,
-                p_is_active: true
+                p_is_active: true,
+                p_monthly_revenues: productCategoryInput.value === 'atlas' ? getMonthlyRevenuesFromForm() : null
             });
             if (error) throw error;
             window.showToast(productIdInput.value ? 'Produit modifié !' : 'Produit ajouté !', 'success');
@@ -182,11 +224,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    function renderMonthlyRevenuesPreview(category, monthlyRevenues) {
+        if (category !== 'atlas') return '—';
+        const arr = Array.isArray(monthlyRevenues) ? monthlyRevenues : [];
+        if (!arr.length || arr.every(v => !v)) return '—';
+        return `<div class="admin-monthly-revenues-view">${arr.map((v, i) => `<span>M${i + 1}: ${formatFCFA(v)}</span>`).join('')}</div>`;
+    }
+
     async function loadProducts() {
         const tbody = document.getElementById('products-tbody');
         const { data, error } = await window.supabaseClient.from('investment_products').select('*').order('category').order('sort_order');
         if (error) { tbody.innerHTML = `<tr><td colspan="8">Erreur de chargement.</td></tr>`; return; }
-        if (!data.length) { tbody.innerHTML = `<tr><td colspan="8">Aucun produit pour le moment.</td></tr>`; return; }
+        if (!data.length) { tbody.innerHTML = `<tr><td colspan="9">Aucun produit pour le moment.</td></tr>`; return; }
         tbody.innerHTML = data.map(p => `
             <tr>
                 <td>${p.image_url ? `<img src="${p.image_url}" class="admin-table-thumb">` : '—'}</td>
@@ -195,6 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${formatFCFA(p.price)}</td>
                 <td>${p.daily_rate}%</td>
                 <td>${p.duration_days} j</td>
+                <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
                 <td>
                     <button class="admin-btn-sm admin-btn-edit" data-edit="${p.id}">Modifier</button>
@@ -215,6 +265,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 editingImageUrl = p.image_url;
                 if (p.image_url) { productImagePreview.src = p.image_url; productImagePreview.style.display = 'block'; }
                 updateDailyGainPreview();
+                setMonthlyRevenuesInForm(p.monthly_revenues);
+                toggleMonthlyRevenuesVisibility();
                 productFormTitle.textContent = 'Modifier le produit';
                 productSubmitBtn.textContent = 'Enregistrer les modifications';
                 productCancelEditBtn.style.display = 'inline-block';
