@@ -447,9 +447,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, duration / steps);
         });
 
-        // --- Graphique d'évolution (12 derniers mois, gains réels) ---
+        // --- Graphique d'évolution (12 derniers mois, REVENUS réels de
+        //     l'utilisateur connecté uniquement : gains, commissions de
+        //     parrainage, récompenses de quêtes. Les dépôts ne sont pas
+        //     des revenus et ne sont donc pas comptabilisés ici). ---
         const chartArea = document.getElementById('mainChart');
         if (chartArea) {
+            const REVENUE_TYPES = new Set(['gain', 'referral_commission', 'quest']);
             const now = new Date();
             const months = [];
             for (let i = 11; i >= 0; i--) {
@@ -460,6 +464,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             months.forEach(m => totalsByMonth[m.key] = 0);
             transactions.forEach(t => {
                 if (!t.created_at) return;
+                if (!REVENUE_TYPES.has(t.type)) return;
                 const d = new Date(t.created_at);
                 const key = `${d.getFullYear()}-${d.getMonth()}`;
                 if (key in totalsByMonth && Number(t.amount) > 0) {
@@ -643,6 +648,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!atlasRates.length) atlasRates = DEFAULT_ATLAS_RATES;
         renderDashboardData();
     };
+
+    // Rafraîchissement automatique en continu (toutes les 30s) : le
+    // portefeuille, les transactions et donc le graphique "Évolution des
+    // Cumuls" restent à jour en temps réel sans recharger la page. On ne
+    // rafraîchit que si l'onglet est visible, pour ne pas gaspiller de
+    // requêtes en arrière-plan.
+    const AUTO_REFRESH_INTERVAL_MS = 30000;
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            refreshDashboardData().catch(() => {});
+        }
+    }, AUTO_REFRESH_INTERVAL_MS);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            refreshDashboardData().catch(() => {});
+        }
+    });
 
     // Message de validation affiché après l'achat, avec les infos réelles du produit activé
     const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne' };
