@@ -156,8 +156,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function toggleMonthlyRevenuesVisibility() {
-        if (!monthlyRevenuesGroup) return;
-        monthlyRevenuesGroup.style.display = productCategoryInput.value === 'atlas' ? 'block' : 'none';
+        const isAtlas = productCategoryInput.value === 'atlas';
+        if (monthlyRevenuesGroup) monthlyRevenuesGroup.style.display = isAtlas ? 'block' : 'none';
+
+        // Pour "Revenu Annuel", le %/jour et l'échéance en jours ne servent à
+        // rien (le montant et la durée viennent du revenu mensuel ci-dessus) :
+        // on les cache et on les rend optionnels pour éviter toute confusion.
+        const rateGroup = document.getElementById('product-rate-group');
+        const durationGroup = document.getElementById('product-duration-group');
+        const dailyGainGroup = document.getElementById('product-daily-gain-preview-group');
+        if (rateGroup) rateGroup.style.display = isAtlas ? 'none' : 'block';
+        if (durationGroup) durationGroup.style.display = isAtlas ? 'none' : 'block';
+        if (dailyGainGroup) dailyGainGroup.style.display = isAtlas ? 'none' : 'block';
+        productRateInput.required = !isAtlas;
+        productDurationInput.required = !isAtlas;
     }
     productCategoryInput.addEventListener('change', toggleMonthlyRevenuesVisibility);
 
