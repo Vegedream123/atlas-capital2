@@ -384,6 +384,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const capitalActive = activeInvestments.filter(i => i.investment_products && ['constant', 'analyse'].includes(i.investment_products.category));
         const totalInvested = capitalActive.reduce((sum, i) => sum + Number(i.amount), 0);
 
+        // Gains "constant"/"analyse" déjà validés via les tâches quotidiennes
+        // mais pas encore versés au solde (le versement se fait en une fois,
+        // avec le capital, à l'échéance du cycle). Équivalent de
+        // atlasGainsRecovered, mais affiché comme "en attente" plutôt que
+        // "récupérés" puisque l'argent n'est pas encore dans le solde.
+        const capitalGainsPending = transactions
+            .filter(t => ['constant', 'analyse'].includes(t.category) && t.type === 'gain')
+            .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
+
         const todayStr = new Date().toISOString().slice(0, 10);
         const dailyQuestGains = transactions
             .filter(t => t.type === 'quest' && t.created_at && t.created_at.slice(0, 10) === todayStr)
@@ -401,7 +410,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
         changeEl('kpi-rate-change', atlasActive.length ? `${atlasActive.length} placement(s) actif(s)` : 'Aucun placement actif');
-        changeEl('kpi-active-change', capitalActive.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
+        changeEl(
+            'kpi-active-change',
+            capitalActive.length
+                ? `${formatFCFA(totalInvested)} investis${capitalGainsPending > 0 ? ` · +${formatFCFA(capitalGainsPending)} de gains en attente` : ''}`
+                : 'Investissez pour démarrer'
+        );
         // Ce montant correspond aux gains de type "quête" réellement crédités
         // aujourd'hui (transactions), ce qui peut inclure un placement arrivé
         // à échéance dans la journée — d'où le libellé explicite ci-dessous,
