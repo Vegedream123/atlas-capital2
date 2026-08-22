@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     const navItems = document.querySelectorAll('.admin-nav-item');
     const views = document.querySelectorAll('.admin-view');
-    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', parametres: 'Paramètres' };
+    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', codespromo: 'Codes Promo', parametres: 'Paramètres' };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -74,6 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
+            if (target === 'codespromo') loadPromoCodes();
             if (target === 'parametres') { loadSettings(); loadPaymentSettings(); }
         });
     });
@@ -618,6 +619,80 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
+    // 6bis. Codes Promo
+    //       Déjà sécurisé côté serveur par les fonctions Postgres existantes
+    //       `admin_generate_promo_codes(p_max_amount, p_count)` (génère un ou
+    //       plusieurs codes, montant tiré au hasard jusqu'au plafond donné),
+    //       `admin_deactivate_promo_code(p_id)`, et côté dashboard.js
+    //       `redeem_promo_code(p_code)` (crédite le portefeuille une seule
+    //       fois par code, voir table promo_code_redemptions).
+    // ----------------------------------------------------------------
+    const promoForm = document.getElementById('promo-form');
+    const promoTbody = document.getElementById('promo-tbody');
+
+    async function loadPromoCodes() {
+        const { data: codes, error } = await window.supabaseClient
+            .from('promo_codes')
+            .select('*, used_by_profile:used_by(full_name, email)')
+            .order('created_at', { ascending: false });
+        if (error) { promoTbody.innerHTML = `<tr><td colspan="7">Erreur de chargement.</td></tr>`; return; }
+        if (!codes.length) { promoTbody.innerHTML = `<tr><td colspan="7">Aucun code pour le moment.</td></tr>`; return; }
+
+        const codeValues = codes.map(c => c.code);
+        const { data: redemptions } = await window.supabaseClient
+            .from('promo_code_redemptions').select('code, amount_credited').in('code', codeValues);
+        const creditedByCode = {};
+        (redemptions || []).forEach(r => { creditedByCode[r.code] = r.amount_credited; });
+
+        promoTbody.innerHTML = codes.map(c => {
+            const used = c.used_count >= c.max_uses;
+            const statusLabel = !c.is_active ? 'Désactivé' : (used ? 'Utilisé' : 'Disponible');
+            const statusCls = !c.is_active || used ? 'blocked' : 'active';
+            const credited = creditedByCode[c.code];
+            return `
+            <tr>
+                <td><code>${c.code}</code></td>
+                <td>Jusqu'à ${formatFCFA(c.max_amount)}</td>
+                <td>${credited != null ? formatFCFA(credited) : '—'}</td>
+                <td><span class="admin-badge ${statusCls}">${statusLabel}</span></td>
+                <td>${c.used_by_profile ? (c.used_by_profile.full_name || c.used_by_profile.email) : '—'}</td>
+                <td>${formatDate(c.created_at)}</td>
+                <td>${(!used && c.is_active) ? `<button class="admin-btn-sm admin-btn-reject" data-deactivate-promo="${c.id}">Désactiver</button>` : '—'}</td>
+            </tr>`;
+        }).join('');
+
+        promoTbody.querySelectorAll('[data-deactivate-promo]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('Désactiver ce code promo non utilisé ?')) return;
+                const { error } = await window.supabaseClient.rpc('admin_deactivate_promo_code', { p_id: btn.getAttribute('data-deactivate-promo') });
+                if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+                window.showToast('Code désactivé.', 'success');
+                loadPromoCodes();
+            });
+        });
+    }
+
+    if (promoForm) {
+        promoForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const maxAmount = Number(document.getElementById('promo-max-amount').value);
+            const count = Number(document.getElementById('promo-count').value);
+            if (!maxAmount || maxAmount <= 0) { window.showToast('Plafond invalide.', 'error'); return; }
+            if (!count || count < 1 || count > 500) { window.showToast('Le nombre de codes doit être entre 1 et 500.', 'error'); return; }
+            const submitBtn = document.getElementById('promo-submit-btn');
+            submitBtn.disabled = true;
+            const { data, error } = await window.supabaseClient.rpc('admin_generate_promo_codes', { p_max_amount: maxAmount, p_count: count });
+            submitBtn.disabled = false;
+            if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+            const codesList = (data || []).map(c => c.code).join(', ');
+            window.showToast(data && data.length > 1 ? `${data.length} codes générés.` : `Code généré : ${codesList}`, 'success');
+            promoForm.reset();
+            document.getElementById('promo-count').value = 1;
+            loadPromoCodes();
+        });
+    }
+
+    // ----------------------------------------------------------------
     // 7. Paramètres généraux
     // ----------------------------------------------------------------
     const settingsForm = document.getElementById('settings-form');
@@ -858,113 +933,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
-    // 7quater. Codes promo
-    // ----------------------------------------------------------------
-    const promoCodeForm = document.getElementById('promo-code-form');
-    const promoCodesTbody = document.getElementById('promo-codes-tbody');
-    const promoCodeSubmitBtn = document.getElementById('promo-code-submit-btn');
-
-    async function loadPromoCodes() {
-        if (!promoCodesTbody) return;
-        const { data, error } = await window.supabaseClient
-            .from('promo_codes')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            promoCodesTbody.innerHTML = `<tr><td colspan="6">Erreur de chargement.</td></tr>`;
-            return;
-        }
-        if (!data || !data.length) {
-            promoCodesTbody.innerHTML = `<tr><td colspan="6">Aucun code promo pour le moment.</td></tr>`;
-            return;
-        }
-        promoCodesTbody.innerHTML = data.map(p => {
-            const expired = p.expires_at && new Date(p.expires_at) < new Date();
-            const maxedOut = p.used_count >= p.max_uses;
-            let statusLabel = 'Actif';
-            let statusClass = 'validated';
-            if (!p.is_active) { statusLabel = 'Désactivé'; statusClass = 'rejected'; }
-            else if (expired) { statusLabel = 'Expiré'; statusClass = 'rejected'; }
-            else if (maxedOut) { statusLabel = 'Épuisé'; statusClass = 'rejected'; }
-            return `
-                <tr>
-                    <td><strong>${p.code}</strong></td>
-                    <td>${formatFCFA(p.amount)} – ${formatFCFA(p.max_amount)}</td>
-                    <td>${p.used_count} / ${p.max_uses}</td>
-                    <td>${p.expires_at ? formatDate(p.expires_at) : 'Jamais'}</td>
-                    <td><span class="admin-badge ${statusClass}">${statusLabel}</span></td>
-                    <td>
-                        <button type="button" class="admin-btn-sm admin-btn-edit" data-toggle-promo="${p.id}" data-active="${p.is_active}">${p.is_active ? 'Désactiver' : 'Réactiver'}</button>
-                        <button type="button" class="admin-btn-sm admin-btn-reject" data-delete-promo="${p.id}">Supprimer</button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
-        promoCodesTbody.querySelectorAll('[data-toggle-promo]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const id = btn.getAttribute('data-toggle-promo');
-                const isActive = btn.getAttribute('data-active') === 'true';
-                const { error } = await window.supabaseClient.from('promo_codes').update({ is_active: !isActive }).eq('id', id);
-                if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
-                loadPromoCodes();
-            });
-        });
-        promoCodesTbody.querySelectorAll('[data-delete-promo]').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                if (!confirm('Supprimer définitivement ce code promo ?')) return;
-                const id = btn.getAttribute('data-delete-promo');
-                const { error } = await window.supabaseClient.from('promo_codes').delete().eq('id', id);
-                if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
-                window.showToast('Code promo supprimé.', 'success');
-                loadPromoCodes();
-            });
-        });
-    }
-
-    if (promoCodeForm) {
-        promoCodeForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const code = document.getElementById('promo-code-value').value.trim().toUpperCase();
-            const min = Number(document.getElementById('promo-code-min').value);
-            const max = Number(document.getElementById('promo-code-max').value);
-            const maxUses = Number(document.getElementById('promo-code-max-uses').value);
-            const expiresRaw = document.getElementById('promo-code-expires').value;
-
-            if (!code) { window.showToast('Veuillez entrer un code.', 'error'); return; }
-            if (!min || !max || max < min) { window.showToast('Vérifiez les montants min/max.', 'error'); return; }
-            if (!maxUses || maxUses < 1) { window.showToast("Vérifiez le nombre max d'utilisateurs.", 'error'); return; }
-
-            promoCodeSubmitBtn.disabled = true;
-            promoCodeSubmitBtn.textContent = 'Création…';
-
-            const { error } = await window.supabaseClient.from('promo_codes').insert({
-                code,
-                amount: min,
-                max_amount: max,
-                max_uses: maxUses,
-                used_count: 0,
-                expires_at: expiresRaw ? new Date(expiresRaw + 'T23:59:59').toISOString() : null,
-                is_active: true
-            });
-
-            promoCodeSubmitBtn.disabled = false;
-            promoCodeSubmitBtn.textContent = 'Créer le code';
-
-            if (error) {
-                window.showToast(error.message.includes('duplicate') ? 'Ce code existe déjà.' : "Erreur : " + error.message, 'error');
-                return;
-            }
-            window.showToast('Code promo créé.', 'success');
-            promoCodeForm.reset();
-            loadPromoCodes();
-        });
-    }
-
-    // ----------------------------------------------------------------
     // 8. Chargement initial
     // ----------------------------------------------------------------
     loadStats();
-    loadPromoCodes();
 });
