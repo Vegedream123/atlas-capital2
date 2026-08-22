@@ -585,6 +585,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('user-detail-add-funds').addEventListener('click', () => adjustUserFunds(1));
     document.getElementById('user-detail-remove-funds').addEventListener('click', () => adjustUserFunds(-1));
 
+    // Bonus personnel : génère un code promo réservé UNIQUEMENT à cet
+    // utilisateur (assigned_to), avec un montant aléatoire jusqu'au plafond
+    // donné. L'utilisateur reçoit une notification avec le code à saisir
+    // dans Compte > Code promo ; personne d'autre ne peut l'utiliser.
+    document.getElementById('user-detail-give-bonus').addEventListener('click', async () => {
+        if (!currentDetailUserId) return;
+        const rawAmount = prompt('Plafond du bonus pour cet utilisateur (FCFA) :');
+        if (rawAmount === null) return;
+        const maxAmount = Number(rawAmount);
+        if (!maxAmount || maxAmount <= 0) { window.showToast('Montant invalide.', 'error'); return; }
+        const reason = prompt('Raison du bonus (optionnel, visible par l\'utilisateur) :', 'Bonne conduite');
+
+        const { data, error } = await window.supabaseClient.rpc('admin_generate_targeted_promo_code', {
+            p_user_id: currentDetailUserId,
+            p_max_amount: maxAmount,
+            p_reason: reason || null
+        });
+        if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+        window.showToast(`Bonus attribué. Code : ${data.code} (l'utilisateur a été notifié).`, 'success');
+    });
+
     async function adjustUserFunds(sign) {
         if (!currentDetailUserId) return;
         const label = sign > 0 ? 'ajouter' : 'retirer';
@@ -633,10 +654,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadPromoCodes() {
         const { data: codes, error } = await window.supabaseClient
             .from('promo_codes')
-            .select('*, used_by_profile:used_by(full_name, email)')
+            .select('*, used_by_profile:used_by(full_name, email), assigned_to_profile:assigned_to(full_name, email)')
             .order('created_at', { ascending: false });
-        if (error) { promoTbody.innerHTML = `<tr><td colspan="7">Erreur de chargement.</td></tr>`; return; }
-        if (!codes.length) { promoTbody.innerHTML = `<tr><td colspan="7">Aucun code pour le moment.</td></tr>`; return; }
+        if (error) { promoTbody.innerHTML = `<tr><td colspan="8">Erreur de chargement.</td></tr>`; return; }
+        if (!codes.length) { promoTbody.innerHTML = `<tr><td colspan="8">Aucun code pour le moment.</td></tr>`; return; }
 
         const codeValues = codes.map(c => c.code);
         const { data: redemptions } = await window.supabaseClient
@@ -652,6 +673,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `
             <tr>
                 <td><code>${c.code}</code></td>
+                <td>${c.assigned_to_profile ? `🔒 ${c.assigned_to_profile.full_name || c.assigned_to_profile.email}` : 'Tout le monde'}</td>
                 <td>Jusqu'à ${formatFCFA(c.max_amount)}</td>
                 <td>${credited != null ? formatFCFA(credited) : '—'}</td>
                 <td><span class="admin-badge ${statusCls}">${statusLabel}</span></td>
