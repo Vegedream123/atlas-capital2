@@ -71,6 +71,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Taux (%) par échéance (1 à 12 mois) pour les produits "Revenu Annuel" (atlas),
     // configurés depuis l'admin — seules les échéances avec un taux > 0 sont proposées.
     let atlasRates = (atlasRatesRes.data || []).filter(r => Number(r.rate_percent) > 0);
+    // Filet de sécurité : si l'admin n'a pas encore configuré de taux dans
+    // Supabase (table vide ou tous les taux à 0), le produit "Revenu Annuel"
+    // ne doit JAMAIS afficher "Indisponible" côté client — on propose alors
+    // ces échéances par défaut, à ajuster depuis l'admin dès que possible.
+    // Dès qu'un vrai taux est configuré en base, il prend automatiquement le dessus.
+    const DEFAULT_ATLAS_RATES = [
+        { duration_months: 1, rate_percent: 8 },
+        { duration_months: 2, rate_percent: 17 },
+        { duration_months: 3, rate_percent: 27 },
+        { duration_months: 6, rate_percent: 60 },
+        { duration_months: 12, rate_percent: 140 }
+    ];
+    if (!atlasRates.length) atlasRates = DEFAULT_ATLAS_RATES;
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
@@ -469,11 +482,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Pour "Revenu Annuel", l'échéance et le gain dépendent du choix de
             // l'utilisateur à l'achat (1 à 12 mois) — pas d'une valeur fixe produit.
-            const noRatesConfigured = isAtlas && !atlasRates.length;
-            const buyDisabled = !affordable || noRatesConfigured;
-            const buyLabel = noRatesConfigured
-                ? 'Indisponible pour le moment'
-                : (affordable ? (ownedCount > 0 ? 'Investir à nouveau' : 'Acheter') : 'Solde insuffisant');
+            // Le produit reste TOUJOURS disponible à l'achat (jamais "Indisponible") :
+            // seul le solde insuffisant peut désactiver le bouton.
+            const buyDisabled = !affordable;
+            const buyLabel = affordable ? (ownedCount > 0 ? 'Investir à nouveau' : 'Acheter') : 'Solde insuffisant';
 
             return `
                 <div class="vip-card${ownedCount > 0 ? ' is-owned' : ''}">
@@ -504,7 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         data-product-price="${p.price}"
                         data-daily-gain="${dailyGain}"
                         data-duration="${p.duration_days}"
-                        ${buyDisabled ? `disabled title="${noRatesConfigured ? 'Aucune échéance configurée' : 'Solde insuffisant'}"` : ''}>
+                        ${buyDisabled ? `disabled title="Solde insuffisant"` : ''}>
                         ${buyLabel}
                     </button>
                 </div>`;
@@ -596,7 +608,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         products = p.data || products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
-        atlasRates = (ar.data || atlasRates).filter(r => Number(r.rate_percent) > 0);
+        atlasRates = (ar.data || []).filter(r => Number(r.rate_percent) > 0);
+        if (!atlasRates.length) atlasRates = DEFAULT_ATLAS_RATES;
         renderDashboardData();
     };
 
@@ -659,10 +672,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeDurationModal = () => { if (durationModalOverlay) durationModalOverlay.classList.remove('active'); };
 
     const openDurationModal = (btn) => {
-        if (!atlasRates.length) {
-            window.showToast('Aucune échéance disponible pour le moment.', 'error');
-            return;
-        }
+        // atlasRates a toujours au moins les échéances par défaut (voir plus haut) :
+        // la modale de choix reste donc toujours disponible pour l'utilisateur.
+        const rates = atlasRates.length ? atlasRates : DEFAULT_ATLAS_RATES;
         const productId = btn.getAttribute('data-product-id');
         const price = Number(btn.getAttribute('data-product-price'));
 
@@ -681,7 +693,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <h2 class="task-modal-title">Choisissez une échéance</h2>
                 <p class="task-modal-sub">Montant : ${formatFCFA(price)}. Le taux est fixé pour toute la durée choisie.</p>
                 <div id="duration-options-list" style="display:flex; flex-direction:column; gap:10px; margin:14px 0;">
-                    ${atlasRates.map(r => {
+                    ${rates.map(r => {
                         const totalGain = Math.round(price * Number(r.rate_percent) / 100);
                         const daily = Math.round(totalGain / (r.duration_months * 30));
                         return `<button type="button" class="quiz-option duration-option" data-duration="${r.duration_months}">
