@@ -158,7 +158,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function toggleMonthlyRevenuesVisibility() {
         const isAtlas = productCategoryInput.value === 'atlas';
-        const isActifCycle = productCategoryInput.value === 'constant' || productCategoryInput.value === 'analyse';
+        // 'quete' fonctionne maintenant exactement comme 'constant'/'analyse' :
+        // cycle en jours + montant de fin de cycle (pas de %/jour), gains
+        // accumulés et versés (capital + gains) à l'échéance.
+        const isActifCycle = ['constant', 'analyse', 'quete'].includes(productCategoryInput.value);
         if (monthlyRevenuesGroup) monthlyRevenuesGroup.style.display = isAtlas ? 'block' : 'none';
 
         // Pour "Revenu Annuel", le %/jour et l'échéance en jours ne servent à
@@ -264,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 imageUrl = await uploadProductImage(selectedImageFile);
             }
             const category = productCategoryInput.value;
-            const isActifCycle = category === 'constant' || category === 'analyse';
+            const isActifCycle = ['constant', 'analyse', 'quete'].includes(category);
             const { error } = await window.supabaseClient.rpc('admin_upsert_product', {
                 p_id: productIdInput.value || null,
                 p_name: productNameInput.value.trim(),
@@ -308,7 +311,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${p.name}</td>
                 <td>${p.category}</td>
                 <td>${formatFCFA(p.price)}</td>
-                <td>${(p.category === 'constant' || p.category === 'analyse') ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
+                <td>${['constant', 'analyse', 'quete'].includes(p.category) ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
                 <td>${p.duration_days} j</td>
                 <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
