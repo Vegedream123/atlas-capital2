@@ -228,6 +228,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tasksCardEl = document.getElementById('daily-tasks-card');
     let taskCountdownTimer = null;
 
+    // Gain journalier réel d'un investissement : pour Atlas (Revenu Annuel),
+    // le taux dépend de l'échéance choisie à l'achat (locked_rate_percent /
+    // locked_payout_amount + duration_months), pas du daily_rate du produit
+    // (qui n'existe que pour Constant/Analyse/Quête). Sans ce calcul, les
+    // tâches quotidiennes des produits Atlas affichaient toujours 0 FCFA.
+    const dailyGainOf = (inv) => {
+        if (inv.duration_months && inv.locked_payout_amount != null) {
+            return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+        }
+        if (inv.duration_months && inv.locked_rate_percent != null) {
+            return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
+        }
+        return Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
+    };
+
     const msUntilUnlock = (lastTaskAt) => {
         if (!lastTaskAt) return 0;
         const next = new Date(lastTaskAt).getTime() + 24 * 60 * 60 * 1000;
@@ -253,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tasksListEl.innerHTML = active.map(inv => {
             const prod = inv.investment_products || {};
-            const dailyGain = Math.round(Number(inv.amount) * Number(prod.daily_rate || 0) / 100);
+            const dailyGain = Math.round(dailyGainOf(inv));
             const remaining = msUntilUnlock(inv.last_task_at);
             const available = remaining <= 0;
             return `
