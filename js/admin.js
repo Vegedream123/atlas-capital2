@@ -304,7 +304,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function loadProducts() {
         const tbody = document.getElementById('products-tbody');
-        const { data, error } = await window.supabaseClient.from('investment_products').select('*').order('category').order('sort_order');
+        const { data: raw, error } = await window.supabaseClient.from('investment_products').select('*').order('category').order('sort_order');
+        // Même tri que le dashboard : sort_order n'est jamais renseigné (0
+        // partout), donc on trie explicitement par niveau VIP croissant.
+        const data = raw ? [...raw].sort((a, b) => {
+            if (a.category !== b.category) return a.category.localeCompare(b.category);
+            const av = Number(a.vip_level) || 0;
+            const bv = Number(b.vip_level) || 0;
+            if (av !== bv) return av - bv;
+            return (a.name || '').localeCompare(b.name || '');
+        }) : raw;
         if (error) { tbody.innerHTML = `<tr><td colspan="10">Erreur de chargement.</td></tr>`; return; }
         if (!data.length) { tbody.innerHTML = `<tr><td colspan="10">Aucun produit pour le moment.</td></tr>`; return; }
         tbody.innerHTML = data.map(p => `
