@@ -1357,15 +1357,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 12. Menu "Mon Compte" (navigation interne, code PIN, profil, code reçu)
     // ------------------------------------------------------------------
     const accountMenuRoot = document.getElementById('account-menu-root');
-    const redeemCard = document.querySelector('.redeem-card');
+    const redeemCards = document.querySelectorAll('.redeem-card');
     const redeemInputRow = document.getElementById('redeem-input-row');
     const accountSubviews = document.querySelectorAll('.account-subview');
 
     const showAccountMenu = () => {
         accountSubviews.forEach(v => v.classList.remove('active'));
         if (accountMenuRoot) accountMenuRoot.style.display = '';
-        if (redeemCard) redeemCard.style.display = '';
+        redeemCards.forEach(c => { c.style.display = ''; });
         if (redeemInputRow) redeemInputRow.style.display = redeemInputRow.classList.contains('open') ? '' : 'none';
+        const promoRow = document.getElementById('promo-redeem-input-row');
+        if (promoRow) promoRow.style.display = promoRow.classList.contains('open') ? '' : 'none';
     };
 
     const openAccountSubview = (target) => {
@@ -1374,8 +1376,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (view) {
             view.classList.add('active');
             if (accountMenuRoot) accountMenuRoot.style.display = 'none';
-            if (redeemCard) redeemCard.style.display = 'none';
+            redeemCards.forEach(c => { c.style.display = 'none'; });
             if (redeemInputRow) redeemInputRow.style.display = 'none';
+            const promoRow = document.getElementById('promo-redeem-input-row');
+            if (promoRow) promoRow.style.display = 'none';
             window.scrollTo(0, 0);
         }
     };
@@ -1535,12 +1539,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
-    const redeemInput = document.getElementById('redeem-code-input');
-    const redeemBtn = document.getElementById('redeem-code-btn');
-    if (redeemBtn) {
-        redeemBtn.addEventListener('click', async () => {
-            const code = redeemInput.value.trim().toUpperCase();
+    // Saisie du code d'un parrain (utilisateur déjà inscrit sans lien de
+    // parrainage) — déplacé ici, dans "Mon Équipe", distinct des bonus.
+    const sponsorCodeInput = document.getElementById('sponsor-code-input');
+    const sponsorCodeBtn = document.getElementById('sponsor-code-btn');
+    if (sponsorCodeBtn) {
+        sponsorCodeBtn.addEventListener('click', async () => {
+            const code = sponsorCodeInput.value.trim().toUpperCase();
             if (!code) {
                 window.showToast('Veuillez entrer un code.', 'error');
                 return;
@@ -1563,15 +1568,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.showToast("Impossible d'enregistrer ce code pour le moment.", 'error');
                 return;
             }
-            redeemInput.value = '';
-            redeemInputRow.classList.remove('open');
-            if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
+            profile.referred_by = code;
+            sponsorCodeInput.value = '';
             window.showToast('Code de parrainage validé !', 'success');
         });
     }
 
+    // Bonus personnel (case du haut "Mon Compte") : code à usage unique
+    // attribué par l'admin à CET utilisateur précis (voir redeem_promo_code
+    // côté serveur, qui vérifie que assigned_to correspond bien au compte
+    // connecté avant de créditer le solde).
+    const redeemInput = document.getElementById('redeem-code-input');
+    const redeemBtn = document.getElementById('redeem-code-btn');
+    if (redeemBtn) {
+        redeemBtn.addEventListener('click', async () => {
+            const code = redeemInput.value.trim().toUpperCase();
+            if (!code) {
+                window.showToast('Veuillez entrer un code.', 'error');
+                return;
+            }
+            redeemBtn.disabled = true;
+            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
+            redeemBtn.disabled = false;
+            if (error) {
+                window.showToast(error.message || 'Code invalide.', 'error');
+                return;
+            }
+            redeemInput.value = '';
+            redeemInputRow.classList.remove('open');
+            if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
+            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
+        });
+    }
+
     // ------------------------------------------------------------------
-    // 13bis. Code promo (bonus aléatoire, distinct du code de parrainage)
+    // 13bis. Code promo général (case du bas "Mon Compte") : même fonction
+    // serveur que ci-dessus, mais pour un code SANS destinataire précis —
+    // premier arrivé, premier servi (le code cesse de fonctionner dès
+    // qu'il a été utilisé une fois).
     // ------------------------------------------------------------------
     const promoRedeemInputRow = document.getElementById('promo-redeem-input-row');
     const promoRedeemToggleBtn = document.getElementById('promo-redeem-toggle-btn');
