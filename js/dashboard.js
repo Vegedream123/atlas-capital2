@@ -1571,6 +1571,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ------------------------------------------------------------------
+    // 13bis. Code promo (bonus aléatoire, distinct du code de parrainage)
+    // ------------------------------------------------------------------
+    const promoRedeemInputRow = document.getElementById('promo-redeem-input-row');
+    const promoRedeemToggleBtn = document.getElementById('promo-redeem-toggle-btn');
+    if (promoRedeemToggleBtn && promoRedeemInputRow) {
+        promoRedeemInputRow.style.display = 'none';
+        promoRedeemToggleBtn.addEventListener('click', () => {
+            promoRedeemInputRow.classList.toggle('open');
+            promoRedeemToggleBtn.classList.toggle('open');
+            promoRedeemInputRow.style.display = promoRedeemInputRow.classList.contains('open') ? '' : 'none';
+            if (promoRedeemInputRow.classList.contains('open')) {
+                document.getElementById('promo-redeem-code-input').focus();
+            }
+        });
+    }
+    const promoRedeemInput = document.getElementById('promo-redeem-code-input');
+    const promoRedeemBtn = document.getElementById('promo-redeem-code-btn');
+    if (promoRedeemBtn) {
+        promoRedeemBtn.addEventListener('click', async () => {
+            const code = promoRedeemInput.value.trim().toUpperCase();
+            if (!code) {
+                window.showToast('Veuillez entrer un code.', 'error');
+                return;
+            }
+            promoRedeemBtn.disabled = true;
+            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
+            promoRedeemBtn.disabled = false;
+
+            if (error) {
+                window.showToast(error.message || 'Code promo invalide.', 'error');
+                return;
+            }
+            promoRedeemInput.value = '';
+            promoRedeemInputRow.classList.remove('open');
+            promoRedeemInputRow.style.display = 'none';
+            if (promoRedeemToggleBtn) promoRedeemToggleBtn.classList.remove('open');
+            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
+        });
+    }
+
+    // ------------------------------------------------------------------
     // 14. Accès admin (n'affiche l'entrée que si le profil est marqué admin)
     // ------------------------------------------------------------------
     const adminMenuItem = document.getElementById('admin-menu-item');
