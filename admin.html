@@ -133,6 +133,15 @@
                                 minimum de retrait est atteint).
                             </p>
                         </div>
+                        <div class="admin-form-group" id="product-cycle-payout-group" style="display:none;">
+                            <label>Montant total à la fin du cycle (FCFA)</label>
+                            <input type="number" id="product-cycle-payout" min="0" step="1">
+                            <p style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
+                                Capital + gain rendus en une fois à la fin du cycle (doit être supérieur au Prix).
+                                Remplace le %/jour pour les produits Actif.
+                            </p>
+                            <div class="admin-computed" id="product-cycle-gain-preview" style="margin-top:6px;">—</div>
+                        </div>
                     </div>
                     <div class="admin-form-group" id="product-daily-gain-preview-group">
                         <label>Gain journalier estimé</label>
