@@ -404,7 +404,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         setKpi('kpi-balance', wallet.balance);
         setKpi('kpi-annual-rate', atlasGainsRecovered);
-        setKpi('kpi-active-investments', capitalActive.length);
+        setKpi('kpi-active-investments', capitalGainsPending);
         setKpi('kpi-daily-quest', dailyQuestGains);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
@@ -413,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         changeEl(
             'kpi-active-change',
             capitalActive.length
-                ? `${formatFCFA(totalInvested)} investis${capitalGainsPending > 0 ? ` · +${formatFCFA(capitalGainsPending)} de gains en attente` : ''}`
+                ? `${capitalActive.length} placement(s) actif(s) · ${formatFCFA(totalInvested)} investis`
                 : 'Investissez pour démarrer'
         );
         // Ce montant correspond aux gains de type "quête" réellement crédités
