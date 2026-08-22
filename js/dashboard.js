@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
-        window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
+        window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate, vip_level)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
         window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
         window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30),
         window.supabaseClient.from('site_settings').select('*').eq('id', 1).single()
@@ -72,19 +72,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Règles de déblocage progressif des catégories de produits :
     //  1) "Actif" (constant / analyse) exige d'avoir déjà acheté au moins
     //     un produit "Revenu Annuel" (Atlas), peu importe son statut actuel.
-    //  2) "Quête Quotidienne" exige d'avoir acheté un produit "Actif"
-    //     (constant ou analyse) LE JOUR MÊME — la fenêtre se referme à minuit.
+    //  2) "Quête Quotidienne" exige d'avoir acheté LES DEUX produits Actifs
+    //     (constant ET analyse) du MÊME niveau VIP, dans les 24 DERNIÈRES
+    //     HEURES (fenêtre glissante, pas "aujourd'hui" calendaire) — passé ce
+    //     délai il faut racheter les deux pour redevenir éligible.
     // Définies tôt (juste après `investments`) pour être utilisables aussi
     // bien dans le rendu des cartes que dans le gestionnaire de clic d'achat.
     // ------------------------------------------------------------------
-    const hasAtlasOwned = () => investments.some(i => i.investment_products && i.investment_products.category === 'atlas');
-    const hasActifBoughtToday = () => {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        return investments.some(i =>
+    const hasAtlasOwnedForLevel = (vipLevel) => investments.some(i =>
+        i.investment_products &&
+        i.investment_products.category === 'atlas' &&
+        i.investment_products.vip_level === vipLevel
+    );
+    const hasBothActifsRecentForLevel = (vipLevel) => {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const recentOfCategory = (cat) => investments.some(i =>
             i.investment_products &&
-            ['constant', 'analyse'].includes(i.investment_products.category) &&
-            i.created_at && i.created_at.slice(0, 10) === todayStr
+            i.investment_products.category === cat &&
+            i.investment_products.vip_level === vipLevel &&
+            i.created_at && new Date(i.created_at).getTime() > cutoff
         );
+        return recentOfCategory('constant') && recentOfCategory('analyse');
     };
 
     // Revenu mensuel (12 valeurs FCFA, une par mois) défini PAR PRODUIT depuis
@@ -523,14 +531,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ownedCount = ownedActive.length;
             const ownedDailyGain = ownedActive.reduce((sum, i) => sum + dailyGainOf(i), 0);
 
-            // Déblocage progressif : Actif nécessite Atlas déjà acheté ; Quête
-            // nécessite un Actif acheté aujourd'hui. Le bouton reste visible et
+            // Déblocage progressif PAR NIVEAU VIP : Actif (Constant/Analyse)
+            // nécessite l'Atlas du MÊME niveau déjà acheté ; Quête nécessite
+            // les DEUX Actifs (Constant ET Analyse) du même niveau achetés
+            // dans les dernières 24h glissantes. Le bouton reste visible et
             // cliquable (jamais un "Indisponible" figé) — un clic sans les
             // conditions requises affiche un message explicite au lieu d'agir.
-            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasOwned()
-                ? 'Achetez d\'abord un produit Revenu Annuel (Atlas)'
-                : (p.category === 'quete' && !hasActifBoughtToday())
-                    ? 'Achetez un produit Actif aujourd\'hui pour débloquer'
+            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasOwnedForLevel(p.vip_level)
+                ? `Achetez d'abord Revenu Annuel (Atlas) VIP ${p.vip_level || '?'}`
+                : (p.category === 'quete' && !hasBothActifsRecentForLevel(p.vip_level))
+                    ? `Achetez les 2 Actifs (Constant + Analyse) VIP ${p.vip_level || '?'} dans les dernières 24h`
                     : null;
 
             // Pour "Revenu Annuel", l'échéance et le gain dépendent du choix de
@@ -567,6 +577,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         data-product-id="${p.id}"
                         data-product-name="${p.name}"
                         data-product-category="${p.category}"
+                        data-product-vip-level="${p.vip_level || ''}"
                         data-product-price="${p.price}"
                         data-daily-gain="${dailyGain}"
                         data-duration="${p.duration_days}"
@@ -654,7 +665,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const [w, p, inv, tr] = await Promise.all([
             window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
             window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
-            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
+            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate, vip_level)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
             window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
         ]);
         wallet = w.data || wallet;
@@ -795,13 +806,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!btn || btn.disabled || isPurchasing) return;
             const category = btn.getAttribute('data-product-category');
             const productId = btn.getAttribute('data-product-id');
+            const vipLevel = btn.getAttribute('data-product-vip-level') || null;
 
-            if ((category === 'constant' || category === 'analyse') && !hasAtlasOwned()) {
-                window.showToast("Achetez d'abord un produit « Revenu Annuel » (Atlas) pour débloquer les produits Actifs.", 'error');
+            if ((category === 'constant' || category === 'analyse') && !hasAtlasOwnedForLevel(vipLevel)) {
+                window.showToast(`Achetez d'abord le produit « Revenu Annuel » (Atlas) VIP ${vipLevel || '?'} pour débloquer ce produit Actif.`, 'error');
                 return;
             }
-            if (category === 'quete' && !hasActifBoughtToday()) {
-                window.showToast("Achetez un produit Actif (Constant ou Analyse) aujourd'hui pour débloquer une Quête Quotidienne.", 'error');
+            if (category === 'quete' && !hasBothActifsRecentForLevel(vipLevel)) {
+                window.showToast(`Achetez les DEUX produits Actifs (Constant ET Analyse) VIP ${vipLevel || '?'} dans les dernières 24h pour débloquer cette Quête Quotidienne.`, 'error');
                 return;
             }
 
