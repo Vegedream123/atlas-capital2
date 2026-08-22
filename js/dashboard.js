@@ -68,6 +68,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
 
+    // Tri du plus petit au plus grand niveau VIP (1, 2, 3, 4…) au sein de
+    // chaque catégorie. `sort_order` n'étant jamais renseigné depuis l'admin
+    // (toujours 0), l'ordre renvoyé par la base n'est pas fiable — on trie
+    // donc explicitement côté client sur le niveau VIP numérique.
+    const sortProductsByVip = (arr) => [...arr].sort((a, b) => {
+        if (a.category !== b.category) return a.category.localeCompare(b.category);
+        const av = Number(a.vip_level) || 0;
+        const bv = Number(b.vip_level) || 0;
+        if (av !== bv) return av - bv;
+        return (a.name || '').localeCompare(b.name || '');
+    });
+    products = sortProductsByVip(products);
+
     // ------------------------------------------------------------------
     // Règles de déblocage progressif des catégories de produits :
     //  1) "Actif" (constant / analyse) exige d'avoir déjà acheté au moins
@@ -669,7 +682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
         ]);
         wallet = w.data || wallet;
-        products = p.data || products;
+        products = p.data ? sortProductsByVip(p.data) : products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
         renderDashboardData();
