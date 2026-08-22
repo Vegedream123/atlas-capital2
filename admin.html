@@ -74,6 +74,21 @@
                     <div class="admin-stat-value" id="stat-pending-withdrawals">—</div>
                 </div>
             </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Placements Revenu Annuel — échéances</h2>
+                </div>
+                <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
+                    Une tâche automatique crédite chaque heure le capital + gain des placements Atlas
+                    arrivés à échéance directement dans le solde du client. Ce bouton permet de forcer
+                    une vérification immédiate (utile juste après avoir modifié une échéance, par exemple).
+                </p>
+                <div class="admin-form-actions">
+                    <button type="button" class="btn btn-primary" id="process-matured-btn">Vérifier et créditer maintenant</button>
+                </div>
+                <div class="admin-computed" id="process-matured-result" style="margin-top:14px; display:none;"></div>
+            </div>
         </section>
 
         <!-- VUE: PRODUITS -->
