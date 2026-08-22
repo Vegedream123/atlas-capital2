@@ -124,8 +124,14 @@
                             <input type="number" id="product-rate" min="0" step="0.01" required>
                         </div>
                         <div class="admin-form-group" id="product-duration-group">
-                            <label>Échéance (jours)</label>
+                            <label>Cycle (jours)</label>
                             <input type="number" id="product-duration" min="1" step="1" required>
+                            <p style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
+                                Durée du placement pour ce produit Actif. Les gains journaliers s'accumulent
+                                pendant le cycle et ne sont pas encore retirables ; à la fin du cycle, le capital
+                                + les gains cumulés sont versés en une fois au Solde Total (retirable si le
+                                minimum de retrait est atteint).
+                            </p>
                         </div>
                     </div>
                     <div class="admin-form-group" id="product-daily-gain-preview-group">
@@ -157,7 +163,7 @@
                 <div class="admin-table-wrap">
                     <table class="admin-table" id="products-table">
                         <thead>
-                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Échéance</th><th>Revenu mensuel</th><th>Statut</th><th>Actions</th></tr>
+                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Cycle</th><th>Revenu mensuel</th><th>Statut</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="products-tbody"><tr><td colspan="9">Chargement…</td></tr></tbody>
                     </table>
