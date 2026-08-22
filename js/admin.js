@@ -92,6 +92,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ----------------------------------------------------------------
+    // 3bis. Placements Revenu Annuel arrivés à échéance — crédit manuel
+    // ----------------------------------------------------------------
+    const processMaturedBtn = document.getElementById('process-matured-btn');
+    const processMaturedResult = document.getElementById('process-matured-result');
+    if (processMaturedBtn) {
+        processMaturedBtn.addEventListener('click', async () => {
+            processMaturedBtn.disabled = true;
+            const originalText = processMaturedBtn.textContent;
+            processMaturedBtn.textContent = 'Vérification…';
+            try {
+                const { data, error } = await window.supabaseClient.rpc('admin_process_matured_investments');
+                if (error) throw error;
+                const count = Number(data) || 0;
+                processMaturedResult.style.display = 'block';
+                processMaturedResult.textContent = count > 0
+                    ? `${count} placement(s) crédité(s) à l'instant.`
+                    : 'Aucun placement en attente de crédit pour le moment.';
+                window.showToast(count > 0 ? `${count} placement(s) crédité(s).` : 'Rien à créditer pour le moment.', 'success');
+                loadStats();
+            } catch (err) {
+                window.showToast('Erreur : ' + err.message, 'error');
+            } finally {
+                processMaturedBtn.disabled = false;
+                processMaturedBtn.textContent = originalText;
+            }
+        });
+    }
+
+    // ----------------------------------------------------------------
     // 4. Produits
     // ----------------------------------------------------------------
     const productForm = document.getElementById('product-form');
