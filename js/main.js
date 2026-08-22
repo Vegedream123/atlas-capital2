@@ -1379,7 +1379,7 @@ document.addEventListener(
                         else {
 
                             showToast(
-                                'Compte créé ! Vérifiez votre email si une confirmation est demandée.',
+                                'Inscription réussie ! Veuillez vous connecter pour accéder à votre Dashboard.',
                                 'success'
                             );
 
