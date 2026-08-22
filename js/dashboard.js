@@ -117,12 +117,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.AtlasPaymentMethods.setCountryOverrides(siteSettings.country_payment_methods);
     }
 
-    // Bouton "Rejoindre le groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
-    const whatsappGroupBtn = document.getElementById('support-whatsapp-group-btn');
+    // Bouton "Groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
+    const whatsappGroupBtn = document.getElementById('account-whatsapp-group-btn');
     if (whatsappGroupBtn) {
         if (siteSettings.whatsapp_group) {
             whatsappGroupBtn.href = siteSettings.whatsapp_group;
-            whatsappGroupBtn.style.display = 'inline-flex';
+            whatsappGroupBtn.style.display = 'flex';
         } else {
             whatsappGroupBtn.style.display = 'none';
         }
