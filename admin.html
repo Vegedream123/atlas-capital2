@@ -140,6 +140,28 @@
                     </table>
                 </div>
             </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Revenu Annuel — Taux par échéance</h2>
+                </div>
+                <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
+                    Rendement total (%) offert selon la durée choisie par le client à l'achat d'un produit
+                    « Revenu Annuel ». Une échéance à 0% n'est pas proposée aux clients. Modifier une valeur
+                    ne change rien aux placements déjà en cours (le taux est figé au moment de l'achat).
+                </p>
+                <div class="admin-table-wrap">
+                    <table class="admin-table" id="atlas-rates-table">
+                        <thead>
+                            <tr><th>Échéance</th><th>Rendement total (%)</th></tr>
+                        </thead>
+                        <tbody id="atlas-rates-tbody"><tr><td colspan="2">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="admin-form-actions">
+                    <button type="button" class="btn btn-primary" id="atlas-rates-save-btn">Enregistrer les taux</button>
+                </div>
+            </div>
         </section>
 
         <!-- VUE: DEPOTS -->
