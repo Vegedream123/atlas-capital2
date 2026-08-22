@@ -50,14 +50,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Chargement des données réelles : profil, portefeuille, produits,
     //    investissements en cours, transactions
     // ------------------------------------------------------------------
-    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes] = await Promise.all([
+    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes, atlasRatesRes] = await Promise.all([
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
         window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
         window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
         window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30),
-        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single()
+        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single(),
+        window.supabaseClient.from('atlas_duration_rates').select('*').order('duration_months')
     ]);
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
@@ -67,6 +68,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
+    // Taux (%) par échéance (1 à 12 mois) pour les produits "Revenu Annuel" (atlas),
+    // configurés depuis l'admin — seules les échéances avec un taux > 0 sont proposées.
+    let atlasRates = (atlasRatesRes.data || []).filter(r => Number(r.rate_percent) > 0);
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
@@ -342,12 +346,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const activeInvestments = investments.filter(i => i.status === 'active');
 
         // Carte "Revenu Annuel" — UNIQUEMENT les produits de catégorie 'atlas'.
+        // Le % affiché est la moyenne pondérée (par montant investi) du rendement
+        // ANNUALISÉ de chaque placement : un placement avec échéance choisie utilise
+        // son taux figé à l'achat (locked_rate_percent, configuré par l'admin selon
+        // la durée) ramené sur 12 mois ; un ancien placement sans échéance (avant
+        // cette fonctionnalité) retombe sur l'ancien calcul via daily_rate du produit.
         const atlasActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'atlas');
         const atlasInvested = atlasActive.reduce((sum, i) => sum + Number(i.amount), 0);
-        const weightedDailyRate = atlasInvested > 0
-            ? atlasActive.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / atlasInvested
+        const annualRateOf = (i) => {
+            if (i.duration_months && i.locked_rate_percent != null) {
+                return Number(i.locked_rate_percent) * 12 / Number(i.duration_months);
+            }
+            return Number((i.investment_products && i.investment_products.daily_rate) || 0) * 365;
+        };
+        const annualRate = atlasInvested > 0
+            ? atlasActive.reduce((sum, i) => sum + Number(i.amount) * annualRateOf(i), 0) / atlasInvested
             : 0;
-        const annualRate = weightedDailyRate * 365 / 100 * 100; // % annuel équivalent (taux/jour * 365)
 
         // Carte "Investissements Actifs" — UNIQUEMENT les produits 'constant' /
         // 'analyse' (capital actif), exclut 'atlas' (Revenu Annuel) et 'quete'
@@ -436,9 +450,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const gridIds = { atlas: 'vip-grid-atlas', constant: 'vip-grid-constant', analyse: 'vip-grid-analyse', quete: 'vip-grid-quete' };
         const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete' };
 
-        const dailyGainOf = (inv) => Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
+        const dailyGainOf = (inv) => {
+            if (inv.duration_months && inv.locked_rate_percent != null) {
+                return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
+            }
+            return Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
+        };
 
         const renderProductCard = (p) => {
+            const isAtlas = p.category === 'atlas';
             const dailyGain = Math.round(Number(p.price) * Number(p.daily_rate) / 100);
             const affordable = wallet.balance >= Number(p.price);
 
@@ -446,6 +466,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ownedActive = activeInvestments.filter(i => i.product_id === p.id);
             const ownedCount = ownedActive.length;
             const ownedDailyGain = ownedActive.reduce((sum, i) => sum + dailyGainOf(i), 0);
+
+            // Pour "Revenu Annuel", l'échéance et le gain dépendent du choix de
+            // l'utilisateur à l'achat (1 à 12 mois) — pas d'une valeur fixe produit.
+            const noRatesConfigured = isAtlas && !atlasRates.length;
+            const buyDisabled = !affordable || noRatesConfigured;
+            const buyLabel = noRatesConfigured
+                ? 'Indisponible pour le moment'
+                : (affordable ? (ownedCount > 0 ? 'Investir à nouveau' : 'Acheter') : 'Solde insuffisant');
 
             return `
                 <div class="vip-card${ownedCount > 0 ? ' is-owned' : ''}">
@@ -457,11 +485,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="vip-stats">
                         <div class="vip-stat">
                             <span class="vip-stat-label">Gain / jour</span>
-                            <span class="vip-stat-value">${formatFCFA(dailyGain)}</span>
+                            <span class="vip-stat-value">${isAtlas ? 'Selon échéance' : formatFCFA(dailyGain)}</span>
                         </div>
                         <div class="vip-stat">
                             <span class="vip-stat-label">Échéance</span>
-                            <span class="vip-stat-value">${p.duration_days} j</span>
+                            <span class="vip-stat-value">${isAtlas ? '1 à 12 mois au choix' : p.duration_days + ' j'}</span>
                         </div>
                     </div>
                     ${ownedCount > 0 ? `
@@ -473,10 +501,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         data-product-id="${p.id}"
                         data-product-name="${p.name}"
                         data-product-category="${p.category}"
+                        data-product-price="${p.price}"
                         data-daily-gain="${dailyGain}"
                         data-duration="${p.duration_days}"
-                        ${affordable ? '' : 'disabled title="Solde insuffisant"'}>
-                        ${affordable ? (ownedCount > 0 ? 'Investir à nouveau' : 'Acheter') : 'Solde insuffisant'}
+                        ${buyDisabled ? `disabled title="${noRatesConfigured ? 'Aucune échéance configurée' : 'Solde insuffisant'}"` : ''}>
+                        ${buyLabel}
                     </button>
                 </div>`;
         };
@@ -556,57 +585,136 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Recharge le portefeuille, les investissements, les produits et les
     // transactions depuis Supabase (appelé après un achat réussi)
     const refreshDashboardData = async () => {
-        const [w, p, inv, tr] = await Promise.all([
+        const [w, p, inv, tr, ar] = await Promise.all([
             window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
             window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
             window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
-            window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
+            window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
+            window.supabaseClient.from('atlas_duration_rates').select('*').order('duration_months')
         ]);
         wallet = w.data || wallet;
         products = p.data || products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
+        atlasRates = (ar.data || atlasRates).filter(r => Number(r.rate_percent) > 0);
         renderDashboardData();
     };
 
     // Message de validation affiché après l'achat, avec les infos réelles du produit activé
     const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne' };
-    const showPurchaseConfirmation = (btn) => {
+    const showPurchaseConfirmation = (btn, durationMonths) => {
         const name = btn.getAttribute('data-product-name');
         const category = btn.getAttribute('data-product-category');
-        const dailyGain = Number(btn.getAttribute('data-daily-gain'));
-        const duration = btn.getAttribute('data-duration');
+        const durationText = durationMonths ? `${durationMonths} mois` : `${btn.getAttribute('data-duration')} jours`;
         window.showToast(
-            `<strong>Produit activé ✅</strong><br>${name} — ${categoryLabel[category] || category}<br>Gain : ${formatFCFA(dailyGain)}/jour pendant ${duration} jours.<br>Disponible dans votre tableau de bord.`,
+            `<strong>Produit activé ✅</strong><br>${name} — ${categoryLabel[category] || category}<br>Échéance : ${durationText}.<br>Disponible dans votre tableau de bord.`,
             'success',
             { extraClass: 'investment-toast', duration: 6000 }
         );
     };
 
+    // Verrou global : empêche tout achat pendant qu'un autre est en cours de
+    // traitement (double-tap, clic sur un autre produit pendant l'attente réseau,
+    // etc.), en plus du cooldown de 8s déjà appliqué côté serveur.
+    let isPurchasing = false;
+    const setAllBuyButtonsDisabled = (disabled) => {
+        document.querySelectorAll('.buy-product-btn').forEach(b => {
+            if (disabled) { b.dataset.wasEnabled = b.disabled ? '0' : '1'; b.disabled = true; }
+            else if (b.dataset.wasEnabled === '1') { b.disabled = false; delete b.dataset.wasEnabled; }
+        });
+    };
+
+    const runPurchase = async (btn, productId, durationMonths) => {
+        if (isPurchasing) return;
+        isPurchasing = true;
+        setAllBuyButtonsDisabled(true);
+        const originalText = btn.textContent;
+        btn.textContent = 'Traitement...';
+        try {
+            const { error } = await window.supabaseClient.rpc('purchase_investment', {
+                p_product_id: productId,
+                p_duration_months: durationMonths || null
+            });
+            if (error) {
+                window.showToast(error.message || "Impossible d'effectuer cet investissement.", 'error');
+            } else {
+                showPurchaseConfirmation(btn, durationMonths);
+                await refreshDashboardData();
+                await refreshNotifications();
+            }
+        } catch (err) {
+            window.showToast('Erreur : ' + err.message, 'error');
+        } finally {
+            isPurchasing = false;
+            setAllBuyButtonsDisabled(false);
+            btn.textContent = originalText;
+        }
+    };
+
+    // ------------------------------------------------------------------
+    // Modal de choix d'échéance — UNIQUEMENT pour "Revenu Annuel" (atlas).
+    // Les autres catégories gardent une échéance fixe définie sur le produit.
+    // ------------------------------------------------------------------
+    let durationModalOverlay = null;
+    const closeDurationModal = () => { if (durationModalOverlay) durationModalOverlay.classList.remove('active'); };
+
+    const openDurationModal = (btn) => {
+        if (!atlasRates.length) {
+            window.showToast('Aucune échéance disponible pour le moment.', 'error');
+            return;
+        }
+        const productId = btn.getAttribute('data-product-id');
+        const price = Number(btn.getAttribute('data-product-price'));
+
+        if (!durationModalOverlay) {
+            durationModalOverlay = document.createElement('div');
+            durationModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(durationModalOverlay);
+            durationModalOverlay.addEventListener('click', (e) => { if (e.target === durationModalOverlay) closeDurationModal(); });
+        }
+
+        durationModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-duration-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <h2 class="task-modal-title">Choisissez une échéance</h2>
+                <p class="task-modal-sub">Montant : ${formatFCFA(price)}. Le taux est fixé pour toute la durée choisie.</p>
+                <div id="duration-options-list" style="display:flex; flex-direction:column; gap:10px; margin:14px 0;">
+                    ${atlasRates.map(r => {
+                        const totalGain = Math.round(price * Number(r.rate_percent) / 100);
+                        const daily = Math.round(totalGain / (r.duration_months * 30));
+                        return `<button type="button" class="quiz-option duration-option" data-duration="${r.duration_months}">
+                            <strong>${r.duration_months} mois</strong> — +${r.rate_percent}% (${formatFCFA(totalGain)} au total, ~${formatFCFA(daily)}/jour)
+                        </button>`;
+                    }).join('')}
+                </div>
+                <div class="quiz-feedback" id="duration-feedback"></div>
+            </div>`;
+
+        durationModalOverlay.querySelector('[data-close-duration-modal]').addEventListener('click', closeDurationModal);
+        durationModalOverlay.querySelectorAll('.duration-option').forEach(optBtn => {
+            optBtn.addEventListener('click', async () => {
+                const durationMonths = Number(optBtn.getAttribute('data-duration'));
+                closeDurationModal();
+                await runPurchase(btn, productId, durationMonths);
+            });
+        });
+
+        durationModalOverlay.classList.add('active');
+    };
+
     // Achat d'un produit (délégation d'événement, débite le solde côté serveur)
     document.querySelectorAll('.vip-grid').forEach(grid => {
-        grid.addEventListener('click', async (e) => {
+        grid.addEventListener('click', (e) => {
             const btn = e.target.closest('.buy-product-btn');
-            if (!btn || btn.disabled) return;
+            if (!btn || btn.disabled || isPurchasing) return;
+            const category = btn.getAttribute('data-product-category');
             const productId = btn.getAttribute('data-product-id');
-            btn.disabled = true;
-            const originalText = btn.textContent;
-            btn.textContent = 'Traitement...';
-            try {
-                const { error } = await window.supabaseClient.rpc('purchase_investment', { p_product_id: productId });
-                if (error) {
-                    window.showToast(error.message || "Impossible d'effectuer cet investissement.", 'error');
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                } else {
-                    showPurchaseConfirmation(btn);
-                    await refreshDashboardData();
-                    await refreshNotifications();
-                }
-            } catch (err) {
-                window.showToast('Erreur : ' + err.message, 'error');
-                btn.disabled = false;
-                btn.textContent = originalText;
+            if (category === 'atlas') {
+                openDurationModal(btn);
+            } else {
+                runPurchase(btn, productId, null);
             }
         });
     });
