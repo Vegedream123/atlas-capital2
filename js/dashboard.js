@@ -996,6 +996,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
             <div class="form-group">
+                <label class="form-label" for="withdraw-recipient-name-input">Nom de réception</label>
+                <input type="text" id="withdraw-recipient-name-input" class="form-control" placeholder="Nom complet du titulaire du compte">
+            </div>
+
+            <div class="form-group">
                 <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
                 <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
             </div>
@@ -1013,18 +1018,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
+            const recipientNameInput = withdrawModalOverlay.querySelector('#withdraw-recipient-name-input');
             const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
             const amountInput = withdrawModalOverlay.querySelector('#withdraw-amount-input');
             const amount = Number(amountInput.value);
+            const recipientName = recipientNameInput.value.trim();
             const destination = destinationInput.value.trim();
 
             if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
-            renderWithdrawPinStep({ amount, destination, method: selectedWithdrawMethod });
+            renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
         });
     };
 
@@ -1079,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     user_id: authUser.id,
                     amount: withdrawData.amount,
                     method_name: withdrawData.method.name,
+                    recipient_name: withdrawData.recipientName,
                     destination: withdrawData.destination,
                     status: 'pending'
                 });
