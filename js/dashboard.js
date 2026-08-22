@@ -393,10 +393,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             .filter(t => ['constant', 'analyse'].includes(t.category) && t.type === 'gain')
             .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
 
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const dailyQuestGains = transactions
-            .filter(t => t.type === 'quest' && t.created_at && t.created_at.slice(0, 10) === todayStr)
-            .reduce((sum, t) => sum + Number(t.amount), 0);
+        // Carte "Quêtes Journalières" — UNIQUEMENT les produits 'quete'.
+        // Même fonctionnement que "Investissements Actifs" désormais : les
+        // gains des tâches quotidiennes s'accumulent ici SANS être crédités
+        // au solde ; le capital + tous les gains sont versés en une fois à
+        // l'échéance du cycle (voir claim_daily_task / _credit_matured_investments).
+        const questActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'quete');
+        const totalInvestedQuest = questActive.reduce((sum, i) => sum + Number(i.amount), 0);
+        const questGainsPending = transactions
+            .filter(t => t.category === 'quete' && t.type === 'quest')
+            .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
 
         const setKpi = (id, value) => {
             const el = document.getElementById(id);
@@ -405,7 +411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setKpi('kpi-balance', wallet.balance);
         setKpi('kpi-annual-rate', atlasGainsRecovered);
         setKpi('kpi-active-investments', capitalGainsPending);
-        setKpi('kpi-daily-quest', dailyQuestGains);
+        setKpi('kpi-daily-quest', questGainsPending);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
@@ -416,12 +422,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `${capitalActive.length} placement(s) actif(s) · ${formatFCFA(totalInvested)} investis`
                 : 'Investissez pour démarrer'
         );
-        // Ce montant correspond aux gains de type "quête" réellement crédités
-        // aujourd'hui (transactions), ce qui peut inclure un placement arrivé
-        // à échéance dans la journée — d'où le libellé explicite ci-dessous,
-        // pour ne pas laisser croire à un placement encore actif s'il n'y en a
-        // plus (voir "Investissements Actifs" pour l'état actuel réel).
-        changeEl('kpi-quest-change', dailyQuestGains > 0 ? 'Crédité aujourd\'hui' : 'Pas encore réclamé');
+        changeEl(
+            'kpi-quest-change',
+            questActive.length
+                ? `${questActive.length} placement(s) actif(s) · ${formatFCFA(totalInvestedQuest)} investis`
+                : 'Investissez pour démarrer'
+        );
 
         // Animation des compteurs (réutilise data-target désormais réel)
         document.querySelectorAll('.stat-number').forEach(counter => {
@@ -501,11 +507,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const renderProductCard = (p) => {
             const isAtlas = p.category === 'atlas';
-            const isCycle = p.category === 'constant' || p.category === 'analyse';
-            // Pour Constant/Analyse, daily_rate vaut volontairement 0 (le gain
-            // vient du cycle_payout_amount fixé à la fin de la durée en jours),
-            // donc on calcule le gain/jour depuis ce montant plutôt que depuis
-            // daily_rate — sinon la carte produit affiche toujours 0 FCFA.
+            const isCycle = ['constant', 'analyse', 'quete'].includes(p.category);
+            // Pour Constant/Analyse/Quête, daily_rate vaut volontairement 0 (le
+            // gain vient du cycle_payout_amount fixé à la fin de la durée en
+            // jours), donc on calcule le gain/jour depuis ce montant plutôt
+            // que depuis daily_rate — sinon la carte produit affiche
+            // toujours 0 FCFA.
             const dailyGain = isCycle
                 ? Math.round((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1))
                 : Math.round(Number(p.price) * Number(p.daily_rate) / 100);
