@@ -113,6 +113,15 @@
                                 <option value="quete">Quête Quotidienne</option>
                             </select>
                         </div>
+                        <div class="admin-form-group">
+                            <label>Niveau VIP</label>
+                            <input type="text" id="product-vip-level" required placeholder="Ex: 1">
+                            <p style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
+                                Relie ce produit aux autres catégories du même niveau : un Atlas VIP 1 débloque
+                                le Constant et l'Analyse VIP 1 (et uniquement ceux-là) ; les deux Actifs VIP 1
+                                débloquent la Quête VIP 1 pendant 24h.
+                            </p>
+                        </div>
                     </div>
                     <div class="admin-form-row" id="product-rate-duration-row">
                         <div class="admin-form-group">
@@ -172,7 +181,7 @@
                 <div class="admin-table-wrap">
                     <table class="admin-table" id="products-table">
                         <thead>
-                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Cycle</th><th>Revenu mensuel</th><th>Statut</th><th>Actions</th></tr>
+                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>VIP</th><th>Prix</th><th>%/jour</th><th>Cycle</th><th>Revenu mensuel</th><th>Statut</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="products-tbody"><tr><td colspan="9">Chargement…</td></tr></tbody>
                     </table>
