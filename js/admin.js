@@ -235,12 +235,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     // 4bis. Revenu Annuel — Taux par échéance (1 à 12 mois)
     // ----------------------------------------------------------------
+    const ATLAS_DEFAULT_DURATIONS = [1, 2, 3, 6, 12];
     async function loadAtlasRates() {
         const tbody = document.getElementById('atlas-rates-tbody');
         if (!tbody) return;
         const { data, error } = await window.supabaseClient.from('atlas_duration_rates').select('*').order('duration_months');
-        if (error) { tbody.innerHTML = `<tr><td colspan="2">Erreur de chargement.</td></tr>`; return; }
-        tbody.innerHTML = (data || []).map(r => `
+        if (error) { tbody.innerHTML = `<tr><td colspan="2">Erreur de chargement : ${error.message}</td></tr>`; return; }
+        // Si la table est vide (aucune échéance encore créée côté Supabase), on
+        // affiche quand même les 5 échéances standard avec un taux à 0 — sinon
+        // le tableau reste vide et il n'y a rien à modifier. Cliquer sur
+        // "Enregistrer les taux" crée alors réellement ces lignes en base.
+        const rows = (data && data.length)
+            ? data
+            : ATLAS_DEFAULT_DURATIONS.map(m => ({ duration_months: m, rate_percent: 0 }));
+        tbody.innerHTML = rows.map(r => `
             <tr>
                 <td>${r.duration_months} mois</td>
                 <td><input type="number" min="0" step="0.01" class="admin-rate-input" data-duration="${r.duration_months}" value="${r.rate_percent}" style="width:120px;"></td>
