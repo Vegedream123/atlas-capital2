@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const productPriceInput = document.getElementById('product-price');
     const productRateInput = document.getElementById('product-rate');
     const productDurationInput = document.getElementById('product-duration');
+    const productCyclePayoutInput = document.getElementById('product-cycle-payout');
     const productImageInput = document.getElementById('product-image');
     const productImagePreview = document.getElementById('product-image-preview');
     const productDailyGainPreview = document.getElementById('product-daily-gain-preview');
@@ -157,19 +158,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function toggleMonthlyRevenuesVisibility() {
         const isAtlas = productCategoryInput.value === 'atlas';
+        const isActifCycle = productCategoryInput.value === 'constant' || productCategoryInput.value === 'analyse';
         if (monthlyRevenuesGroup) monthlyRevenuesGroup.style.display = isAtlas ? 'block' : 'none';
 
         // Pour "Revenu Annuel", le %/jour et l'échéance en jours ne servent à
         // rien (le montant et la durée viennent du revenu mensuel ci-dessus) :
         // on les cache et on les rend optionnels pour éviter toute confusion.
+        // Pour les produits Actif (constant/analyse), le %/jour est remplacé
+        // par un montant total fixe versé à la fin du cycle.
         const rateGroup = document.getElementById('product-rate-group');
         const durationGroup = document.getElementById('product-duration-group');
         const dailyGainGroup = document.getElementById('product-daily-gain-preview-group');
-        if (rateGroup) rateGroup.style.display = isAtlas ? 'none' : 'block';
+        const cyclePayoutGroup = document.getElementById('product-cycle-payout-group');
+        if (rateGroup) rateGroup.style.display = (isAtlas || isActifCycle) ? 'none' : 'block';
         if (durationGroup) durationGroup.style.display = isAtlas ? 'none' : 'block';
-        if (dailyGainGroup) dailyGainGroup.style.display = isAtlas ? 'none' : 'block';
-        productRateInput.required = !isAtlas;
+        if (dailyGainGroup) dailyGainGroup.style.display = (isAtlas || isActifCycle) ? 'none' : 'block';
+        if (cyclePayoutGroup) cyclePayoutGroup.style.display = isActifCycle ? 'block' : 'none';
+        productRateInput.required = !isAtlas && !isActifCycle;
         productDurationInput.required = !isAtlas;
+        productCyclePayoutInput.required = isActifCycle;
     }
     productCategoryInput.addEventListener('change', toggleMonthlyRevenuesVisibility);
 
@@ -206,6 +213,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     productPriceInput.addEventListener('input', updateDailyGainPreview);
     productRateInput.addEventListener('input', updateDailyGainPreview);
 
+    const cycleGainPreview = document.getElementById('product-cycle-gain-preview');
+    const updateCycleGainPreview = () => {
+        if (!cycleGainPreview) return;
+        const price = Number(productPriceInput.value) || 0;
+        const total = Number(productCyclePayoutInput.value) || 0;
+        const days = Number(productDurationInput.value) || 0;
+        if (!price || !total || !days) { cycleGainPreview.textContent = '—'; return; }
+        const gain = total - price;
+        cycleGainPreview.textContent = `Gain total : ${formatFCFA(gain)} sur ${days} j (~${formatFCFA(gain / days)} / jour)`;
+    };
+    productPriceInput.addEventListener('input', updateCycleGainPreview);
+    productDurationInput.addEventListener('input', updateCycleGainPreview);
+    productCyclePayoutInput.addEventListener('input', updateCycleGainPreview);
+
     const resetProductForm = () => {
         productForm.reset();
         productIdInput.value = '';
@@ -213,6 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         editingImageUrl = null;
         productImagePreview.style.display = 'none';
         productDailyGainPreview.textContent = '—';
+        if (cycleGainPreview) cycleGainPreview.textContent = '—';
         productSubmitBtn.textContent = 'Ajouter le produit';
         productFormTitle.textContent = 'Ajouter un produit';
         productCancelEditBtn.style.display = 'none';
@@ -241,17 +263,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (selectedImageFile) {
                 imageUrl = await uploadProductImage(selectedImageFile);
             }
+            const category = productCategoryInput.value;
+            const isActifCycle = category === 'constant' || category === 'analyse';
             const { error } = await window.supabaseClient.rpc('admin_upsert_product', {
                 p_id: productIdInput.value || null,
                 p_name: productNameInput.value.trim(),
-                p_category: productCategoryInput.value,
+                p_category: category,
                 p_price: Number(productPriceInput.value),
-                p_daily_rate: productCategoryInput.value === 'atlas' ? 0 : Number(productRateInput.value),
-                p_duration_days: productCategoryInput.value === 'atlas' ? 1 : Number(productDurationInput.value),
+                p_daily_rate: (category === 'atlas' || isActifCycle) ? 0 : Number(productRateInput.value),
+                p_duration_days: category === 'atlas' ? 1 : Number(productDurationInput.value),
                 p_image_url: imageUrl,
                 p_sort_order: 0,
                 p_is_active: true,
-                p_monthly_revenues: productCategoryInput.value === 'atlas' ? getMonthlyRevenuesFromForm() : null
+                p_monthly_revenues: category === 'atlas' ? getMonthlyRevenuesFromForm() : null,
+                p_cycle_payout_amount: isActifCycle ? Number(productCyclePayoutInput.value) : null
             });
             if (error) throw error;
             window.showToast(productIdInput.value ? 'Produit modifié !' : 'Produit ajouté !', 'success');
@@ -283,7 +308,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${p.name}</td>
                 <td>${p.category}</td>
                 <td>${formatFCFA(p.price)}</td>
-                <td>${p.daily_rate}%</td>
+                <td>${(p.category === 'constant' || p.category === 'analyse') ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
                 <td>${p.duration_days} j</td>
                 <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
@@ -303,9 +328,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 productPriceInput.value = p.price;
                 productRateInput.value = p.daily_rate;
                 productDurationInput.value = p.duration_days;
+                productCyclePayoutInput.value = p.cycle_payout_amount != null ? p.cycle_payout_amount : '';
                 editingImageUrl = p.image_url;
                 if (p.image_url) { productImagePreview.src = p.image_url; productImagePreview.style.display = 'block'; }
                 updateDailyGainPreview();
+                updateCycleGainPreview();
                 setMonthlyRevenuesInForm(p.monthly_revenues);
                 toggleMonthlyRevenuesVisibility();
                 productFormTitle.textContent = 'Modifier le produit';
