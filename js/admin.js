@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const productIdInput = document.getElementById('product-id');
     const productNameInput = document.getElementById('product-name');
     const productCategoryInput = document.getElementById('product-category');
+    const productVipLevelInput = document.getElementById('product-vip-level');
     const productPriceInput = document.getElementById('product-price');
     const productRateInput = document.getElementById('product-rate');
     const productDurationInput = document.getElementById('product-duration');
@@ -278,6 +279,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 p_image_url: imageUrl,
                 p_sort_order: 0,
                 p_is_active: true,
+                p_vip_level: productVipLevelInput.value.trim(),
                 p_monthly_revenues: category === 'atlas' ? getMonthlyRevenuesFromForm() : null,
                 p_cycle_payout_amount: isActifCycle ? Number(productCyclePayoutInput.value) : null
             });
@@ -303,13 +305,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadProducts() {
         const tbody = document.getElementById('products-tbody');
         const { data, error } = await window.supabaseClient.from('investment_products').select('*').order('category').order('sort_order');
-        if (error) { tbody.innerHTML = `<tr><td colspan="8">Erreur de chargement.</td></tr>`; return; }
-        if (!data.length) { tbody.innerHTML = `<tr><td colspan="9">Aucun produit pour le moment.</td></tr>`; return; }
+        if (error) { tbody.innerHTML = `<tr><td colspan="10">Erreur de chargement.</td></tr>`; return; }
+        if (!data.length) { tbody.innerHTML = `<tr><td colspan="10">Aucun produit pour le moment.</td></tr>`; return; }
         tbody.innerHTML = data.map(p => `
             <tr>
                 <td>${p.image_url ? `<img src="${p.image_url}" class="admin-table-thumb">` : '—'}</td>
                 <td>${p.name}</td>
                 <td>${p.category}</td>
+                <td>${p.vip_level || '—'}</td>
                 <td>${formatFCFA(p.price)}</td>
                 <td>${['constant', 'analyse', 'quete'].includes(p.category) ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
                 <td>${p.duration_days} j</td>
@@ -328,6 +331,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 productIdInput.value = p.id;
                 productNameInput.value = p.name;
                 productCategoryInput.value = p.category;
+                productVipLevelInput.value = p.vip_level || '';
                 productPriceInput.value = p.price;
                 productRateInput.value = p.daily_rate;
                 productDurationInput.value = p.duration_days;
