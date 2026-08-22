@@ -50,15 +50,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Chargement des données réelles : profil, portefeuille, produits,
     //    investissements en cours, transactions
     // ------------------------------------------------------------------
-    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes, atlasRatesRes] = await Promise.all([
+    const [profileRes, walletRes, productsRes, investmentsRes, transactionsRes, notificationsRes, settingsRes] = await Promise.all([
         window.supabaseClient.from('profiles').select('*').eq('id', authUser.id).single(),
         window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
         window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
         window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
         window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
         window.supabaseClient.from('notifications').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(30),
-        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single(),
-        window.supabaseClient.from('atlas_duration_rates').select('*').order('duration_months')
+        window.supabaseClient.from('site_settings').select('*').eq('id', 1).single()
     ]);
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
@@ -88,22 +87,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         );
     };
 
-    // Taux (%) par échéance (1 à 12 mois) pour les produits "Revenu Annuel" (atlas),
-    // configurés depuis l'admin — seules les échéances avec un taux > 0 sont proposées.
-    let atlasRates = (atlasRatesRes.data || []).filter(r => Number(r.rate_percent) > 0);
-    // Filet de sécurité : si l'admin n'a pas encore configuré de taux dans
-    // Supabase (table vide ou tous les taux à 0), le produit "Revenu Annuel"
-    // ne doit JAMAIS afficher "Indisponible" côté client — on propose alors
-    // ces échéances par défaut, à ajuster depuis l'admin dès que possible.
-    // Dès qu'un vrai taux est configuré en base, il prend automatiquement le dessus.
-    const DEFAULT_ATLAS_RATES = [
-        { duration_months: 1, rate_percent: 8 },
-        { duration_months: 2, rate_percent: 17 },
-        { duration_months: 3, rate_percent: 27 },
-        { duration_months: 6, rate_percent: 60 },
-        { duration_months: 12, rate_percent: 140 }
-    ];
-    if (!atlasRates.length) atlasRates = DEFAULT_ATLAS_RATES;
+    // Revenu mensuel (12 valeurs FCFA, une par mois) défini PAR PRODUIT depuis
+    // l'admin — remplace l'ancien tableau global de taux (%). Chaque produit
+    // Atlas (Atlas 1, Atlas 2…) a donc ses propres montants pour 1 à 12 mois.
+    const getAtlasMonthlyOptions = (product) => {
+        const arr = Array.isArray(product && product.monthly_revenues) ? product.monthly_revenues : [];
+        return arr
+            .map((total, idx) => ({ duration_months: idx + 1, total: Number(total) || 0 }))
+            .filter(o => o.total > 0);
+    };
 
     if (profileRes.error) console.error('Erreur profil :', profileRes.error);
     if (walletRes.error) console.error('Erreur portefeuille :', walletRes.error);
@@ -387,6 +379,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const atlasActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'atlas');
         const atlasInvested = atlasActive.reduce((sum, i) => sum + Number(i.amount), 0);
         const annualRateOf = (i) => {
+            if (i.duration_months && i.locked_payout_amount != null) {
+                const gainPercent = (Number(i.locked_payout_amount) - Number(i.amount)) / Number(i.amount) * 100;
+                return gainPercent * 12 / Number(i.duration_months);
+            }
             if (i.duration_months && i.locked_rate_percent != null) {
                 return Number(i.locked_rate_percent) * 12 / Number(i.duration_months);
             }
@@ -489,6 +485,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete' };
 
         const dailyGainOf = (inv) => {
+            if (inv.duration_months && inv.locked_payout_amount != null) {
+                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+            }
             if (inv.duration_months && inv.locked_rate_percent != null) {
                 return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
             }
@@ -633,19 +632,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Recharge le portefeuille, les investissements, les produits et les
     // transactions depuis Supabase (appelé après un achat réussi)
     const refreshDashboardData = async () => {
-        const [w, p, inv, tr, ar] = await Promise.all([
+        const [w, p, inv, tr] = await Promise.all([
             window.supabaseClient.from('wallets').select('*').eq('user_id', authUser.id).single(),
             window.supabaseClient.from('investment_products').select('*').eq('is_active', true).order('category').order('sort_order'),
             window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate)').eq('user_id', authUser.id).order('created_at', { ascending: false }),
-            window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100),
-            window.supabaseClient.from('atlas_duration_rates').select('*').order('duration_months')
+            window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
         ]);
         wallet = w.data || wallet;
         products = p.data || products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
-        atlasRates = (ar.data || []).filter(r => Number(r.rate_percent) > 0);
-        if (!atlasRates.length) atlasRates = DEFAULT_ATLAS_RATES;
         renderDashboardData();
     };
 
@@ -725,11 +721,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const closeDurationModal = () => { if (durationModalOverlay) durationModalOverlay.classList.remove('active'); };
 
     const openDurationModal = (btn) => {
-        // atlasRates a toujours au moins les échéances par défaut (voir plus haut) :
-        // la modale de choix reste donc toujours disponible pour l'utilisateur.
-        const rates = atlasRates.length ? atlasRates : DEFAULT_ATLAS_RATES;
         const productId = btn.getAttribute('data-product-id');
         const price = Number(btn.getAttribute('data-product-price'));
+        const product = products.find(p => p.id === productId);
+        const options = getAtlasMonthlyOptions(product);
+
+        if (!options.length) {
+            window.showToast("Aucune échéance n'est encore configurée pour ce produit. Contactez le support.", 'error');
+            return;
+        }
 
         if (!durationModalOverlay) {
             durationModalOverlay = document.createElement('div');
@@ -744,13 +744,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
                 <h2 class="task-modal-title">Choisissez une échéance</h2>
-                <p class="task-modal-sub">Montant : ${formatFCFA(price)}. Le taux est fixé pour toute la durée choisie.</p>
+                <p class="task-modal-sub">Montant : ${formatFCFA(price)}. Le montant reçu est fixé pour toute la durée choisie.</p>
                 <div id="duration-options-list" style="display:flex; flex-direction:column; gap:10px; margin:14px 0;">
-                    ${rates.map(r => {
-                        const totalGain = Math.round(price * Number(r.rate_percent) / 100);
-                        const daily = Math.round(totalGain / (r.duration_months * 30));
-                        return `<button type="button" class="quiz-option duration-option" data-duration="${r.duration_months}">
-                            <strong>${r.duration_months} mois</strong> — +${r.rate_percent}% (${formatFCFA(totalGain)} au total, ~${formatFCFA(daily)}/jour)
+                    ${options.map(o => {
+                        const gain = o.total - price;
+                        const daily = Math.round(gain / (o.duration_months * 30));
+                        return `<button type="button" class="quiz-option duration-option" data-duration="${o.duration_months}">
+                            <strong>${o.duration_months} mois</strong> — ${formatFCFA(o.total)} au total (~${formatFCFA(daily)}/jour)
                         </button>`;
                     }).join('')}
                 </div>
