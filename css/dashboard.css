@@ -77,7 +77,7 @@ svg { flex-shrink: 0; }
     border: 1px solid transparent;
     white-space: nowrap;
 }
-.btn-primary { background: var(--gold-gradient); color: var(--primary); }
+.btn-primary { background: var(--gold-gradient); color: var(--white); }
 .btn-primary:hover { background: var(--gold-dark); color: var(--white); }
 .btn-outline { background: var(--white); color: var(--primary); border-color: var(--gray-200); }
 .btn-outline:hover { background: var(--gray-100); }
@@ -195,7 +195,7 @@ svg { flex-shrink: 0; }
 
 .finances-subnav { display: flex; flex-wrap: nowrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--gray-200); padding-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .subnav-btn { flex-shrink: 0; padding: 8px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); background: var(--gray-100); transition: var(--transition); white-space: nowrap; }
-.subnav-btn.active { background: var(--gold-gradient); color: var(--primary); }
+.subnav-btn.active { background: var(--gold-gradient); color: var(--white); }
 .sub-view { display: none; }
 .sub-view.active { display: block; animation: fadeIn 0.3s ease; }
 .amount { font-size: 2rem; font-weight: 700; }
@@ -213,7 +213,7 @@ svg { flex-shrink: 0; }
 .vip-owned-row span:first-child { min-width: 0; }
 .vip-card.is-owned { border-color: var(--success); box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25); }
 .vip-card-header { display: flex; align-items: center; gap: 8px; }
-.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); color: var(--white); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
 .vip-name { font-weight: 700; font-size: 0.85rem; color: var(--primary); }
 .vip-price { font-size: 0.85rem; color: var(--text-secondary); }
 .vip-stats { display: flex; flex-direction: column; gap: 6px; }
@@ -266,7 +266,7 @@ svg { flex-shrink: 0; }
 
 .account-grid { grid-template-columns: 1fr; }
 @media (min-width: 720px) { .account-grid { grid-template-columns: 1fr 1.3fr; } }
-.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--gold-gradient); color: var(--white); display: flex; align-items: center; justify-content: center; font-weight: 700; }
 .view-all { color: var(--accent); font-weight: 600; font-size: 0.9rem; }
 .view-all:hover { text-decoration: underline; }
 
