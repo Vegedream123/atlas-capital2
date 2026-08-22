@@ -32,6 +32,7 @@
             <button class="admin-nav-item" data-target="depots">⬆️ Dépôts</button>
             <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
             <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
+            <button class="admin-nav-item" data-target="codespromo">🎟️ Codes Promo</button>
             <button class="admin-nav-item" data-target="parametres">⚙️ Paramètres</button>
         </nav>
         <div class="admin-sidebar-footer">
@@ -227,6 +228,46 @@
             </div>
         </section>
 
+        <!-- VUE: CODES PROMO -->
+        <section class="admin-view" id="view-codespromo">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Générer des codes promo</h2>
+                </div>
+                <p class="text-secondary" style="margin:-6px 0 14px;">
+                    Chaque code est à usage unique : le premier utilisateur qui le saisit reçoit un montant
+                    tiré au hasard jusqu'au plafond indiqué, puis le code devient inutilisable.
+                </p>
+                <form id="promo-form" class="admin-form">
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Plafond du gain (FCFA)</label>
+                            <input type="number" id="promo-max-amount" min="1" step="1" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Nombre de codes à générer</label>
+                            <input type="number" id="promo-count" min="1" max="500" step="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="promo-submit-btn">Générer</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header"><h2>Codes existants</h2></div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table" id="promo-table">
+                        <thead>
+                            <tr><th>Code</th><th>Plafond</th><th>Montant crédité</th><th>Statut</th><th>Utilisé par</th><th>Créé le</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="promo-tbody"><tr><td colspan="7">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- VUE: UTILISATEURS -->
         <section class="admin-view" id="view-utilisateurs">
             <div class="admin-panel">
@@ -340,49 +381,6 @@
                         <button type="submit" class="btn btn-primary" id="payment-settings-submit-btn">Enregistrer les moyens de paiement</button>
                     </div>
                 </form>
-            </div>
-
-            <div class="admin-panel">
-                <div class="admin-panel-header">
-                    <h2>Codes promo</h2>
-                </div>
-                <form id="promo-code-form" class="admin-form">
-                    <div class="admin-form-row">
-                        <div class="admin-form-group">
-                            <label>Code</label>
-                            <input type="text" id="promo-code-value" placeholder="Ex: BIENVENUE2026" style="text-transform:uppercase;">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Bonus minimum (FCFA)</label>
-                            <input type="number" id="promo-code-min" min="0" step="1" placeholder="500">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Bonus maximum (FCFA)</label>
-                            <input type="number" id="promo-code-max" min="0" step="1" placeholder="5000">
-                        </div>
-                    </div>
-                    <div class="admin-form-row">
-                        <div class="admin-form-group">
-                            <label>Nombre max d'utilisateurs</label>
-                            <input type="number" id="promo-code-max-uses" min="1" step="1" placeholder="100">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Date d'expiration</label>
-                            <input type="date" id="promo-code-expires">
-                        </div>
-                    </div>
-                    <div class="admin-form-actions">
-                        <button type="submit" class="btn btn-primary" id="promo-code-submit-btn">Créer le code</button>
-                    </div>
-                </form>
-                <div class="admin-table-wrap" style="margin-top:18px;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr><th>Code</th><th>Bonus</th><th>Utilisations</th><th>Expire le</th><th>Statut</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody id="promo-codes-tbody"><tr><td colspan="6">Chargement…</td></tr></tbody>
-                    </table>
-                </div>
             </div>
         </section>
     </main>
