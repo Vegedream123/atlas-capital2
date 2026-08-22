@@ -171,44 +171,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     //       via une courte question financière avant que le gain du jour
     //       ne soit crédité au portefeuille.
     //
-    //       ⚠️ Pour que le crédit soit réellement sécurisé côté serveur,
-    //       créez cette fonction Postgres dans Supabase (SQL Editor) et
-    //       ajoutez la colonne `last_task_at` à `user_investments` :
-    //
-    //       alter table user_investments add column if not exists last_task_at timestamptz;
-    //
-    //       -- IMPORTANT : le type de transaction dépend de la catégorie du
-    //       -- produit, afin que "Revenu Annuel" (atlas), "Investissement Actif"
-    //       -- (constant / analyse) et "Quêtes Journalières" (quete) restent
-    //       -- des compteurs bien séparés côté tableau de bord.
-    //       create or replace function claim_daily_task(p_investment_id uuid)
-    //       returns void language plpgsql security definer as $$
-    //       declare v_user_id uuid := auth.uid(); v_amount numeric; v_last timestamptz;
-    //               v_category text; v_type text; v_desc text;
-    //       begin
-    //         select ui.amount * ip.daily_rate / 100, ui.last_task_at, ip.category
-    //           into v_amount, v_last, v_category
-    //         from user_investments ui join investment_products ip on ip.id = ui.product_id
-    //         where ui.id = p_investment_id and ui.user_id = v_user_id and ui.status = 'active';
-    //         if v_amount is null then raise exception 'Investissement introuvable ou inactif.'; end if;
-    //         if v_last is not null and v_last > now() - interval '24 hours' then
-    //           raise exception 'Tâche déjà effectuée aujourd''hui.'; end if;
-    //
-    //         if v_category = 'quete' then
-    //           v_type := 'quest'; v_desc := 'Quête quotidienne validée';
-    //         else
-    //           v_type := 'gain'; v_desc := 'Gain quotidien débloqué';
-    //         end if;
-    //
-    //         update user_investments set last_task_at = now() where id = p_investment_id;
-    //         update wallets set balance = balance + v_amount, total_income = total_income + v_amount where user_id = v_user_id;
-    //         insert into transactions (user_id, type, amount, description)
-    //           values (v_user_id, v_type, v_amount, v_desc);
-    //       end; $$;
-    //
-    //       Tant que cette fonction n'existe pas côté Supabase, la tâche
-    //       s'affiche et se joue normalement mais l'appel RPC échouera
-    //       avec un message d'erreur explicite au lieu de créditer le solde.
+    //       Le crédit est sécurisé côté serveur par la fonction Postgres
+    //       `claim_daily_task(p_investment_id uuid)`, déjà déployée dans
+    //       Supabase. Elle calcule le bon montant par catégorie de produit
+    //       (taux figé à l'achat pour Atlas, daily_rate sinon), crédite le
+    //       portefeuille, et journalise une transaction avec `category` et
+    //       `gain_amount` renseignés — utilisés par la carte "Revenu Annuel"
+    //       (voir renderDashboardData) pour totaliser les gains par produit.
     // ------------------------------------------------------------------
     const FINANCE_QUESTIONS = [
         { q: "Qu'est-ce que la diversification en investissement ?", options: ["Tout miser sur un seul actif", "Répartir son capital sur plusieurs actifs pour réduire le risque", "Retirer tout son argent chaque mois", "Emprunter pour investir davantage"], correct: 1 },
@@ -386,26 +355,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const activeInvestments = investments.filter(i => i.status === 'active');
 
         // Carte "Revenu Annuel" — UNIQUEMENT les produits de catégorie 'atlas'.
-        // Le % affiché est la moyenne pondérée (par montant investi) du rendement
-        // ANNUALISÉ de chaque placement : un placement avec échéance choisie utilise
-        // son taux figé à l'achat (locked_rate_percent, configuré par l'admin selon
-        // la durée) ramené sur 12 mois ; un ancien placement sans échéance (avant
-        // cette fonctionnalité) retombe sur l'ancien calcul via daily_rate du produit.
+        // Affiche le montant RÉELLEMENT RÉCUPÉRÉ par l'utilisateur sur ce produit
+        // (gains débloqués via les tâches quotidiennes + intérêts versés à
+        // échéance), et non plus un taux annualisé théorique.
+        //
+        // Basé sur `transactions.category` et `transactions.gain_amount` (colonnes
+        // ajoutées en base). gain_amount isole la part "intérêts" de chaque
+        // transaction : pour une tâche quotidienne il vaut le montant entier (pas
+        // de capital en jeu) ; pour un versement à échéance (type
+        // 'investment_payout', qui inclut le capital rendu) il ne contient QUE les
+        // intérêts, pas le capital — sans quoi le total serait gonflé du capital
+        // remboursé, qui n'est pas un "gain".
         const atlasActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'atlas');
-        const atlasInvested = atlasActive.reduce((sum, i) => sum + Number(i.amount), 0);
-        const annualRateOf = (i) => {
-            if (i.duration_months && i.locked_payout_amount != null) {
-                const gainPercent = (Number(i.locked_payout_amount) - Number(i.amount)) / Number(i.amount) * 100;
-                return gainPercent * 12 / Number(i.duration_months);
-            }
-            if (i.duration_months && i.locked_rate_percent != null) {
-                return Number(i.locked_rate_percent) * 12 / Number(i.duration_months);
-            }
-            return Number((i.investment_products && i.investment_products.daily_rate) || 0) * 365;
-        };
-        const annualRate = atlasInvested > 0
-            ? atlasActive.reduce((sum, i) => sum + Number(i.amount) * annualRateOf(i), 0) / atlasInvested
-            : 0;
+        const atlasGainsRecovered = transactions
+            .filter(t => t.category === 'atlas' && ['gain', 'investment_payout'].includes(t.type))
+            .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
 
         // Carte "Investissements Actifs" — UNIQUEMENT les produits 'constant' /
         // 'analyse' (capital actif), exclut 'atlas' (Revenu Annuel) et 'quete'
@@ -423,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (el) { el.setAttribute('data-target', value); }
         };
         setKpi('kpi-balance', wallet.balance);
-        setKpi('kpi-annual-rate', annualRate.toFixed(1));
+        setKpi('kpi-annual-rate', atlasGainsRecovered);
         setKpi('kpi-active-investments', capitalActive.length);
         setKpi('kpi-daily-quest', dailyQuestGains);
 
