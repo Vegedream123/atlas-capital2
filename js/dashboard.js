@@ -336,13 +336,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderDashboardData = () => {
         // --- KPIs ---
+        // Tous les placements actifs, toutes catégories confondues — utilisé
+        // uniquement pour les vérifications de possession de produit plus bas
+        // (ownedActive / active par catégorie), PAS pour les cartes KPI.
         const activeInvestments = investments.filter(i => i.status === 'active');
 
-        const totalInvested = activeInvestments.reduce((sum, i) => sum + Number(i.amount), 0);
-        const weightedDailyRate = totalInvested > 0
-            ? activeInvestments.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / totalInvested
+        // Carte "Revenu Annuel" — UNIQUEMENT les produits de catégorie 'atlas'.
+        const atlasActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'atlas');
+        const atlasInvested = atlasActive.reduce((sum, i) => sum + Number(i.amount), 0);
+        const weightedDailyRate = atlasInvested > 0
+            ? atlasActive.reduce((sum, i) => sum + Number(i.amount) * Number((i.investment_products && i.investment_products.daily_rate) || 0), 0) / atlasInvested
             : 0;
         const annualRate = weightedDailyRate * 365 / 100 * 100; // % annuel équivalent (taux/jour * 365)
+
+        // Carte "Investissements Actifs" — UNIQUEMENT les produits 'constant' /
+        // 'analyse' (capital actif), exclut 'atlas' (Revenu Annuel) et 'quete'
+        // (Quêtes Journalières) qui ont chacun leur propre carte dédiée.
+        const capitalActive = activeInvestments.filter(i => i.investment_products && ['constant', 'analyse'].includes(i.investment_products.category));
+        const totalInvested = capitalActive.reduce((sum, i) => sum + Number(i.amount), 0);
 
         const todayStr = new Date().toISOString().slice(0, 10);
         const dailyQuestGains = transactions
@@ -355,13 +366,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
         setKpi('kpi-balance', wallet.balance);
         setKpi('kpi-annual-rate', annualRate.toFixed(1));
-        setKpi('kpi-active-investments', activeInvestments.length);
+        setKpi('kpi-active-investments', capitalActive.length);
         setKpi('kpi-daily-quest', dailyQuestGains);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
-        changeEl('kpi-rate-change', activeInvestments.length ? `${activeInvestments.length} placement(s) actif(s)` : 'Aucun placement actif');
-        changeEl('kpi-active-change', activeInvestments.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
+        changeEl('kpi-rate-change', atlasActive.length ? `${atlasActive.length} placement(s) actif(s)` : 'Aucun placement actif');
+        changeEl('kpi-active-change', capitalActive.length ? `${formatFCFA(totalInvested)} investis` : 'Investissez pour démarrer');
         // Ce montant correspond aux gains de type "quête" réellement crédités
         // aujourd'hui (transactions), ce qui peut inclure un placement arrivé
         // à échéance dans la journée — d'où le libellé explicite ci-dessous,
