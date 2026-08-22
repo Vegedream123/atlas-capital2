@@ -199,12 +199,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Gain journalier réel d'un investissement : pour Atlas (Revenu Annuel),
     // le taux dépend de l'échéance choisie à l'achat (locked_rate_percent /
-    // locked_payout_amount + duration_months), pas du daily_rate du produit
-    // (qui n'existe que pour Constant/Analyse/Quête). Sans ce calcul, les
-    // tâches quotidiennes des produits Atlas affichaient toujours 0 FCFA.
+    // locked_payout_amount + duration_months). Pour Constant/Analyse, le
+    // cycle est exprimé en JOURS (duration_days), pas en mois : il faut donc
+    // aussi couvrir ce cas, sinon locked_payout_amount est ignoré et le
+    // calcul retombe à tort sur daily_rate (qui vaut volontairement 0 pour
+    // ces catégories), affichant 0 FCFA/jour malgré un cycle bien configuré.
     const dailyGainOf = (inv) => {
-        if (inv.duration_months && inv.locked_payout_amount != null) {
-            return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+        if (inv.locked_payout_amount != null) {
+            if (inv.duration_months) {
+                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+            }
+            if (inv.duration_days) {
+                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+            }
         }
         if (inv.duration_months && inv.locked_rate_percent != null) {
             return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
@@ -464,8 +471,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete' };
 
         const dailyGainOf = (inv) => {
-            if (inv.duration_months && inv.locked_payout_amount != null) {
-                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+            if (inv.locked_payout_amount != null) {
+                if (inv.duration_months) {
+                    return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+                }
+                if (inv.duration_days) {
+                    return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+                }
             }
             if (inv.duration_months && inv.locked_rate_percent != null) {
                 return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
@@ -475,7 +487,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const renderProductCard = (p) => {
             const isAtlas = p.category === 'atlas';
-            const dailyGain = Math.round(Number(p.price) * Number(p.daily_rate) / 100);
+            const isCycle = p.category === 'constant' || p.category === 'analyse';
+            // Pour Constant/Analyse, daily_rate vaut volontairement 0 (le gain
+            // vient du cycle_payout_amount fixé à la fin de la durée en jours),
+            // donc on calcule le gain/jour depuis ce montant plutôt que depuis
+            // daily_rate — sinon la carte produit affiche toujours 0 FCFA.
+            const dailyGain = isCycle
+                ? Math.round((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1))
+                : Math.round(Number(p.price) * Number(p.daily_rate) / 100);
             const affordable = wallet.balance >= Number(p.price);
 
             // Placements actifs de l'utilisateur sur CE produit précis (pas la catégorie entière)
