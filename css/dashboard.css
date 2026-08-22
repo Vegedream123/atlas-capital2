@@ -207,7 +207,10 @@ svg { flex-shrink: 0; }
 .vip-section-stats.has-active { color: var(--success); background: rgba(16, 185, 129, 0.12); }
 .vip-section-subtitle { font-size: 0.75rem; color: var(--text-secondary); margin: 0 0 12px; }
 .vip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.vip-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.vip-card { min-width: 0; background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.vip-card .btn-full { white-space: normal; text-align: center; }
+.vip-owned-row { flex-wrap: wrap; }
+.vip-owned-row span:first-child { min-width: 0; }
 .vip-card.is-owned { border-color: var(--success); box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25); }
 .vip-card-header { display: flex; align-items: center; gap: 8px; }
 .vip-icon { width: 30px; height: 30px; border-radius: 50%; background: var(--gold-gradient); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
