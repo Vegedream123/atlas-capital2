@@ -177,7 +177,7 @@ h3 {
 
 .btn-primary {
     background: var(--gold-gradient);
-    color: var(--primary);
+    color: var(--white);
     box-shadow: var(--shadow);
 }
 
@@ -705,7 +705,7 @@ h3 {
     left: 50%;
     transform: translateX(-50%);
     background: var(--gold-gradient);
-    color: var(--primary);
+    color: var(--white);
     padding: 0.25rem 1rem;
     border-radius: 100px;
     font-size: 0.75rem;
@@ -899,7 +899,7 @@ h3 {
 
 .social-links a:hover {
     background: var(--gold-gradient);
-    color: var(--primary);
+    color: var(--white);
     transform: translateY(-2px);
 }
 
