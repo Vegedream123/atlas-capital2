@@ -260,7 +260,7 @@
                 <div class="admin-table-wrap">
                     <table class="admin-table" id="promo-table">
                         <thead>
-                            <tr><th>Code</th><th>Plafond</th><th>Montant crédité</th><th>Statut</th><th>Utilisé par</th><th>Créé le</th><th>Actions</th></tr>
+                            <tr><th>Code</th><th>Réservé à</th><th>Plafond</th><th>Montant crédité</th><th>Statut</th><th>Utilisé par</th><th>Créé le</th><th>Actions</th></tr>
                         </thead>
                         <tbody id="promo-tbody"><tr><td colspan="7">Chargement…</td></tr></tbody>
                     </table>
@@ -407,6 +407,14 @@
             <div class="admin-user-actions-row">
                 <button type="button" class="btn btn-fund-add" id="user-detail-add-funds">+ Ajouter des fonds</button>
                 <button type="button" class="btn btn-fund-remove" id="user-detail-remove-funds">− Retirer des fonds</button>
+            </div>
+
+            <div class="admin-user-row-line">
+                <div>
+                    <div class="admin-user-label">Bonus personnel 🎁</div>
+                    <div class="admin-user-value admin-user-value-muted">Récompense réservée à cet utilisateur uniquement (bonne conduite, tâches accomplies…)</div>
+                </div>
+                <button type="button" class="btn btn-outline" id="user-detail-give-bonus">Attribuer un bonus</button>
             </div>
 
             <div class="admin-user-row-line">
