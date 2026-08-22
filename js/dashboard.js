@@ -933,9 +933,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (depositBtn) depositBtn.addEventListener('click', openDepositModal);
 
     // ------------------------------------------------------------------
-    // 7ter. Retrait : vérification du code PIN -> pays -> moyen de
-    //       réception -> montant. Envoie directement sur le formulaire
-    //       de retrait si le PIN est bon et le solde suffisant.
+    // 7ter. Retrait : pays -> moyen de réception -> montant, puis code
+    //       PIN en toute dernière étape pour valider et envoyer la
+    //       demande. Sans PIN correct, la demande n'est jamais envoyée.
     // ------------------------------------------------------------------
     let withdrawModalOverlay = null;
     let selectedWithdrawMethod = null;
@@ -973,7 +973,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Étape 2 : formulaire de retrait (affiché directement après validation du PIN)
+    // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
@@ -1006,16 +1006,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
-            <button type="button" class="btn btn-primary btn-full" id="withdraw-submit-btn" disabled>Envoyer ma demande de retrait</button>`;
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-submit-btn" disabled>Continuer</button>`;
 
         withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
         withdrawModalOverlay.querySelector('#withdraw-country-select').addEventListener('change', (e) => renderWithdrawMethods(e.target.value));
 
-        withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', async () => {
+        withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
             const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
             const amountInput = withdrawModalOverlay.querySelector('#withdraw-amount-input');
-            const submitBtn = withdrawModalOverlay.querySelector('#withdraw-submit-btn');
             const amount = Number(amountInput.value);
             const destination = destinationInput.value.trim();
 
@@ -1024,6 +1023,53 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
 
+            // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
+            renderWithdrawPinStep({ amount, destination, method: selectedWithdrawMethod });
+        });
+    };
+
+    // Étape 2 (finale) : vérification du code PIN, puis envoi effectif de la demande.
+    // Sans PIN correct, la demande de retrait n'est jamais envoyée.
+    const renderWithdrawPinStep = (withdrawData) => {
+        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+            <button type="button" class="modal-close" data-close-withdraw-modal>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <span class="task-modal-badge">Retrait</span>
+            <h2 class="task-modal-title">Confirmez votre code PIN</h2>
+            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour envoyer votre demande de <strong>${formatFCFA(withdrawData.amount)}</strong>.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-pin-input">Code PIN</label>
+                <input type="password" id="withdraw-pin-input" class="form-control" maxlength="5" inputmode="numeric" placeholder="•••••">
+            </div>
+
+            <div class="quiz-feedback" id="withdraw-pin-feedback"></div>
+            <button type="button" class="btn btn-outline btn-full" id="withdraw-pin-back-btn" style="margin-bottom:10px;">Retour</button>
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-pin-submit-btn">Envoyer ma demande de retrait</button>`;
+
+        withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
+        withdrawModalOverlay.querySelector('#withdraw-pin-back-btn').addEventListener('click', renderWithdrawForm);
+
+        const pinInputEl = withdrawModalOverlay.querySelector('#withdraw-pin-input');
+        const submitPin = async () => {
+            const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-pin-feedback');
+            const submitBtn = withdrawModalOverlay.querySelector('#withdraw-pin-submit-btn');
+            const pin = pinInputEl.value.trim();
+
+            // Sans code PIN valide (absent ou incorrect) -> demande refusée, rien n'est envoyé
+            if (!/^\d{5}$/.test(pin)) { feedbackEl.textContent = 'Le code PIN doit contenir 5 chiffres.'; feedbackEl.className = 'quiz-feedback error'; return; }
+
+            const hash = await sha256Hex(pin + ':' + authUser.id);
+            if (hash !== profile.withdrawal_pin_hash) {
+                feedbackEl.textContent = 'Code PIN incorrect. Demande refusée.';
+                feedbackEl.className = 'quiz-feedback error';
+                pinInputEl.value = '';
+                pinInputEl.focus();
+                return;
+            }
+
+            // PIN correct -> envoi effectif de la demande de retrait
             submitBtn.disabled = true;
             submitBtn.textContent = 'Envoi en cours...';
             feedbackEl.textContent = '';
@@ -1031,9 +1077,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const { error: insertError } = await window.supabaseClient.from('withdrawal_requests').insert({
                     user_id: authUser.id,
-                    amount,
-                    method_name: selectedWithdrawMethod.name,
-                    destination,
+                    amount: withdrawData.amount,
+                    method_name: withdrawData.method.name,
+                    destination: withdrawData.destination,
                     status: 'pending'
                 });
                 if (insertError) throw insertError;
@@ -1048,45 +1094,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Envoyer ma demande de retrait';
             }
-        });
-    };
-
-    // Étape 1 : vérification du code PIN, avant d'accéder au formulaire
-    const renderWithdrawPinStep = () => {
-        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
-            <button type="button" class="modal-close" data-close-withdraw-modal>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-            <span class="task-modal-badge">Retrait</span>
-            <h2 class="task-modal-title">Confirmez votre code PIN</h2>
-            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour continuer.</p>
-
-            <div class="form-group">
-                <label class="form-label" for="withdraw-pin-input">Code PIN</label>
-                <input type="password" id="withdraw-pin-input" class="form-control" maxlength="5" inputmode="numeric" placeholder="•••••">
-            </div>
-
-            <div class="quiz-feedback" id="withdraw-pin-feedback"></div>
-            <button type="button" class="btn btn-primary btn-full" id="withdraw-pin-submit-btn">Valider</button>`;
-
-        withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
-
-        const pinInputEl = withdrawModalOverlay.querySelector('#withdraw-pin-input');
-        const submitPin = async () => {
-            const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-pin-feedback');
-            const pin = pinInputEl.value.trim();
-            if (!/^\d{5}$/.test(pin)) { feedbackEl.textContent = 'Le code PIN doit contenir 5 chiffres.'; feedbackEl.className = 'quiz-feedback error'; return; }
-
-            const hash = await sha256Hex(pin + ':' + authUser.id);
-            if (hash !== profile.withdrawal_pin_hash) {
-                feedbackEl.textContent = 'Code PIN incorrect.';
-                feedbackEl.className = 'quiz-feedback error';
-                pinInputEl.value = '';
-                pinInputEl.focus();
-                return;
-            }
-            // PIN correct -> direction directe vers le formulaire de retrait
-            renderWithdrawForm();
         };
         withdrawModalOverlay.querySelector('#withdraw-pin-submit-btn').addEventListener('click', submitPin);
         pinInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
@@ -1109,7 +1116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         ensureWithdrawModal();
-        renderWithdrawPinStep();
+        renderWithdrawForm();
         withdrawModalOverlay.classList.add('active');
     };
 
