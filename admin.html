@@ -117,6 +117,14 @@
                         <label>Gain journalier estimé</label>
                         <div class="admin-computed" id="product-daily-gain-preview">—</div>
                     </div>
+                    <div class="admin-form-group" id="product-monthly-revenues-group" style="display:none;">
+                        <label>Revenu mensuel (FCFA) — un montant par mois</label>
+                        <p style="margin:-2px 0 10px; color:var(--text-secondary,#666); font-size:13px;">
+                            Réservé aux produits « Revenu Annuel ». Le montant versé au client peut être différent
+                            chaque mois (ex: mois 1 = 50 000 FCFA, mois 2 = 55 000 FCFA…).
+                        </p>
+                        <div class="admin-monthly-revenues-grid" id="product-monthly-revenues-grid"></div>
+                    </div>
                     <div class="admin-form-group">
                         <label>Image du produit</label>
                         <input type="file" id="product-image" accept="image/*">
@@ -134,9 +142,9 @@
                 <div class="admin-table-wrap">
                     <table class="admin-table" id="products-table">
                         <thead>
-                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Échéance</th><th>Statut</th><th>Actions</th></tr>
+                            <tr><th>Image</th><th>Nom</th><th>Catégorie</th><th>Prix</th><th>%/jour</th><th>Échéance</th><th>Revenu mensuel</th><th>Statut</th><th>Actions</th></tr>
                         </thead>
-                        <tbody id="products-tbody"><tr><td colspan="8">Chargement…</td></tr></tbody>
+                        <tbody id="products-tbody"><tr><td colspan="9">Chargement…</td></tr></tbody>
                     </table>
                 </div>
             </div>
