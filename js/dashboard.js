@@ -1459,7 +1459,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        // Lien propre pointant vers la racine du domaine (le serveur sert
+        // automatiquement index.html à cette adresse) : jamais "index.html"
+        // visible dans l'URL partagée.
+        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
