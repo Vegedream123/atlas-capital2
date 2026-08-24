@@ -1,0 +1,8 @@
+RewriteEngine On
+
+# Les anciens liens directs (déjà partagés) vers index.html / dashboard.html /
+# admin.html à la racine n'existent plus à cet endroit (le site vit maintenant
+# dans /app/) : on les renvoie proprement vers la racine, qui affiche la
+# coquille et charge l'app en interne. Le paramètre ?ref=... est conservé
+# automatiquement par mod_rewrite.
+RewriteRule ^(index|dashboard|admin)\.html$ / [R=301,L,NC]
