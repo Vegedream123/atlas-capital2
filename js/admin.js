@@ -740,6 +740,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
+        document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
+        const allowedDays = Array.isArray(data.withdrawal_allowed_days) ? data.withdrawal_allowed_days.map(String) : [];
+        document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]').forEach(cb => {
+            cb.checked = allowedDays.includes(cb.value);
+        });
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         settingsSubmitBtn.disabled = false;
     }
@@ -760,6 +765,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
+            max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value.trim()
+                ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
+            withdrawal_allowed_days: Array.from(document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]:checked'))
+                .map(cb => Number(cb.value)),
             maintenance_mode: document.getElementById('setting-maintenance-mode').checked
         };
 
