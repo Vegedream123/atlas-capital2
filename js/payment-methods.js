@@ -65,9 +65,22 @@
     // paiement USDT reste masqué (on ne veut pas afficher une adresse
     // vide/placeholder aux utilisateurs).
     let usdtAddress = '';
+    // Informations affichées au client lorsqu'il choisit l'USDT (TRC-20)
+    // comme moyen de RETRAIT (distinct de l'adresse de dépôt ci-dessus,
+    // qui appartient à Atlas Capital — au retrait, c'est le client qui
+    // fournit SON adresse). Configuré depuis l'admin.
+    let usdtWithdrawInfo = '';
 
     function setUsdtAddress(address) {
         usdtAddress = (address || '').trim();
+    }
+
+    function setUsdtWithdrawInfo(text) {
+        usdtWithdrawInfo = (text || '').trim();
+    }
+
+    function getUsdtWithdrawInfo() {
+        return usdtWithdrawInfo;
     }
 
     // Moyen de paiement universel ajouté à TOUS les pays : l'USDT (réseau
@@ -203,10 +216,23 @@
         });
     }
 
+    // Moyens de paiement LOCAUX (mobile money) : réservés au Cameroun pour
+    // le moment. Pour tout autre pays, seul l'USDT (TRC-20, universel) est
+    // proposé, en dépôt comme en retrait — le mobile money local reste
+    // indisponible tant qu'il n'a pas été activé pour ce pays.
     function getPaymentMethods(countryCode) {
-        const specific = countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
+        const specific = countryCode === 'CM'
+            ? (countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [])
+            : [];
         const usdt = getUsdtMethod();
         return usdt ? [...specific, usdt] : [...specific];
+    }
+
+    // Un pays est "restreint" (mobile money local indisponible pour le
+    // moment) s'il ne s'agit pas du Cameroun — utilisé côté dashboard pour
+    // afficher un message explicatif au client.
+    function isCountryRestricted(countryCode) {
+        return countryCode !== 'CM';
     }
 
     global.AtlasCountries = COUNTRIES;
@@ -214,7 +240,10 @@
         getCountryName,
         getPaymentMethods,
         setUsdtAddress,
-        setCountryOverrides
+        setCountryOverrides,
+        setUsdtWithdrawInfo,
+        getUsdtWithdrawInfo,
+        isCountryRestricted
     };
 
 })(window);
