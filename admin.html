@@ -361,8 +361,14 @@
 
                     <h3 class="admin-form-subtitle">Dépôts</h3>
                     <div class="admin-form-group">
-                        <label>Adresse USDT-TRC-20</label>
+                        <label>Adresse USDT-TRC-20 (dépôt)</label>
                         <input type="text" id="setting-deposit-usdt-address" placeholder="Adresse de réception USDT (réseau TRC-20)">
+                        <p class="admin-form-hint">Adresse Atlas Capital affichée au client pour envoyer son dépôt en USDT (réseau TRC-20).</p>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Informations USDT-TRC-20 (retrait)</label>
+                        <textarea id="setting-withdrawal-usdt-info" rows="3" placeholder="Ex : Retrait traité sous 24h. Vérifiez bien que votre adresse est sur le réseau TRC-20."></textarea>
+                        <p class="admin-form-hint">Affiché au client lorsqu'il choisit l'USDT comme moyen de retrait (le client fournit sa propre adresse, distincte de celle ci-dessus).</p>
                     </div>
                     <div class="admin-form-group">
                         <label>Montants de dépôt proposés (FCFA, un par ligne)</label>
