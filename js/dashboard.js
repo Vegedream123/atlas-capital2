@@ -984,6 +984,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ------------------------------------------------------------------
     let withdrawModalOverlay = null;
     let selectedWithdrawMethod = null;
+    let remainingDailyWithdrawal = null; // null = pas de plafond configuré
     const closeWithdrawModal = () => { if (withdrawModalOverlay) withdrawModalOverlay.classList.remove('active'); };
 
     const ensureWithdrawModal = () => {
@@ -1048,6 +1049,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
+        const effectiveMax = remainingDailyWithdrawal !== null
+            ? Math.min(Math.floor(wallet.balance), Math.floor(remainingDailyWithdrawal))
+            : Math.floor(wallet.balance);
+        const quotaNote = remainingDailyWithdrawal !== null
+            ? `<p class="quiz-feedback" style="background:#eef7ff; color:#0a5a8c; border:1px solid #bfe3ff;">Il vous reste <strong>${formatFCFA(remainingDailyWithdrawal)}</strong> de retrait disponible aujourd'hui.</p>`
+            : '';
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1055,6 +1062,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
             <p class="task-modal-sub">Solde disponible : <strong>${formatFCFA(wallet.balance)}</strong>. Choisissez comment vous souhaitez être payé.</p>
+            ${quotaNote}
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
@@ -1080,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${effectiveMax}">
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1103,6 +1111,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (remainingDailyWithdrawal !== null && amount > remainingDailyWithdrawal) { feedbackEl.textContent = `Le montant dépasse votre quota de retrait restant aujourd'hui (${formatFCFA(remainingDailyWithdrawal)}).`; feedbackEl.className = 'quiz-feedback error'; return; }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
             renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
@@ -1182,7 +1191,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         pinInputEl.focus();
     };
 
-    const openWithdrawFlow = () => {
+    // Libellés FR pour les jours de la semaine (index = Date.getDay(), 0=dimanche)
+    const WEEKDAY_LABELS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+    const openWithdrawFlow = async () => {
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
 
         if (!profile.withdrawal_pin_hash) {
@@ -1195,6 +1207,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (wallet.balance < minWithdrawal) {
             window.showToast(`Solde insuffisant pour un retrait. Minimum requis : ${formatFCFA(minWithdrawal)}.`, 'error');
             return;
+        }
+
+        // Jour de retrait autorisé ? (vide côté admin = tous les jours autorisés)
+        const allowedDays = Array.isArray(siteSettings.withdrawal_allowed_days) ? siteSettings.withdrawal_allowed_days : [];
+        if (allowedDays.length && !allowedDays.includes(new Date().getDay())) {
+            const allowedLabels = allowedDays.map(d => WEEKDAY_LABELS[d]).join(', ');
+            window.showToast(`Les retraits ne sont pas autorisés aujourd'hui. Jours de retrait : ${allowedLabels}.`, 'error');
+            return;
+        }
+
+        // Plafond quotidien : calcule ce qu'il reste disponible aujourd'hui
+        // (demandes en attente ou déjà approuvées comptent).
+        remainingDailyWithdrawal = null;
+        const maxDaily = Number(siteSettings.max_daily_withdrawal_amount) || 0;
+        if (maxDaily > 0) {
+            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+            const { data: todaysRequests } = await window.supabaseClient
+                .from('withdrawal_requests')
+                .select('amount, status')
+                .eq('user_id', authUser.id)
+                .in('status', ['pending', 'approved'])
+                .gte('created_at', todayStart.toISOString());
+            const alreadyRequested = (todaysRequests || []).reduce((sum, r) => sum + Number(r.amount), 0);
+            remainingDailyWithdrawal = Math.max(0, maxDaily - alreadyRequested);
+            if (remainingDailyWithdrawal <= 0) {
+                window.showToast(`Vous avez atteint le plafond de retrait quotidien (${formatFCFA(maxDaily)}/jour). Réessayez demain.`, 'error');
+                return;
+            }
         }
 
         ensureWithdrawModal();
