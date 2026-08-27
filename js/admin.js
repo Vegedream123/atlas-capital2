@@ -720,6 +720,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settingsForm = document.getElementById('settings-form');
     const settingsSubmitBtn = document.getElementById('settings-submit-btn');
 
+    // Génère les options 0h..23h pour les deux listes déroulantes d'horaires de retrait
+    const hourStartSelect = document.getElementById('setting-withdrawal-hour-start');
+    const hourEndSelect = document.getElementById('setting-withdrawal-hour-end');
+    if (hourStartSelect && hourEndSelect) {
+        const hourOptions = Array.from({ length: 24 }, (_, h) => `<option value="${h}">${String(h).padStart(2, '0')}h</option>`).join('');
+        hourStartSelect.innerHTML = hourOptions;
+        hourEndSelect.innerHTML = hourOptions;
+    }
+
     async function loadSettings() {
         settingsSubmitBtn.disabled = true;
         const { data, error } = await window.supabaseClient
@@ -740,11 +749,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
-        document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
-        const allowedDays = Array.isArray(data.withdrawal_allowed_days) ? data.withdrawal_allowed_days.map(String) : [];
-        document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]').forEach(cb => {
-            cb.checked = allowedDays.includes(cb.value);
-        });
+        if (hourStartSelect) hourStartSelect.value = data.withdrawal_hour_start ?? 0;
+        if (hourEndSelect) hourEndSelect.value = data.withdrawal_hour_end ?? 23;
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         settingsSubmitBtn.disabled = false;
     }
@@ -765,10 +771,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
-            max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value.trim()
-                ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
-            withdrawal_allowed_days: Array.from(document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]:checked'))
-                .map(cb => Number(cb.value)),
+            withdrawal_hour_start: Number(hourStartSelect ? hourStartSelect.value : 0) || 0,
+            withdrawal_hour_end: Number(hourEndSelect ? hourEndSelect.value : 23) || 0,
             maintenance_mode: document.getElementById('setting-maintenance-mode').checked
         };
 
@@ -819,7 +823,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('setting-withdrawal-methods').value = linesFromValue(data.withdrawal_methods);
         document.getElementById('setting-deposit-usdt-address').value = data.deposit_usdt_address || '';
-        document.getElementById('setting-withdrawal-usdt-info').value = data.withdrawal_usdt_info || '';
         document.getElementById('setting-deposit-amounts').value = linesFromValue(data.deposit_amounts);
 
         countryPaymentData = parseCountryPaymentMethods(data.country_payment_methods);
@@ -951,7 +954,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: 1,
             withdrawal_methods: linesToArray(document.getElementById('setting-withdrawal-methods').value),
             deposit_usdt_address: document.getElementById('setting-deposit-usdt-address').value.trim(),
-            withdrawal_usdt_info: document.getElementById('setting-withdrawal-usdt-info').value.trim(),
             deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n)),
             country_payment_methods: cleanCountryPayments
         };
