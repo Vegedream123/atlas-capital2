@@ -128,7 +128,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.AtlasPaymentMethods) {
         window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address);
         window.AtlasPaymentMethods.setCountryOverrides(siteSettings.country_payment_methods);
-        window.AtlasPaymentMethods.setUsdtWithdrawInfo(siteSettings.withdrawal_usdt_info);
     }
 
     // Bouton "Groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
@@ -819,23 +818,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderDepositMethods = (countryCode) => {
         const listEl = depositModalOverlay.querySelector('#deposit-methods-list');
-        const noticeEl = depositModalOverlay.querySelector('#deposit-country-notice');
         if (!countryCode || !window.AtlasPaymentMethods) {
             listEl.innerHTML = '';
-            if (noticeEl) noticeEl.innerHTML = '';
             return;
         }
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         selectedDepositMethod = null;
         depositModalOverlay.querySelector('#deposit-method-details').innerHTML = '';
         depositModalOverlay.querySelector('#deposit-submit-btn').disabled = true;
-
-        if (noticeEl) {
-            noticeEl.innerHTML = window.AtlasPaymentMethods.isCountryRestricted(countryCode)
-                ? `<p class="quiz-feedback" style="background:#fff4e5; color:#9a6700; border:1px solid #ffe0a3;">Les moyens de paiement locaux ne sont pas encore disponibles pour ce pays. Seul le dépôt en <strong>USDT (TRC-20)</strong> est proposé pour le moment.</p>`
-                : '';
-        }
-
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
@@ -885,7 +875,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                 </div>
 
-                <div id="deposit-country-notice"></div>
                 <div id="deposit-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
                 <div id="deposit-method-details" style="margin-bottom:14px;"></div>
 
@@ -984,7 +973,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ------------------------------------------------------------------
     let withdrawModalOverlay = null;
     let selectedWithdrawMethod = null;
-    let remainingDailyWithdrawal = null; // null = pas de plafond configuré
     const closeWithdrawModal = () => { if (withdrawModalOverlay) withdrawModalOverlay.classList.remove('active'); };
 
     const ensureWithdrawModal = () => {
@@ -1000,26 +988,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderWithdrawMethods = (countryCode) => {
         const listEl = withdrawModalOverlay.querySelector('#withdraw-methods-list');
-        const noticeEl = withdrawModalOverlay.querySelector('#withdraw-country-notice');
-        const detailsEl = withdrawModalOverlay.querySelector('#withdraw-method-details');
-        const destinationInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
         if (!listEl) return;
-        if (!countryCode || !window.AtlasPaymentMethods) {
-            listEl.innerHTML = '';
-            if (noticeEl) noticeEl.innerHTML = '';
-            return;
-        }
+        if (!countryCode || !window.AtlasPaymentMethods) { listEl.innerHTML = ''; return; }
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         selectedWithdrawMethod = null;
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = true;
-        if (detailsEl) detailsEl.innerHTML = '';
-
-        if (noticeEl) {
-            noticeEl.innerHTML = window.AtlasPaymentMethods.isCountryRestricted(countryCode)
-                ? `<p class="quiz-feedback" style="background:#fff4e5; color:#9a6700; border:1px solid #ffe0a3;">Les moyens de paiement locaux ne sont pas encore disponibles pour ce pays. Seul le retrait en <strong>USDT (TRC-20)</strong> est proposé pour le moment.</p>`
-                : '';
-        }
-
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
@@ -1030,31 +1003,42 @@ document.addEventListener('DOMContentLoaded', async () => {
                 btn.classList.add('selected');
                 selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
                 withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
-
-                const isUsdt = selectedWithdrawMethod && selectedWithdrawMethod.type === 'usdt';
-                if (detailsEl) {
-                    const info = window.AtlasPaymentMethods.getUsdtWithdrawInfo();
-                    detailsEl.innerHTML = (isUsdt && info)
-                        ? `<div class="deposit-method-details-box"><p>${info}</p></div>`
-                        : '';
-                }
-                if (destinationInput) {
-                    destinationInput.placeholder = isUsdt ? 'Votre adresse USDT (réseau TRC-20)' : 'Ex : +237 6XX XXX XXX';
-                }
             });
         });
+    };
+
+    // Vérifie si l'heure actuelle (heure locale de l'utilisateur) est dans le
+    // créneau autorisé pour les retraits, configuré par l'admin (site_settings).
+    // Gère aussi un créneau qui passe minuit (ex: 22h -> 6h).
+    const isWithinWithdrawalWindow = () => {
+        const start = Number(siteSettings.withdrawal_hour_start ?? 0);
+        const end = Number(siteSettings.withdrawal_hour_end ?? 23);
+        const h = new Date().getHours();
+        if (start <= end) return h >= start && h <= end;
+        return h >= start || h <= end;
     };
 
     // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
-        const effectiveMax = remainingDailyWithdrawal !== null
-            ? Math.min(Math.floor(wallet.balance), Math.floor(remainingDailyWithdrawal))
-            : Math.floor(wallet.balance);
-        const quotaNote = remainingDailyWithdrawal !== null
-            ? `<p class="quiz-feedback" style="background:#eef7ff; color:#0a5a8c; border:1px solid #bfe3ff;">Il vous reste <strong>${formatFCFA(remainingDailyWithdrawal)}</strong> de retrait disponible aujourd'hui.</p>`
-            : '';
+        const startH = Number(siteSettings.withdrawal_hour_start ?? 0);
+        const endH = Number(siteSettings.withdrawal_hour_end ?? 23);
+        const pad = (n) => String(n).padStart(2, '0');
+
+        if (!isWithinWithdrawalWindow()) {
+            withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+                <button type="button" class="modal-close" data-close-withdraw-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <span class="task-modal-badge">Retrait</span>
+                <h2 class="task-modal-title">Retraits fermés pour le moment</h2>
+                <p class="task-modal-sub">Les retraits ne sont possibles qu'entre <strong>${pad(startH)}h</strong> et <strong>${pad(endH)}h</strong>. Reviens dans ce créneau pour envoyer ta demande.</p>
+                <button type="button" class="btn btn-outline btn-full" data-close-withdraw-modal>Fermer</button>`;
+            withdrawModalOverlay.querySelectorAll('[data-close-withdraw-modal]').forEach(btn => btn.addEventListener('click', closeWithdrawModal));
+            return;
+        }
+
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1062,7 +1046,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
             <p class="task-modal-sub">Solde disponible : <strong>${formatFCFA(wallet.balance)}</strong>. Choisissez comment vous souhaitez être payé.</p>
-            ${quotaNote}
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
@@ -1072,9 +1055,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </select>
             </div>
 
-            <div id="withdraw-country-notice"></div>
-            <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
-            <div id="withdraw-method-details" style="margin-bottom:14px;"></div>
+            <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-recipient-name-input">Nom de réception</label>
@@ -1088,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${effectiveMax}">
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1111,7 +1092,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (remainingDailyWithdrawal !== null && amount > remainingDailyWithdrawal) { feedbackEl.textContent = `Le montant dépasse votre quota de retrait restant aujourd'hui (${formatFCFA(remainingDailyWithdrawal)}).`; feedbackEl.className = 'quiz-feedback error'; return; }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
             renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
@@ -1149,6 +1129,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Sans code PIN valide (absent ou incorrect) -> demande refusée, rien n'est envoyé
             if (!/^\d{5}$/.test(pin)) { feedbackEl.textContent = 'Le code PIN doit contenir 5 chiffres.'; feedbackEl.className = 'quiz-feedback error'; return; }
+
+            // Double vérification du créneau horaire (au cas où le formulaire est resté
+            // ouvert pendant que l'heure changeait) avant d'envoyer la demande.
+            if (!isWithinWithdrawalWindow()) {
+                const pad = (n) => String(n).padStart(2, '0');
+                feedbackEl.textContent = `Les retraits sont fermés en ce moment. Créneau autorisé : ${pad(Number(siteSettings.withdrawal_hour_start ?? 0))}h - ${pad(Number(siteSettings.withdrawal_hour_end ?? 23))}h.`;
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
 
             const hash = await sha256Hex(pin + ':' + authUser.id);
             if (hash !== profile.withdrawal_pin_hash) {
@@ -1191,10 +1180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         pinInputEl.focus();
     };
 
-    // Libellés FR pour les jours de la semaine (index = Date.getDay(), 0=dimanche)
-    const WEEKDAY_LABELS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-
-    const openWithdrawFlow = async () => {
+    const openWithdrawFlow = () => {
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
 
         if (!profile.withdrawal_pin_hash) {
@@ -1207,34 +1193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (wallet.balance < minWithdrawal) {
             window.showToast(`Solde insuffisant pour un retrait. Minimum requis : ${formatFCFA(minWithdrawal)}.`, 'error');
             return;
-        }
-
-        // Jour de retrait autorisé ? (vide côté admin = tous les jours autorisés)
-        const allowedDays = Array.isArray(siteSettings.withdrawal_allowed_days) ? siteSettings.withdrawal_allowed_days : [];
-        if (allowedDays.length && !allowedDays.includes(new Date().getDay())) {
-            const allowedLabels = allowedDays.map(d => WEEKDAY_LABELS[d]).join(', ');
-            window.showToast(`Les retraits ne sont pas autorisés aujourd'hui. Jours de retrait : ${allowedLabels}.`, 'error');
-            return;
-        }
-
-        // Plafond quotidien : calcule ce qu'il reste disponible aujourd'hui
-        // (demandes en attente ou déjà approuvées comptent).
-        remainingDailyWithdrawal = null;
-        const maxDaily = Number(siteSettings.max_daily_withdrawal_amount) || 0;
-        if (maxDaily > 0) {
-            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-            const { data: todaysRequests } = await window.supabaseClient
-                .from('withdrawal_requests')
-                .select('amount, status')
-                .eq('user_id', authUser.id)
-                .in('status', ['pending', 'approved'])
-                .gte('created_at', todayStart.toISOString());
-            const alreadyRequested = (todaysRequests || []).reduce((sum, r) => sum + Number(r.amount), 0);
-            remainingDailyWithdrawal = Math.max(0, maxDaily - alreadyRequested);
-            if (remainingDailyWithdrawal <= 0) {
-                window.showToast(`Vous avez atteint le plafond de retrait quotidien (${formatFCFA(maxDaily)}/jour). Réessayez demain.`, 'error');
-                return;
-            }
         }
 
         ensureWithdrawModal();
@@ -1538,10 +1496,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        // Lien propre pointant vers la racine du domaine (le serveur sert
-        // automatiquement index.html à cette adresse) : jamais "index.html"
-        // visible dans l'URL partagée.
-        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
