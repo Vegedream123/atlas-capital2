@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administration - Atlas Capital</title>
+<meta name="application-name" content="Atlas Capital">
+<meta property="og:site_name" content="Atlas Capital">
+<meta property="og:title" content="Atlas Capital">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="shortcut icon" href="assets/favicon.ico">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -337,24 +345,19 @@
                             <input type="number" id="setting-min-withdrawal" min="0" step="1">
                         </div>
                     </div>
-                    <div class="admin-form-group">
-                        <label>Retrait maximum par jour (FCFA)</label>
-                        <input type="number" id="setting-max-daily-withdrawal" min="0" step="1" placeholder="Laisser vide = pas de plafond">
-                        <p class="admin-form-hint">Total maximum qu'un même utilisateur peut demander en retrait sur une journée (toutes demandes en attente ou approuvées cumulées).</p>
-                    </div>
-                    <div class="admin-form-group">
-                        <label>Jours de retrait autorisés</label>
-                        <div class="admin-checkbox-row" id="setting-withdrawal-days">
-                            <label><input type="checkbox" value="1"> Lundi</label>
-                            <label><input type="checkbox" value="2"> Mardi</label>
-                            <label><input type="checkbox" value="3"> Mercredi</label>
-                            <label><input type="checkbox" value="4"> Jeudi</label>
-                            <label><input type="checkbox" value="5"> Vendredi</label>
-                            <label><input type="checkbox" value="6"> Samedi</label>
-                            <label><input type="checkbox" value="0"> Dimanche</label>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Retraits autorisés à partir de (heure)</label>
+                            <select id="setting-withdrawal-hour-start"></select>
                         </div>
-                        <p class="admin-form-hint">Aucune case cochée = retraits autorisés tous les jours (comportement actuel).</p>
+                        <div class="admin-form-group">
+                            <label>Retraits autorisés jusqu'à (heure)</label>
+                            <select id="setting-withdrawal-hour-end"></select>
+                        </div>
                     </div>
+                    <p class="admin-form-hint" style="margin:-8px 0 16px; font-size:0.8rem; color:var(--gray-500,#78716C);">
+                        En dehors de ce créneau, les utilisateurs voient le bouton de retrait désactivé avec l'horaire autorisé. Laisser 0h → 23h pour ne poser aucune restriction.
+                    </p>
                     <div class="admin-form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="checkbox" id="setting-maintenance-mode" style="width:auto;">
@@ -379,14 +382,8 @@
 
                     <h3 class="admin-form-subtitle">Dépôts</h3>
                     <div class="admin-form-group">
-                        <label>Adresse USDT-TRC-20 (dépôt)</label>
+                        <label>Adresse USDT-TRC-20</label>
                         <input type="text" id="setting-deposit-usdt-address" placeholder="Adresse de réception USDT (réseau TRC-20)">
-                        <p class="admin-form-hint">Adresse Atlas Capital affichée au client pour envoyer son dépôt en USDT (réseau TRC-20).</p>
-                    </div>
-                    <div class="admin-form-group">
-                        <label>Informations USDT-TRC-20 (retrait)</label>
-                        <textarea id="setting-withdrawal-usdt-info" rows="3" placeholder="Ex : Retrait traité sous 24h. Vérifiez bien que votre adresse est sur le réseau TRC-20."></textarea>
-                        <p class="admin-form-hint">Affiché au client lorsqu'il choisit l'USDT comme moyen de retrait (le client fournit sa propre adresse, distincte de celle ci-dessus).</p>
                     </div>
                     <div class="admin-form-group">
                         <label>Montants de dépôt proposés (FCFA, un par ligne)</label>
