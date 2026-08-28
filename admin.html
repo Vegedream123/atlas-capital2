@@ -4,14 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Administration - Atlas Capital</title>
-<meta name="application-name" content="Atlas Capital">
-<meta property="og:site_name" content="Atlas Capital">
-<meta property="og:title" content="Atlas Capital">
-<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
-<link rel="shortcut icon" href="assets/favicon.ico">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -344,26 +336,49 @@
                             <label>Retrait minimum (FCFA)</label>
                             <input type="number" id="setting-min-withdrawal" min="0" step="1">
                         </div>
-                    </div>
-                    <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Retraits autorisés à partir de (heure)</label>
-                            <select id="setting-withdrawal-hour-start"></select>
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Retraits autorisés jusqu'à (heure)</label>
-                            <select id="setting-withdrawal-hour-end"></select>
+                            <label>Frais de retrait (%)</label>
+                            <input type="number" id="setting-withdrawal-fee-percent" min="0" max="100" step="0.01" placeholder="Ex: 5">
                         </div>
                     </div>
-                    <p class="admin-form-hint" style="margin:-8px 0 16px; font-size:0.8rem; color:var(--gray-500,#78716C);">
-                        En dehors de ce créneau, les utilisateurs voient le bouton de retrait désactivé avec l'horaire autorisé. Laisser 0h → 23h pour ne poser aucune restriction.
-                    </p>
                     <div class="admin-form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="checkbox" id="setting-maintenance-mode" style="width:auto;">
                             Activer le mode maintenance (bloque l'accès au site pour les utilisateurs non-admin)
                         </label>
                     </div>
+
+                    <h3 class="admin-form-subtitle">Restrictions de retrait</h3>
+                    <p class="text-secondary" style="margin:-6px 0 12px;">Laisse un champ vide (ou aucun jour coché) pour ne fixer aucune limite sur ce point.</p>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Plafond de retrait par jour et par utilisateur (FCFA)</label>
+                            <input type="number" id="setting-max-daily-withdrawal" min="0" step="1" placeholder="Illimité si vide">
+                        </div>
+                    </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Retraits autorisés à partir de (heure, 0-23)</label>
+                            <input type="number" id="setting-withdrawal-hour-start" min="0" max="23" step="1" placeholder="Ex: 8">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Retraits autorisés jusqu'à (heure, 0-23)</label>
+                            <input type="number" id="setting-withdrawal-hour-end" min="0" max="23" step="1" placeholder="Ex: 20">
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Jours de retrait autorisés</label>
+                        <div class="admin-checkbox-grid">
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="1"> Lundi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="2"> Mardi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="3"> Mercredi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="4"> Jeudi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="5"> Vendredi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="6"> Samedi</label>
+                            <label><input type="checkbox" class="setting-withdrawal-day" value="0"> Dimanche</label>
+                        </div>
+                    </div>
+
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-primary" id="settings-submit-btn">Enregistrer les paramètres</button>
                     </div>
