@@ -1007,38 +1007,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Vérifie si l'heure actuelle (heure locale de l'utilisateur) est dans le
-    // créneau autorisé pour les retraits, configuré par l'admin (site_settings).
-    // Gère aussi un créneau qui passe minuit (ex: 22h -> 6h).
-    const isWithinWithdrawalWindow = () => {
-        const start = Number(siteSettings.withdrawal_hour_start ?? 0);
-        const end = Number(siteSettings.withdrawal_hour_end ?? 23);
-        const h = new Date().getHours();
-        if (start <= end) return h >= start && h <= end;
-        return h >= start || h <= end;
-    };
-
     // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
-        const startH = Number(siteSettings.withdrawal_hour_start ?? 0);
-        const endH = Number(siteSettings.withdrawal_hour_end ?? 23);
-        const pad = (n) => String(n).padStart(2, '0');
-
-        if (!isWithinWithdrawalWindow()) {
-            withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
-                <button type="button" class="modal-close" data-close-withdraw-modal>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <span class="task-modal-badge">Retrait</span>
-                <h2 class="task-modal-title">Retraits fermés pour le moment</h2>
-                <p class="task-modal-sub">Les retraits ne sont possibles qu'entre <strong>${pad(startH)}h</strong> et <strong>${pad(endH)}h</strong>. Reviens dans ce créneau pour envoyer ta demande.</p>
-                <button type="button" class="btn btn-outline btn-full" data-close-withdraw-modal>Fermer</button>`;
-            withdrawModalOverlay.querySelectorAll('[data-close-withdraw-modal]').forEach(btn => btn.addEventListener('click', closeWithdrawModal));
-            return;
-        }
-
+        const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1070,6 +1043,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
                 <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
+                ${feePercent > 0 ? `<p class="text-secondary" id="withdraw-fee-preview" style="font-size:0.78rem; margin-top:6px;">Frais de retrait : ${feePercent}%</p>` : ''}
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1077,6 +1051,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
         withdrawModalOverlay.querySelector('#withdraw-country-select').addEventListener('change', (e) => renderWithdrawMethods(e.target.value));
+
+        if (feePercent > 0) {
+            const amountInputEl = withdrawModalOverlay.querySelector('#withdraw-amount-input');
+            const feePreviewEl = withdrawModalOverlay.querySelector('#withdraw-fee-preview');
+            amountInputEl.addEventListener('input', () => {
+                const amt = Number(amountInputEl.value) || 0;
+                const fee = Math.round(amt * feePercent / 100);
+                feePreviewEl.textContent = amt > 0
+                    ? `Frais de retrait : ${feePercent}% (${formatFCFA(fee)}) — vous recevrez ${formatFCFA(amt - fee)}`
+                    : `Frais de retrait : ${feePercent}%`;
+            });
+        }
 
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
@@ -1129,15 +1115,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Sans code PIN valide (absent ou incorrect) -> demande refusée, rien n'est envoyé
             if (!/^\d{5}$/.test(pin)) { feedbackEl.textContent = 'Le code PIN doit contenir 5 chiffres.'; feedbackEl.className = 'quiz-feedback error'; return; }
-
-            // Double vérification du créneau horaire (au cas où le formulaire est resté
-            // ouvert pendant que l'heure changeait) avant d'envoyer la demande.
-            if (!isWithinWithdrawalWindow()) {
-                const pad = (n) => String(n).padStart(2, '0');
-                feedbackEl.textContent = `Les retraits sont fermés en ce moment. Créneau autorisé : ${pad(Number(siteSettings.withdrawal_hour_start ?? 0))}h - ${pad(Number(siteSettings.withdrawal_hour_end ?? 23))}h.`;
-                feedbackEl.className = 'quiz-feedback error';
-                return;
-            }
 
             const hash = await sha256Hex(pin + ':' + authUser.id);
             if (hash !== profile.withdrawal_pin_hash) {
@@ -1496,7 +1473,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        // Lien propre pointant vers la racine du domaine (le serveur sert
+        // automatiquement index.html à cette adresse) : jamais "index.html"
+        // visible dans l'URL partagée.
+        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
