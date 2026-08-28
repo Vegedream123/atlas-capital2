@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `<tr>
                 <td>${formatDate(r.created_at)}</td>
                 <td>${u.full_name || u.email || r.user_id}</td>
-                <td>${formatFCFA(r.amount)}</td>
+                <td>${formatFCFA(r.amount)}${r.fee_amount ? `<br><span class="text-secondary" style="font-size:0.72rem;">frais ${r.fee_percent}% (${formatFCFA(r.fee_amount)}) → <strong>net ${formatFCFA(r.net_amount)}</strong></span>` : ''}</td>
                 <td>${r.method_name || '—'}</td>
                 <td>${r.destination || '—'}</td>
                 <td>${r.recipient_name || '—'}</td>
@@ -720,15 +720,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settingsForm = document.getElementById('settings-form');
     const settingsSubmitBtn = document.getElementById('settings-submit-btn');
 
-    // Génère les options 0h..23h pour les deux listes déroulantes d'horaires de retrait
-    const hourStartSelect = document.getElementById('setting-withdrawal-hour-start');
-    const hourEndSelect = document.getElementById('setting-withdrawal-hour-end');
-    if (hourStartSelect && hourEndSelect) {
-        const hourOptions = Array.from({ length: 24 }, (_, h) => `<option value="${h}">${String(h).padStart(2, '0')}h</option>`).join('');
-        hourStartSelect.innerHTML = hourOptions;
-        hourEndSelect.innerHTML = hourOptions;
-    }
-
     async function loadSettings() {
         settingsSubmitBtn.disabled = true;
         const { data, error } = await window.supabaseClient
@@ -749,9 +740,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
-        if (hourStartSelect) hourStartSelect.value = data.withdrawal_hour_start ?? 0;
-        if (hourEndSelect) hourEndSelect.value = data.withdrawal_hour_end ?? 23;
+        document.getElementById('setting-withdrawal-fee-percent').value = data.withdrawal_fee_percent ?? '';
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
+        document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
+        document.getElementById('setting-withdrawal-hour-start').value = data.withdrawal_hour_start ?? '';
+        document.getElementById('setting-withdrawal-hour-end').value = data.withdrawal_hour_end ?? '';
+        const allowedDays = (data.withdrawal_allowed_days || []).map(String);
+        document.querySelectorAll('.setting-withdrawal-day').forEach(cb => {
+            cb.checked = allowedDays.includes(cb.value);
+        });
         settingsSubmitBtn.disabled = false;
     }
 
@@ -771,9 +768,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
-            withdrawal_hour_start: Number(hourStartSelect ? hourStartSelect.value : 0) || 0,
-            withdrawal_hour_end: Number(hourEndSelect ? hourEndSelect.value : 23) || 0,
-            maintenance_mode: document.getElementById('setting-maintenance-mode').checked
+            withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee-percent').value) || 0,
+            maintenance_mode: document.getElementById('setting-maintenance-mode').checked,
+            max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
+            withdrawal_hour_start: document.getElementById('setting-withdrawal-hour-start').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-start').value) : null,
+            withdrawal_hour_end: document.getElementById('setting-withdrawal-hour-end').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-end').value) : null,
+            withdrawal_allowed_days: Array.from(document.querySelectorAll('.setting-withdrawal-day:checked')).map(cb => Number(cb.value))
         };
 
         const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
