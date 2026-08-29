@@ -470,6 +470,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, duration / steps);
         });
 
+        // --- Graphique d'évolution (12 derniers mois, REVENUS réels de
+        //     l'utilisateur connecté uniquement : gains, commissions de
+        //     parrainage, récompenses de quêtes. Les dépôts ne sont pas
+        //     des revenus et ne sont donc pas comptabilisés ici). ---
+        const chartArea = document.getElementById('mainChart');
+        if (chartArea) {
+            const REVENUE_TYPES = new Set(['gain', 'referral_commission', 'quest']);
+            const now = new Date();
+            const months = [];
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
+            }
+            const totalsByMonth = {};
+            months.forEach(m => totalsByMonth[m.key] = 0);
+            transactions.forEach(t => {
+                if (!t.created_at) return;
+                if (!REVENUE_TYPES.has(t.type)) return;
+                const d = new Date(t.created_at);
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (key in totalsByMonth && Number(t.amount) > 0) {
+                    totalsByMonth[key] += Number(t.amount);
+                }
+            });
+            const maxVal = Math.max(1, ...Object.values(totalsByMonth));
+            chartArea.innerHTML = months.map(m => {
+                const val = totalsByMonth[m.key];
+                const heightPct = Math.max(4, Math.round((val / maxVal) * 100));
+                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatFCFA(val)}"></div><span class="x-label">${m.label}</span></div>`;
+            }).join('');
+        }
+
         // --- Produits disponibles par catégorie (Revenu Annuel / Actif / Quête) ---
         // Chaque produit reste affiché en permanence dans sa case (grille) de
         // catégorie, qu'il soit possédé ou non. Une fois acheté, le nombre de
@@ -1011,14 +1043,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
-        const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
+        // Seuls les GAINS sont retirables — un dépôt non encore investi reste
+        // bloqué (non_withdrawable_balance) tant qu'il n'a pas été placé sur
+        // un produit. Voir request_withdrawal() côté base, qui applique la
+        // même règle en dernier recours (source de vérité).
+        const withdrawable = Math.max(0, Math.floor(Number(wallet.balance) - Number(wallet.non_withdrawable_balance || 0)));
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
-            <p class="task-modal-sub">Solde disponible : <strong>${formatFCFA(wallet.balance)}</strong>. Choisissez comment vous souhaitez être payé.</p>
+            <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatFCFA(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
@@ -1042,8 +1078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
-                ${feePercent > 0 ? `<p class="text-secondary" id="withdraw-fee-preview" style="font-size:0.78rem; margin-top:6px;">Frais de retrait : ${feePercent}%</p>` : ''}
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}">
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1051,18 +1086,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
         withdrawModalOverlay.querySelector('#withdraw-country-select').addEventListener('change', (e) => renderWithdrawMethods(e.target.value));
-
-        if (feePercent > 0) {
-            const amountInputEl = withdrawModalOverlay.querySelector('#withdraw-amount-input');
-            const feePreviewEl = withdrawModalOverlay.querySelector('#withdraw-fee-preview');
-            amountInputEl.addEventListener('input', () => {
-                const amt = Number(amountInputEl.value) || 0;
-                const fee = Math.round(amt * feePercent / 100);
-                feePreviewEl.textContent = amt > 0
-                    ? `Frais de retrait : ${feePercent}% (${formatFCFA(fee)}) — vous recevrez ${formatFCFA(amt - fee)}`
-                    : `Frais de retrait : ${feePercent}%`;
-            });
-        }
 
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
@@ -1077,7 +1100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatFCFA(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
             renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
@@ -1131,15 +1154,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             feedbackEl.textContent = '';
 
             try {
-                const { error: insertError } = await window.supabaseClient.from('withdrawal_requests').insert({
-                    user_id: authUser.id,
-                    amount: withdrawData.amount,
-                    method_name: withdrawData.method.name,
-                    recipient_name: withdrawData.recipientName,
-                    destination: withdrawData.destination,
-                    status: 'pending'
+                // Passe par la fonction serveur `request_withdrawal`, seule
+                // habilitée à vérifier le montant retirable réel (gains
+                // uniquement, hors dépôts non investis) ET à réserver le
+                // montant en le déduisant immédiatement du solde. Un simple
+                // insert() dans withdrawal_requests (ancien comportement)
+                // sautait ces deux vérifications : le solde n'était jamais
+                // débité et un dépôt brut pouvait être retiré comme un gain.
+                const { error: rpcError } = await window.supabaseClient.rpc('request_withdrawal', {
+                    p_amount: withdrawData.amount,
+                    p_method_name: withdrawData.method.name,
+                    p_destination: withdrawData.destination,
+                    p_recipient_name: withdrawData.recipientName
                 });
-                if (insertError) throw insertError;
+                if (rpcError) throw rpcError;
 
                 window.showToast('<strong>Demande envoyée ✅</strong><br>Votre retrait sera traité après validation par notre équipe.', 'success', { extraClass: 'investment-toast' });
                 closeWithdrawModal();
@@ -1339,17 +1367,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 12. Menu "Mon Compte" (navigation interne, code PIN, profil, code reçu)
     // ------------------------------------------------------------------
     const accountMenuRoot = document.getElementById('account-menu-root');
-    const redeemCards = document.querySelectorAll('.redeem-card');
+    const redeemCard = document.querySelector('.redeem-card');
     const redeemInputRow = document.getElementById('redeem-input-row');
     const accountSubviews = document.querySelectorAll('.account-subview');
 
     const showAccountMenu = () => {
         accountSubviews.forEach(v => v.classList.remove('active'));
         if (accountMenuRoot) accountMenuRoot.style.display = '';
-        redeemCards.forEach(c => { c.style.display = ''; });
+        if (redeemCard) redeemCard.style.display = '';
         if (redeemInputRow) redeemInputRow.style.display = redeemInputRow.classList.contains('open') ? '' : 'none';
-        const promoRow = document.getElementById('promo-redeem-input-row');
-        if (promoRow) promoRow.style.display = promoRow.classList.contains('open') ? '' : 'none';
     };
 
     const openAccountSubview = (target) => {
@@ -1358,10 +1384,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (view) {
             view.classList.add('active');
             if (accountMenuRoot) accountMenuRoot.style.display = 'none';
-            redeemCards.forEach(c => { c.style.display = 'none'; });
+            if (redeemCard) redeemCard.style.display = 'none';
             if (redeemInputRow) redeemInputRow.style.display = 'none';
-            const promoRow = document.getElementById('promo-redeem-input-row');
-            if (promoRow) promoRow.style.display = 'none';
             window.scrollTo(0, 0);
         }
     };
@@ -1473,10 +1497,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        // Lien propre pointant vers la racine du domaine (le serveur sert
-        // automatiquement index.html à cette adresse) : jamais "index.html"
-        // visible dans l'URL partagée.
-        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
@@ -1524,10 +1545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Bonus personnel (case du haut "Mon Compte") : code à usage unique
-    // attribué par l'admin à CET utilisateur précis (voir redeem_promo_code
-    // côté serveur, qui vérifie que assigned_to correspond bien au compte
-    // connecté avant de créditer le solde).
+    // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
     const redeemInput = document.getElementById('redeem-code-input');
     const redeemBtn = document.getElementById('redeem-code-btn');
     if (redeemBtn) {
@@ -1538,60 +1556,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             redeemBtn.disabled = true;
-            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
+            const { data: amount, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
             redeemBtn.disabled = false;
             if (error) {
-                window.showToast(error.message || 'Code invalide.', 'error');
+                window.showToast(error.message || 'Code invalide ou déjà utilisé.', 'error');
                 return;
             }
             redeemInput.value = '';
             redeemInputRow.classList.remove('open');
             if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
-            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
-        });
-    }
-
-    // ------------------------------------------------------------------
-    // 13bis. Code promo général (case du bas "Mon Compte") : même fonction
-    // serveur que ci-dessus, mais pour un code SANS destinataire précis —
-    // premier arrivé, premier servi (le code cesse de fonctionner dès
-    // qu'il a été utilisé une fois).
-    // ------------------------------------------------------------------
-    const promoRedeemInputRow = document.getElementById('promo-redeem-input-row');
-    const promoRedeemToggleBtn = document.getElementById('promo-redeem-toggle-btn');
-    if (promoRedeemToggleBtn && promoRedeemInputRow) {
-        promoRedeemInputRow.style.display = 'none';
-        promoRedeemToggleBtn.addEventListener('click', () => {
-            promoRedeemInputRow.classList.toggle('open');
-            promoRedeemToggleBtn.classList.toggle('open');
-            promoRedeemInputRow.style.display = promoRedeemInputRow.classList.contains('open') ? '' : 'none';
-            if (promoRedeemInputRow.classList.contains('open')) {
-                document.getElementById('promo-redeem-code-input').focus();
-            }
-        });
-    }
-    const promoRedeemInput = document.getElementById('promo-redeem-code-input');
-    const promoRedeemBtn = document.getElementById('promo-redeem-code-btn');
-    if (promoRedeemBtn) {
-        promoRedeemBtn.addEventListener('click', async () => {
-            const code = promoRedeemInput.value.trim().toUpperCase();
-            if (!code) {
-                window.showToast('Veuillez entrer un code.', 'error');
-                return;
-            }
-            promoRedeemBtn.disabled = true;
-            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
-            promoRedeemBtn.disabled = false;
-
-            if (error) {
-                window.showToast(error.message || 'Code promo invalide.', 'error');
-                return;
-            }
-            promoRedeemInput.value = '';
-            promoRedeemInputRow.classList.remove('open');
-            promoRedeemInputRow.style.display = 'none';
-            if (promoRedeemToggleBtn) promoRedeemToggleBtn.classList.remove('open');
-            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
+            window.showToast(`🎁 Code validé ! +${formatFCFA(Number(amount))} crédités sur votre solde.`, 'success');
+            await refreshDashboardData();
         });
     }
 
