@@ -1497,7 +1497,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', 'index.html')}?ref=${referralCode}`;
+        // Lien de parrainage SANS "index.html" (juste le domaine/racine + le
+        // paramètre ?ref=). index.html étant servi par défaut sur la racine,
+        // l'inclure explicitement n'est pas nécessaire et alourdit le lien.
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', '')}?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
