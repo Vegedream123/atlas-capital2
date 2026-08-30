@@ -1051,6 +1051,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         return withdrawModalOverlay;
     };
 
+    // Le champ "Nom de réception" n'a pas de sens pour l'USDT (TRC-20) — un
+    // wallet crypto n'a pas de titulaire nommé — et "Numéro / compte de
+    // réception" devient "Adresse de réception" dans ce cas.
+    const updateWithdrawFieldsForMethod = (method) => {
+        const nameGroup = withdrawModalOverlay.querySelector('#withdraw-recipient-name-group');
+        const destLabel = withdrawModalOverlay.querySelector('#withdraw-destination-label');
+        const destInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
+        if (!nameGroup || !destLabel || !destInput) return;
+        const isUsdt = method && method.type === 'usdt';
+        nameGroup.style.display = isUsdt ? 'none' : '';
+        destLabel.textContent = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
+        destInput.placeholder = isUsdt ? 'Votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX';
+    };
+
     const renderWithdrawMethods = (countryCode) => {
         const listEl = withdrawModalOverlay.querySelector('#withdraw-methods-list');
         if (!listEl) return;
@@ -1058,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         selectedWithdrawMethod = null;
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = true;
+        updateWithdrawFieldsForMethod(null);
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
@@ -1067,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
+                updateWithdrawFieldsForMethod(selectedWithdrawMethod);
                 withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
             });
         });
@@ -1099,13 +1115,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
-            <div class="form-group">
+            <div class="form-group" id="withdraw-recipient-name-group">
                 <label class="form-label" for="withdraw-recipient-name-input">Nom de réception</label>
                 <input type="text" id="withdraw-recipient-name-input" class="form-control" placeholder="Nom complet du titulaire du compte">
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
+                <label class="form-label" for="withdraw-destination-input" id="withdraw-destination-label">Numéro / compte de réception</label>
                 <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
             </div>
 
@@ -1130,8 +1146,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const destination = destinationInput.value.trim();
 
             if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            const isUsdt = selectedWithdrawMethod.type === 'usdt';
+            if (!isUsdt && !recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!destination) { feedbackEl.textContent = isUsdt ? 'Veuillez indiquer votre adresse de réception.' : 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatFCFA(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
 
