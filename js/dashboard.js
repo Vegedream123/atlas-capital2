@@ -83,8 +83,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ------------------------------------------------------------------
     // Règles de déblocage progressif des catégories de produits :
-    //  1) "Actif" (constant / analyse) exige d'avoir déjà acheté au moins
-    //     un produit "Revenu Annuel" (Atlas), peu importe son statut actuel.
+    //  1) "Actif" (constant / analyse) exige d'avoir acheté un produit
+    //     "Revenu Annuel" (Atlas) du MÊME niveau VIP PLUS RÉCEMMENT que la
+    //     dernière fois où l'utilisateur a complété la paire Constant+Analyse
+    //     de ce niveau. Autrement dit, un Atlas ne sert à débloquer QU'UN
+    //     SEUL cycle Constant+Analyse : une fois la paire complétée, cet
+    //     Atlas est "consommé" et il faut en racheter un nouveau pour
+    //     réinvestir dans Constant/Analyse de ce niveau (ou du niveau
+    //     suivant). Ça empêche de rester bloqué sur Constant/Analyse sans
+    //     jamais repasser par Revenu Annuel.
     //  2) "Quête Quotidienne" exige d'avoir acheté LES DEUX produits Actifs
     //     (constant ET analyse) du MÊME niveau VIP, dans les 24 DERNIÈRES
     //     HEURES (fenêtre glissante, pas "aujourd'hui" calendaire) — passé ce
@@ -92,11 +99,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Définies tôt (juste après `investments`) pour être utilisables aussi
     // bien dans le rendu des cartes que dans le gestionnaire de clic d'achat.
     // ------------------------------------------------------------------
-    const hasAtlasOwnedForLevel = (vipLevel) => investments.some(i =>
-        i.investment_products &&
-        i.investment_products.category === 'atlas' &&
-        i.investment_products.vip_level === vipLevel
-    );
+    const latestTimeOfCategoryForLevel = (cat, vipLevel) => investments
+        .filter(i => i.investment_products && i.investment_products.category === cat && i.investment_products.vip_level === vipLevel)
+        .reduce((max, i) => Math.max(max, i.created_at ? new Date(i.created_at).getTime() : 0), 0);
+
+    const hasAtlasOwnedForLevel = (vipLevel) => {
+        const lastAtlas = latestTimeOfCategoryForLevel('atlas', vipLevel);
+        if (!lastAtlas) return false;
+        const lastConstant = latestTimeOfCategoryForLevel('constant', vipLevel);
+        const lastAnalyse = latestTimeOfCategoryForLevel('analyse', vipLevel);
+        // Paire jamais complétée pour ce niveau -> n'importe quel Atlas acheté compte encore.
+        const pairCompletedAt = (lastConstant && lastAnalyse) ? Math.max(lastConstant, lastAnalyse) : 0;
+        return lastAtlas > pairCompletedAt;
+    };
     const hasBothActifsRecentForLevel = (vipLevel) => {
         const cutoff = Date.now() - 24 * 60 * 60 * 1000;
         const recentOfCategory = (cat) => investments.some(i =>
