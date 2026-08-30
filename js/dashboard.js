@@ -122,6 +122,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         return recentOfCategory('constant') && recentOfCategory('analyse');
     };
 
+    // "Quête Quotidienne" doit, comme les Actifs, être consommée à l'achat :
+    // une paire Constant+Analyse ne débloque qu'UN SEUL achat de Quête. On
+    // garde la fermeture après 24h déjà en place (hasBothActifsRecentForLevel)
+    // et on ajoute la même règle de consommation que pour l'Atlas : la paire
+    // doit être plus récente que le dernier achat de Quête pour ce niveau.
+    const hasQueteAvailableForLevel = (vipLevel) => {
+        if (!hasBothActifsRecentForLevel(vipLevel)) return false;
+        const lastConstant = latestTimeOfCategoryForLevel('constant', vipLevel);
+        const lastAnalyse = latestTimeOfCategoryForLevel('analyse', vipLevel);
+        const pairCompletedAt = Math.max(lastConstant, lastAnalyse);
+        const lastQuete = latestTimeOfCategoryForLevel('quete', vipLevel);
+        return pairCompletedAt > lastQuete;
+    };
+
     // Revenu mensuel (12 valeurs FCFA, une par mois) défini PAR PRODUIT depuis
     // l'admin — remplace l'ancien tableau global de taux (%). Chaque produit
     // Atlas (Atlas 1, Atlas 2…) a donc ses propres montants pour 1 à 12 mois.
@@ -566,7 +580,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // conditions requises affiche un message explicite au lieu d'agir.
             const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasAvailableForActif(p.vip_level, p.category)
                 ? `Achetez d'abord Revenu Annuel (Atlas) VIP ${p.vip_level || '?'}`
-                : (p.category === 'quete' && !hasBothActifsRecentForLevel(p.vip_level))
+                : (p.category === 'quete' && !hasQueteAvailableForLevel(p.vip_level))
                     ? `Achetez les 2 Actifs (Constant + Analyse) VIP ${p.vip_level || '?'} dans les dernières 24h`
                     : null;
 
@@ -839,7 +853,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.showToast(`Achetez d'abord le produit « Revenu Annuel » (Atlas) VIP ${vipLevel || '?'} pour débloquer ce produit Actif.`, 'error');
                 return;
             }
-            if (category === 'quete' && !hasBothActifsRecentForLevel(vipLevel)) {
+            if (category === 'quete' && !hasQueteAvailableForLevel(vipLevel)) {
                 window.showToast(`Achetez les DEUX produits Actifs (Constant ET Analyse) VIP ${vipLevel || '?'} dans les dernières 24h pour débloquer cette Quête Quotidienne.`, 'error');
                 return;
             }
