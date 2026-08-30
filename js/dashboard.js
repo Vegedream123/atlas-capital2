@@ -84,14 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ------------------------------------------------------------------
     // Règles de déblocage progressif des catégories de produits :
     //  1) "Actif" (constant / analyse) exige d'avoir acheté un produit
-    //     "Revenu Annuel" (Atlas) du MÊME niveau VIP PLUS RÉCEMMENT que la
-    //     dernière fois où l'utilisateur a complété la paire Constant+Analyse
-    //     de ce niveau. Autrement dit, un Atlas ne sert à débloquer QU'UN
-    //     SEUL cycle Constant+Analyse : une fois la paire complétée, cet
-    //     Atlas est "consommé" et il faut en racheter un nouveau pour
-    //     réinvestir dans Constant/Analyse de ce niveau (ou du niveau
-    //     suivant). Ça empêche de rester bloqué sur Constant/Analyse sans
-    //     jamais repasser par Revenu Annuel.
+    //     "Revenu Annuel" (Atlas) du MÊME niveau VIP PLUS RÉCEMMENT que le
+    //     dernier achat de CETTE MÊME catégorie Actif (constant ou analyse
+    //     pris séparément). Autrement dit, un seul Atlas ne débloque QU'UN
+    //     SEUL achat de Constant ET QU'UN SEUL achat d'Analyse — dès que
+    //     l'un des deux est racheté, cet Atlas ne le débloque plus une
+    //     deuxième fois (même si l'autre catégorie, elle, n'a jamais été
+    //     achetée). Il faut alors un nouvel Atlas pour réinvestir dans
+    //     Constant/Analyse de ce niveau (ou du niveau suivant).
     //  2) "Quête Quotidienne" exige d'avoir acheté LES DEUX produits Actifs
     //     (constant ET analyse) du MÊME niveau VIP, dans les 24 DERNIÈRES
     //     HEURES (fenêtre glissante, pas "aujourd'hui" calendaire) — passé ce
@@ -103,14 +103,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         .filter(i => i.investment_products && i.investment_products.category === cat && i.investment_products.vip_level === vipLevel)
         .reduce((max, i) => Math.max(max, i.created_at ? new Date(i.created_at).getTime() : 0), 0);
 
-    const hasAtlasOwnedForLevel = (vipLevel) => {
+    // category ici doit être 'constant' ou 'analyse' — chacun consomme
+    // l'Atlas indépendamment de l'autre.
+    const hasAtlasAvailableForActif = (vipLevel, category) => {
         const lastAtlas = latestTimeOfCategoryForLevel('atlas', vipLevel);
         if (!lastAtlas) return false;
-        const lastConstant = latestTimeOfCategoryForLevel('constant', vipLevel);
-        const lastAnalyse = latestTimeOfCategoryForLevel('analyse', vipLevel);
-        // Paire jamais complétée pour ce niveau -> n'importe quel Atlas acheté compte encore.
-        const pairCompletedAt = (lastConstant && lastAnalyse) ? Math.max(lastConstant, lastAnalyse) : 0;
-        return lastAtlas > pairCompletedAt;
+        const lastOfThisCategory = latestTimeOfCategoryForLevel(category, vipLevel);
+        return lastAtlas > lastOfThisCategory;
     };
     const hasBothActifsRecentForLevel = (vipLevel) => {
         const cutoff = Date.now() - 24 * 60 * 60 * 1000;
@@ -565,7 +564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // dans les dernières 24h glissantes. Le bouton reste visible et
             // cliquable (jamais un "Indisponible" figé) — un clic sans les
             // conditions requises affiche un message explicite au lieu d'agir.
-            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasOwnedForLevel(p.vip_level)
+            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasAvailableForActif(p.vip_level, p.category)
                 ? `Achetez d'abord Revenu Annuel (Atlas) VIP ${p.vip_level || '?'}`
                 : (p.category === 'quete' && !hasBothActifsRecentForLevel(p.vip_level))
                     ? `Achetez les 2 Actifs (Constant + Analyse) VIP ${p.vip_level || '?'} dans les dernières 24h`
@@ -836,7 +835,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const productId = btn.getAttribute('data-product-id');
             const vipLevel = btn.getAttribute('data-product-vip-level') || null;
 
-            if ((category === 'constant' || category === 'analyse') && !hasAtlasOwnedForLevel(vipLevel)) {
+            if ((category === 'constant' || category === 'analyse') && !hasAtlasAvailableForActif(vipLevel, category)) {
                 window.showToast(`Achetez d'abord le produit « Revenu Annuel » (Atlas) VIP ${vipLevel || '?'} pour débloquer ce produit Actif.`, 'error');
                 return;
             }
