@@ -944,7 +944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="deposit-proof-input">Capture / preuve de paiement (optionnel)</label>
+                    <label class="form-label" for="deposit-proof-input">Capture / preuve de paiement</label>
                     <div class="file-input-group">
                         <label class="file-input-btn" for="deposit-proof-input">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
@@ -981,6 +981,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (!amount || amount <= 0) {
                 feedbackEl.textContent = 'Veuillez saisir un montant valide.';
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+            if (!proofInput.files || !proofInput.files[0]) {
+                feedbackEl.textContent = 'Veuillez joindre la capture / preuve de paiement avant d\'envoyer votre demande.';
                 feedbackEl.className = 'quiz-feedback error';
                 return;
             }
