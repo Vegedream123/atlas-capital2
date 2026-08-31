@@ -539,12 +539,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('user-detail-balance').textContent = formatFCFA(user.balance);
         await refreshUserDetailBlockUI(user);
 
-        const [{ data: deposits }, { data: withdrawals }, { count: referralCount }] = await Promise.all([
+        const [{ data: deposits }, { data: withdrawals }, { count: referralCount }, { data: investments }] = await Promise.all([
             window.supabaseClient.from('deposit_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             window.supabaseClient.from('withdrawal_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             user.referral_code
                 ? window.supabaseClient.from('profiles').select('id', { count: 'exact', head: true }).eq('referred_by', user.referral_code)
-                : Promise.resolve({ count: 0 })
+                : Promise.resolve({ count: 0 }),
+            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, vip_level)').eq('user_id', userId).order('created_at', { ascending: false })
         ]);
 
         const depositsBody = document.getElementById('user-detail-deposits');
@@ -556,6 +557,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         withdrawalsBody.innerHTML = (withdrawals && withdrawals.length) ? withdrawals.map(w => `
             <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun retrait.</td></tr>`;
+
+        const investmentsBody = document.getElementById('user-detail-investments');
+        document.getElementById('user-detail-investments-count').textContent = (investments || []).length;
+        investmentsBody.innerHTML = (investments && investments.length) ? investments.map(i => {
+            const productName = (i.investment_products && i.investment_products.name) || i.product_name || 'Produit supprimé';
+            const category = (i.investment_products && i.investment_products.category) || '—';
+            const statusLabel = i.status === 'active' ? 'En cours' : (i.status === 'completed' ? 'Terminé' : (i.status || '—'));
+            const statusClass = i.status === 'active' ? 'validated' : (i.status === 'completed' ? 'active' : 'pending');
+            return `
+            <tr><td>${formatDate(i.created_at)}</td><td>${productName} <span style="color:var(--text-secondary); font-size:0.75rem;">(${category})</span></td><td>${formatFCFA(i.amount)}</td><td><span class="admin-badge ${statusClass}">${statusLabel}</span></td></tr>`;
+        }).join('') : `<tr><td>Aucune machine/produit acheté.</td></tr>`;
 
         document.getElementById('user-detail-deposits-count').textContent =
             (deposits || []).filter(d => d.status === 'approved').length;
@@ -570,7 +582,101 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (wallet) referralEarnings = wallet.referral_earnings || 0;
         document.getElementById('user-detail-referral-earnings').textContent = formatFCFA(referralEarnings);
 
+        document.getElementById('user-detail-tree-sponsor-label').textContent =
+            user.referred_by ? `(parrainé par ${user.referred_by})` : '';
+        loadUserGenealogyTree(user.referral_code);
+
         openModal('user-detail-modal');
+    }
+
+    // ------------------------------------------------------------------
+    // Arbre généalogique (3 niveaux) — pour chaque filleul : nom, total
+    // déposé (dépôts approuvés) et statut actif (au moins un
+    // investissement au statut 'active' dans user_investments).
+    // ------------------------------------------------------------------
+    async function loadUserGenealogyTree(rootReferralCode) {
+        const listEls = {
+            1: document.getElementById('tree-l1-list'),
+            2: document.getElementById('tree-l2-list'),
+            3: document.getElementById('tree-l3-list'),
+        };
+        const countEls = {
+            1: document.getElementById('tree-l1-count'),
+            2: document.getElementById('tree-l2-count'),
+            3: document.getElementById('tree-l3-count'),
+        };
+        [1, 2, 3].forEach(n => {
+            listEls[n].innerHTML = `<span class="admin-tree-empty">Chargement…</span>`;
+            countEls[n].textContent = '0';
+        });
+
+        if (!rootReferralCode) {
+            [1, 2, 3].forEach(n => { listEls[n].innerHTML = `<span class="admin-tree-empty">Aucun</span>`; });
+            return;
+        }
+
+        const fetchLevel = async (codes) => {
+            if (!codes.length) return [];
+            const { data } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, phone, email, referral_code, created_at')
+                .in('referred_by', codes);
+            return data || [];
+        };
+
+        const level1 = await fetchLevel([rootReferralCode]);
+        const level2 = await fetchLevel(level1.map(u => u.referral_code).filter(Boolean));
+        const level3 = await fetchLevel(level2.map(u => u.referral_code).filter(Boolean));
+
+        const allIds = [...level1, ...level2, ...level3].map(u => u.id);
+        let depositsByUser = {};
+        let activeUserIds = new Set();
+
+        if (allIds.length) {
+            const [{ data: deposits }, { data: activeInv }] = await Promise.all([
+                window.supabaseClient.from('deposit_requests').select('user_id, amount, status').in('user_id', allIds),
+                window.supabaseClient.from('user_investments').select('user_id, status').in('user_id', allIds),
+            ]);
+            (deposits || []).forEach(d => {
+                if (d.status !== 'approved') return;
+                depositsByUser[d.user_id] = (depositsByUser[d.user_id] || 0) + Number(d.amount || 0);
+            });
+            (activeInv || []).forEach(i => { if (i.status === 'active') activeUserIds.add(i.user_id); });
+        }
+
+        const renderLevel = (n, users) => {
+            countEls[n].textContent = users.length;
+            if (!users.length) {
+                listEls[n].innerHTML = `<span class="admin-tree-empty">Aucun</span>`;
+                return;
+            }
+            listEls[n].innerHTML = users.map(u => {
+                const isActive = activeUserIds.has(u.id);
+                const deposited = depositsByUser[u.id] || 0;
+                return `
+                    <div class="admin-tree-item">
+                        <div>
+                            <div class="admin-tree-item-name">${u.full_name || u.email || 'Utilisateur'}</div>
+                            <div class="admin-tree-item-sub">${u.phone || u.email || '—'} · inscrit le ${formatDate(u.created_at)}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="admin-tree-item-deposit">${formatFCFA(deposited)}</span>
+                            <span class="admin-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        renderLevel(1, level1);
+        renderLevel(2, level2);
+        renderLevel(3, level3);
+    }
+
+    const treeToggleBtn = document.getElementById('user-detail-tree-toggle');
+    if (treeToggleBtn) {
+        treeToggleBtn.addEventListener('click', () => {
+            treeToggleBtn.closest('.admin-tree-card').classList.toggle('collapsed');
+        });
     }
 
     document.getElementById('user-detail-toggle-block').addEventListener('click', async () => {
