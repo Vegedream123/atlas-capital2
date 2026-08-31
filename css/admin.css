@@ -113,6 +113,25 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
 .admin-user-referral h4 { margin: 0 0 8px; }
 .admin-user-referral .admin-user-label { margin-bottom: 4px; }
 
+/* ---- Arbre généalogique (modal détail utilisateur) ---- */
+.admin-tree-card { border: 1px solid var(--gray-200); border-radius: var(--radius); margin: 14px 0; overflow: hidden; background: var(--gray-50); }
+.admin-tree-toggle { width: 100%; display: flex; align-items: center; gap: 8px; padding: 14px 16px; background: none; border: none; text-align: left; font-size: 0.92rem; font-weight: 700; color: var(--primary); cursor: pointer; font-family: inherit; }
+.admin-tree-caret { display: inline-block; transition: transform 0.2s ease; color: var(--accent); }
+.admin-tree-card.collapsed .admin-tree-caret { transform: rotate(-90deg); }
+.admin-tree-card.collapsed .admin-tree-body { display: none; }
+.admin-tree-sponsor-label { font-weight: 500; font-size: 0.8rem; color: var(--text-secondary); }
+.admin-tree-body { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+.admin-tree-level-title { font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+.admin-tree-list { display: flex; flex-direction: column; gap: 6px; border-left: 2px solid var(--gray-200); padding-left: 10px; }
+.admin-tree-empty { color: var(--text-secondary); font-style: italic; font-size: 0.85rem; }
+.admin-tree-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: var(--white); border-radius: var(--radius-sm); font-size: 0.82rem; border: 1px solid var(--gray-100); flex-wrap: wrap; }
+.admin-tree-item-name { font-weight: 600; color: var(--text-primary); }
+.admin-tree-item-sub { color: var(--text-secondary); font-size: 0.78rem; }
+.admin-tree-item-deposit { font-weight: 700; color: var(--primary); font-size: 0.82rem; }
+.admin-tree-item-badge { padding: 2px 9px; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+.admin-tree-item-badge.actif { background: rgba(16,185,129,0.15); color: var(--success); }
+.admin-tree-item-badge.inactif { background: rgba(100,116,139,0.15); color: var(--text-secondary); }
+
 /* ---- Paiement par pays (Paramètres → Moyens de paiement) ---- */
 .country-payment-item {
     border: 1px solid var(--gray-200);
