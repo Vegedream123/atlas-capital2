@@ -1564,6 +1564,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (referralCode) loadMyTeamTree(referralCode);
+        loadMyCommissionHistory();
 
         if (referralCopyBtn) {
             referralCopyBtn.addEventListener('click', async () => {
@@ -1675,6 +1676,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderLevel(1, level1);
         renderLevel(2, level2);
         renderLevel(3, level3);
+    }
+
+    // ------------------------------------------------------------------
+    // Détail des commissions de parrainage : liste des transactions de
+    // type 'referral_commission' de l'utilisateur connecté, la plus
+    // récente en premier (date, niveau/produit concerné, montant).
+    // ------------------------------------------------------------------
+    async function loadMyCommissionHistory() {
+        const listEl = document.getElementById('commission-history-list');
+        const countEl = document.getElementById('commission-history-count');
+        if (!listEl) return;
+
+        const formatShortDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        const { data } = await window.supabaseClient
+            .from('transactions')
+            .select('amount, description, created_at')
+            .eq('user_id', authUser.id)
+            .eq('type', 'referral_commission')
+            .order('created_at', { ascending: false });
+
+        countEl.textContent = (data || []).length;
+        if (!data || !data.length) {
+            listEl.innerHTML = `<span class="team-tree-empty">Aucune commission pour l'instant</span>`;
+            return;
+        }
+
+        listEl.innerHTML = data.map(t => `
+            <div class="team-tree-item">
+                <div>
+                    <div class="team-tree-item-name">${t.description || 'Commission de parrainage'}</div>
+                    <div class="team-tree-item-sub">${formatShortDate(t.created_at)}</div>
+                </div>
+                <span class="team-tree-item-deposit">+${formatFCFA(t.amount)}</span>
+            </div>`).join('');
     }
 
     // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
