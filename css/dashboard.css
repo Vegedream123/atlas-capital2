@@ -319,6 +319,20 @@ svg { flex-shrink: 0; }
 .referral-tier-rate { font-size: 1.2rem; font-weight: 800; }
 .referral-tier-label { font-size: 0.72rem; color: rgba(255,255,255,0.75); margin-top: 2px; }
 
+/* ---- Évolution de mon équipe (page Mon Compte > Mon Équipe) ---- */
+.team-tree-card { background: rgba(255,255,255,0.08); border-radius: var(--radius); padding: 16px; margin-top: 18px; position: relative; display: flex; flex-direction: column; gap: 14px; }
+.team-tree-title { font-size: 0.95rem; font-weight: 700; }
+.team-tree-level-title { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.85); margin-bottom: 6px; }
+.team-tree-list { display: flex; flex-direction: column; gap: 6px; border-left: 2px solid rgba(255,255,255,0.2); padding-left: 10px; }
+.team-tree-empty { color: rgba(255,255,255,0.6); font-style: italic; font-size: 0.8rem; }
+.team-tree-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; background: rgba(255,255,255,0.09); border-radius: var(--radius-sm); font-size: 0.8rem; flex-wrap: wrap; }
+.team-tree-item-name { font-weight: 600; }
+.team-tree-item-sub { color: rgba(255,255,255,0.65); font-size: 0.72rem; }
+.team-tree-item-deposit { font-weight: 700; font-size: 0.8rem; }
+.team-tree-item-badge { padding: 2px 9px; border-radius: 999px; font-size: 0.68rem; font-weight: 700; }
+.team-tree-item-badge.actif { background: rgba(16,185,129,0.25); color: #ffffff; }
+.team-tree-item-badge.inactif { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.75); }
+
 @media (max-width: 480px) {
     .referral-stats { grid-template-columns: 1fr 1fr; }
     .referral-stats .referral-stat:last-child { grid-column: 1 / -1; }
