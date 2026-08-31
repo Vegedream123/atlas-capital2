@@ -1563,6 +1563,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .then(({ count }) => { referralCountEl.textContent = count || 0; });
         }
 
+        if (referralCode) loadMyTeamTree(referralCode);
+
         if (referralCopyBtn) {
             referralCopyBtn.addEventListener('click', async () => {
                 try {
@@ -1596,6 +1598,83 @@ document.addEventListener('DOMContentLoaded', async () => {
             const message = encodeURIComponent(`Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀 ${referralLink}`);
             referralWhatsappBtn.href = `https://wa.me/?text=${message}`;
         }
+    }
+
+    // ------------------------------------------------------------------
+    // "Évolution de mon équipe" — arbre généalogique sur 3 niveaux pour
+    // l'utilisateur connecté : pour chaque filleul, total déposé (dépôts
+    // approuvés) et statut actif (au moins un investissement 'active').
+    // ------------------------------------------------------------------
+    async function loadMyTeamTree(rootReferralCode) {
+        const listEls = {
+            1: document.getElementById('my-team-l1-list'),
+            2: document.getElementById('my-team-l2-list'),
+            3: document.getElementById('my-team-l3-list'),
+        };
+        const countEls = {
+            1: document.getElementById('my-team-l1-count'),
+            2: document.getElementById('my-team-l2-count'),
+            3: document.getElementById('my-team-l3-count'),
+        };
+        if (!listEls[1]) return;
+
+        const formatShortDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+
+        const fetchLevel = async (codes) => {
+            if (!codes.length) return [];
+            const { data } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, phone, email, referral_code, created_at')
+                .in('referred_by', codes);
+            return data || [];
+        };
+
+        const level1 = await fetchLevel([rootReferralCode]);
+        const level2 = await fetchLevel(level1.map(u => u.referral_code).filter(Boolean));
+        const level3 = await fetchLevel(level2.map(u => u.referral_code).filter(Boolean));
+
+        const allIds = [...level1, ...level2, ...level3].map(u => u.id);
+        let depositsByUser = {};
+        let activeUserIds = new Set();
+
+        if (allIds.length) {
+            const [{ data: deposits }, { data: activeInv }] = await Promise.all([
+                window.supabaseClient.from('deposit_requests').select('user_id, amount, status').in('user_id', allIds),
+                window.supabaseClient.from('user_investments').select('user_id, status').in('user_id', allIds),
+            ]);
+            (deposits || []).forEach(d => {
+                if (d.status !== 'approved') return;
+                depositsByUser[d.user_id] = (depositsByUser[d.user_id] || 0) + Number(d.amount || 0);
+            });
+            (activeInv || []).forEach(i => { if (i.status === 'active') activeUserIds.add(i.user_id); });
+        }
+
+        const renderLevel = (n, users) => {
+            countEls[n].textContent = users.length;
+            if (!users.length) {
+                listEls[n].innerHTML = `<span class="team-tree-empty">Aucun filleul pour l'instant</span>`;
+                return;
+            }
+            listEls[n].innerHTML = users.map(u => {
+                const isActive = activeUserIds.has(u.id);
+                const deposited = depositsByUser[u.id] || 0;
+                return `
+                    <div class="team-tree-item">
+                        <div>
+                            <div class="team-tree-item-name">${u.full_name || 'Membre'}</div>
+                            <div class="team-tree-item-sub">Inscrit le ${formatShortDate(u.created_at)}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="team-tree-item-deposit">${formatFCFA(deposited)}</span>
+                            <span class="team-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        renderLevel(1, level1);
+        renderLevel(2, level2);
+        renderLevel(3, level3);
     }
 
     // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
