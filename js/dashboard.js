@@ -819,9 +819,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderDepositMethods = (countryCode) => {
         const listEl = depositModalOverlay.querySelector('#deposit-methods-list');
         const linkEl = depositModalOverlay.querySelector('#deposit-payment-link');
+        if (linkEl) linkEl.innerHTML = '';
         if (!countryCode || !window.AtlasPaymentMethods) {
             listEl.innerHTML = '';
-            if (linkEl) linkEl.innerHTML = '';
             return;
         }
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
@@ -830,22 +830,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         depositModalOverlay.querySelector('#deposit-method-details').innerHTML = '';
         depositModalOverlay.querySelector('#deposit-submit-btn').disabled = true;
 
-        if (linkEl) {
-            linkEl.innerHTML = paymentLink ? `
-                <a href="${paymentLink}" target="_blank" rel="noopener" class="btn btn-primary" style="display:block; text-align:center; margin-bottom:14px; text-decoration:none;">
-                    Payer directement en ligne
-                </a>
-                <p class="text-secondary" style="font-size:0.82rem; margin:-8px 0 14px;">
-                    Ou choisissez un moyen ci-dessous pour un dépôt manuel :
-                </p>` : '';
-        }
+        // Le lien de paiement en ligne (configuré par pays depuis l'admin) est
+        // affiché comme un moyen de paiement à part entière : cliquer dessus
+        // redirige directement vers ce lien, sans passer par le formulaire de
+        // preuve manuelle utilisé pour les autres moyens.
+        const linkOptionHtml = paymentLink ? `
+            <a href="${paymentLink}" target="_blank" rel="noopener" class="quiz-option deposit-method-option deposit-method-link">
+                💳 Payer en ligne
+            </a>` : '';
 
-        listEl.innerHTML = methods.map(m => `
+        listEl.innerHTML = linkOptionHtml + methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
             </button>`).join('');
 
-        listEl.querySelectorAll('.deposit-method-option').forEach(btn => {
+        listEl.querySelectorAll('.deposit-method-option:not(.deposit-method-link)').forEach(btn => {
             btn.addEventListener('click', () => {
                 listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -1523,6 +1522,66 @@ document.addEventListener('DOMContentLoaded', async () => {
             const message = encodeURIComponent(`Rejoins Atlas Capital et fais fructifier ton argent avec moi 🚀 ${referralLink}`);
             referralWhatsappBtn.href = `https://wa.me/?text=${message}`;
         }
+    }
+
+    // ----------------------------------------------------------------
+    // Arbre de parrainage : détail des commissions reçues + évolution
+    // de l'équipe sur 3 niveaux (Mon Compte > Programme de Parrainage).
+    // ----------------------------------------------------------------
+    const teamTreeItemHtml = (m) => `
+        <div class="team-tree-item">
+            <div>
+                <div class="team-tree-item-name">${m.name}</div>
+                <div class="team-tree-item-sub">${m.has_deposit ? 'A déjà déposé' : "N'a pas encore déposé"}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="team-tree-item-deposit">${formatFCFA(m.total_deposit)}</span>
+                <span class="team-tree-item-badge ${m.has_deposit ? 'actif' : 'inactif'}">${m.has_deposit ? 'Actif' : 'Inactif'}</span>
+            </div>
+        </div>`;
+
+    const renderTeamLevel = (listId, countId, members) => {
+        const listEl = document.getElementById(listId);
+        const countEl = document.getElementById(countId);
+        if (!listEl) return;
+        countEl && (countEl.textContent = (members || []).length);
+        listEl.innerHTML = (members && members.length)
+            ? members.map(teamTreeItemHtml).join('')
+            : `<span class="team-tree-empty">Aucun filleul pour l'instant</span>`;
+    };
+
+    if (document.getElementById('my-team-l1-list')) {
+        window.supabaseClient.rpc('get_referral_tree').then(({ data, error }) => {
+            if (error || !data) return;
+            renderTeamLevel('my-team-l1-list', 'my-team-l1-count', data.l1);
+            renderTeamLevel('my-team-l2-list', 'my-team-l2-count', data.l2);
+            renderTeamLevel('my-team-l3-list', 'my-team-l3-count', data.l3);
+        });
+    }
+
+    const commissionHistoryList = document.getElementById('commission-history-list');
+    if (commissionHistoryList) {
+        window.supabaseClient
+            .from('transactions')
+            .select('amount, description, created_at')
+            .eq('user_id', authUser.id)
+            .eq('type', 'referral_commission')
+            .order('created_at', { ascending: false })
+            .then(({ data }) => {
+                const rows = data || [];
+                const countEl = document.getElementById('commission-history-count');
+                if (countEl) countEl.textContent = rows.length;
+                commissionHistoryList.innerHTML = rows.length
+                    ? rows.map(t => `
+                        <div class="team-tree-item">
+                            <div>
+                                <div class="team-tree-item-name">${t.description || 'Commission de parrainage'}</div>
+                                <div class="team-tree-item-sub">${new Date(t.created_at).toLocaleDateString('fr-FR')}</div>
+                            </div>
+                            <span class="team-tree-item-deposit">+${formatFCFA(t.amount)}</span>
+                        </div>`).join('')
+                    : `<span class="team-tree-empty">Aucune commission pour l'instant</span>`;
+            });
     }
 
     // Bonus personnel (case du haut "Mon Compte") : code à usage unique
