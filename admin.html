@@ -337,6 +337,41 @@
                             <input type="number" id="setting-min-withdrawal" min="0" step="1">
                         </div>
                     </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Frais de retrait (%)</label>
+                            <input type="number" id="setting-withdrawal-fee" min="0" step="0.01">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Retrait maximum par jour (FCFA)</label>
+                            <input type="number" id="setting-max-daily-withdrawal" min="0" step="1" placeholder="Laisser vide = pas de limite">
+                        </div>
+                    </div>
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Heure de début des retraits</label>
+                            <input type="number" id="setting-withdrawal-hour-start" min="0" max="23" step="1">
+                            <p class="admin-form-hint">Ex: 8 = les retraits ne sont acceptés qu'à partir de 8h.</p>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Heure de fin des retraits</label>
+                            <input type="number" id="setting-withdrawal-hour-end" min="0" max="23" step="1">
+                            <p class="admin-form-hint">Ex: 17 = plus aucun retrait accepté après 17h.</p>
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Jours de retrait autorisés</label>
+                        <div class="admin-checkbox-row" id="setting-withdrawal-days">
+                            <label><input type="checkbox" value="1"> Lundi</label>
+                            <label><input type="checkbox" value="2"> Mardi</label>
+                            <label><input type="checkbox" value="3"> Mercredi</label>
+                            <label><input type="checkbox" value="4"> Jeudi</label>
+                            <label><input type="checkbox" value="5"> Vendredi</label>
+                            <label><input type="checkbox" value="6"> Samedi</label>
+                            <label><input type="checkbox" value="0"> Dimanche</label>
+                        </div>
+                        <p class="admin-form-hint">Décochez un jour pour bloquer les demandes de retrait ce jour-là.</p>
+                    </div>
                     <div class="admin-form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                             <input type="checkbox" id="setting-maintenance-mode" style="width:auto;">
@@ -437,6 +472,20 @@
                 <h4>👥 Parrainage (<span id="user-detail-referral-count">0</span> recruté(s))</h4>
                 <div class="admin-user-label">Parrain : <span id="user-detail-sponsor">Aucun</span></div>
                 <div class="admin-user-label">Commissions gagnées : <span id="user-detail-referral-earnings">0 FCFA</span></div>
+            </div>
+
+            <div class="admin-tree-card collapsed" id="admin-tree-card">
+                <button type="button" class="admin-tree-toggle" id="admin-tree-toggle">
+                    <span class="admin-tree-caret">▾</span> Arbre généalogique (3 niveaux)
+                </button>
+                <div class="admin-tree-body">
+                    <div class="admin-tree-level-title">Niveau 1 (<span id="admin-tree-l1-count">0</span>)</div>
+                    <div class="admin-tree-list" id="admin-tree-l1-list"><span class="admin-tree-empty">Aucun filleul</span></div>
+                    <div class="admin-tree-level-title">Niveau 2 (<span id="admin-tree-l2-count">0</span>)</div>
+                    <div class="admin-tree-list" id="admin-tree-l2-list"><span class="admin-tree-empty">Aucun filleul</span></div>
+                    <div class="admin-tree-level-title">Niveau 3 (<span id="admin-tree-l3-count">0</span>)</div>
+                    <div class="admin-tree-list" id="admin-tree-l3-list"><span class="admin-tree-empty">Aucun filleul</span></div>
+                </div>
             </div>
 
             <h4>Dépôts</h4>
