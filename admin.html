@@ -336,10 +336,6 @@
                             <label>Retrait minimum (FCFA)</label>
                             <input type="number" id="setting-min-withdrawal" min="0" step="1">
                         </div>
-                        <div class="admin-form-group">
-                            <label>Frais de retrait (%)</label>
-                            <input type="number" id="setting-withdrawal-fee-percent" min="0" max="100" step="0.01" placeholder="Ex: 5">
-                        </div>
                     </div>
                     <div class="admin-form-group">
                         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -347,38 +343,6 @@
                             Activer le mode maintenance (bloque l'accès au site pour les utilisateurs non-admin)
                         </label>
                     </div>
-
-                    <h3 class="admin-form-subtitle">Restrictions de retrait</h3>
-                    <p class="text-secondary" style="margin:-6px 0 12px;">Laisse un champ vide (ou aucun jour coché) pour ne fixer aucune limite sur ce point.</p>
-                    <div class="admin-form-row">
-                        <div class="admin-form-group">
-                            <label>Plafond de retrait par jour et par utilisateur (FCFA)</label>
-                            <input type="number" id="setting-max-daily-withdrawal" min="0" step="1" placeholder="Illimité si vide">
-                        </div>
-                    </div>
-                    <div class="admin-form-row">
-                        <div class="admin-form-group">
-                            <label>Retraits autorisés à partir de (heure, 0-23)</label>
-                            <input type="number" id="setting-withdrawal-hour-start" min="0" max="23" step="1" placeholder="Ex: 8">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Retraits autorisés jusqu'à (heure, 0-23)</label>
-                            <input type="number" id="setting-withdrawal-hour-end" min="0" max="23" step="1" placeholder="Ex: 20">
-                        </div>
-                    </div>
-                    <div class="admin-form-group">
-                        <label>Jours de retrait autorisés</label>
-                        <div class="admin-checkbox-grid">
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="1"> Lundi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="2"> Mardi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="3"> Mercredi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="4"> Jeudi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="5"> Vendredi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="6"> Samedi</label>
-                            <label><input type="checkbox" class="setting-withdrawal-day" value="0"> Dimanche</label>
-                        </div>
-                    </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-primary" id="settings-submit-btn">Enregistrer les paramètres</button>
                     </div>
@@ -475,33 +439,10 @@
                 <div class="admin-user-label">Commissions gagnées : <span id="user-detail-referral-earnings">0 FCFA</span></div>
             </div>
 
-            <div class="admin-tree-card">
-                <button type="button" class="admin-tree-toggle" id="user-detail-tree-toggle">
-                    <span class="admin-tree-caret">▾</span>
-                    <span>Arbre généalogique <span id="user-detail-tree-sponsor-label" class="admin-tree-sponsor-label"></span></span>
-                </button>
-                <div class="admin-tree-body" id="user-detail-tree-body">
-                    <div class="admin-tree-level">
-                        <div class="admin-tree-level-title">Niveau 1 (<span id="tree-l1-count">0</span>)</div>
-                        <div class="admin-tree-list" id="tree-l1-list"><span class="admin-tree-empty">Aucun</span></div>
-                    </div>
-                    <div class="admin-tree-level">
-                        <div class="admin-tree-level-title">Niveau 2 (<span id="tree-l2-count">0</span>)</div>
-                        <div class="admin-tree-list" id="tree-l2-list"><span class="admin-tree-empty">Aucun</span></div>
-                    </div>
-                    <div class="admin-tree-level">
-                        <div class="admin-tree-level-title">Niveau 3 (<span id="tree-l3-count">0</span>)</div>
-                        <div class="admin-tree-list" id="tree-l3-list"><span class="admin-tree-empty">Aucun</span></div>
-                    </div>
-                </div>
-            </div>
-
             <h4>Dépôts</h4>
             <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-deposits"></tbody></table></div>
             <h4>Retraits</h4>
             <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-withdrawals"></tbody></table></div>
-            <h4>Machines / Produits achetés (<span id="user-detail-investments-count">0</span>)</h4>
-            <div class="admin-table-wrap"><table class="admin-table"><tbody id="user-detail-investments"></tbody></table></div>
         </div>
     </div>
 </div>
