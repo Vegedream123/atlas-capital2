@@ -533,6 +533,7 @@ svg { flex-shrink: 0; }
 .quiz-option:disabled { cursor: default; }
 .quiz-option.correct { border-color: var(--success); background: rgba(16,185,129,0.1); color: var(--success); }
 .quiz-option.wrong { border-color: var(--danger); background: rgba(239,68,68,0.08); color: var(--danger); }
+.deposit-method-link { display: block; text-decoration: none; box-sizing: border-box; border-color: var(--gold); font-weight: 700; color: var(--gold); }
 .quiz-feedback { margin-top: 14px; font-size: 0.85rem; font-weight: 600; text-align: center; min-height: 20px; }
 .quiz-feedback.success { color: var(--success); }
 .quiz-feedback.error { color: var(--danger); }
