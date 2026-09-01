@@ -570,7 +570,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (wallet) referralEarnings = wallet.referral_earnings || 0;
         document.getElementById('user-detail-referral-earnings').textContent = formatFCFA(referralEarnings);
 
+        renderAdminTree(userId);
+
         openModal('user-detail-modal');
+    }
+
+    function adminTreeItemHtml(m) {
+        return `
+            <div class="admin-tree-item">
+                <div>
+                    <div class="admin-tree-item-name">${m.name}</div>
+                    <div class="admin-tree-item-sub">${m.has_deposit ? 'A déjà déposé' : "N'a pas encore déposé"}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="admin-tree-item-deposit">${formatFCFA(m.total_deposit)}</span>
+                    <span class="admin-tree-item-badge ${m.has_deposit ? 'actif' : 'inactif'}">${m.has_deposit ? 'Actif' : 'Inactif'}</span>
+                </div>
+            </div>`;
+    }
+
+    function renderAdminTreeLevel(listId, countId, members) {
+        const listEl = document.getElementById(listId);
+        document.getElementById(countId).textContent = (members || []).length;
+        listEl.innerHTML = (members && members.length)
+            ? members.map(adminTreeItemHtml).join('')
+            : `<span class="admin-tree-empty">Aucun filleul</span>`;
+    }
+
+    async function renderAdminTree(userId) {
+        renderAdminTreeLevel('admin-tree-l1-list', 'admin-tree-l1-count', []);
+        renderAdminTreeLevel('admin-tree-l2-list', 'admin-tree-l2-count', []);
+        renderAdminTreeLevel('admin-tree-l3-list', 'admin-tree-l3-count', []);
+        const { data, error } = await window.supabaseClient.rpc('get_referral_tree', { p_user_id: userId });
+        if (error || !data) return;
+        renderAdminTreeLevel('admin-tree-l1-list', 'admin-tree-l1-count', data.l1);
+        renderAdminTreeLevel('admin-tree-l2-list', 'admin-tree-l2-count', data.l2);
+        renderAdminTreeLevel('admin-tree-l3-list', 'admin-tree-l3-count', data.l3);
+    }
+
+    const adminTreeToggle = document.getElementById('admin-tree-toggle');
+    if (adminTreeToggle) {
+        adminTreeToggle.addEventListener('click', () => {
+            document.getElementById('admin-tree-card').classList.toggle('collapsed');
+        });
     }
 
     document.getElementById('user-detail-toggle-block').addEventListener('click', async () => {
@@ -740,6 +782,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
+        document.getElementById('setting-withdrawal-fee').value = data.withdrawal_fee_percent ?? '';
+        document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
+        document.getElementById('setting-withdrawal-hour-start').value = data.withdrawal_hour_start ?? '';
+        document.getElementById('setting-withdrawal-hour-end').value = data.withdrawal_hour_end ?? '';
+        const allowedDays = Array.isArray(data.withdrawal_allowed_days) ? data.withdrawal_allowed_days.map(String) : [];
+        document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]').forEach(cb => {
+            cb.checked = allowedDays.includes(cb.value);
+        });
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         settingsSubmitBtn.disabled = false;
     }
@@ -748,6 +798,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         settingsSubmitBtn.disabled = true;
         settingsSubmitBtn.textContent = 'Enregistrement…';
+
+        const maxDailyRaw = document.getElementById('setting-max-daily-withdrawal').value;
+        const allowedDays = Array.from(document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]:checked'))
+            .map(cb => Number(cb.value));
 
         const payload = {
             id: 1,
@@ -760,6 +814,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
+            withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee').value) || 0,
+            max_daily_withdrawal_amount: maxDailyRaw === '' ? null : Number(maxDailyRaw),
+            withdrawal_hour_start: Number(document.getElementById('setting-withdrawal-hour-start').value) || 0,
+            withdrawal_hour_end: Number(document.getElementById('setting-withdrawal-hour-end').value) || 23,
+            withdrawal_allowed_days: allowedDays,
             maintenance_mode: document.getElementById('setting-maintenance-mode').checked
         };
 
