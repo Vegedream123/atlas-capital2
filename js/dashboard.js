@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let investments = investmentsRes.data || [];
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
-    let siteSettings = settingsRes.data || { min_withdrawal: 0 };
+    let siteSettings = settingsRes.data || { min_withdrawal: 0, min_deposit: 0, withdrawal_fee_percent: 0 };
     if (settingsRes.error) {
         // Si ce message apparaît dans la console, la page de dépôt n'affichera
         // ni l'adresse USDT ni les liens de paiement par pays : c'est presque
@@ -970,6 +970,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const countries = window.AtlasCountries || [];
+        const minDeposit = Number(siteSettings.min_deposit) || 0;
         depositModalOverlay.innerHTML = `
             <div class="modal-card">
                 <button type="button" class="modal-close" data-close-deposit-modal>
@@ -993,7 +994,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 <div class="form-group">
                     <label class="form-label" for="deposit-amount-input">Montant (FCFA)</label>
-                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Ex: 10000" min="1">
+                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minDeposit)}" min="${minDeposit || 1}">
                 </div>
 
                 <div class="form-group">
@@ -1032,8 +1033,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 feedbackEl.className = 'quiz-feedback error';
                 return;
             }
+            const minDeposit = Number(siteSettings.min_deposit) || 0;
             if (!amount || amount <= 0) {
                 feedbackEl.textContent = 'Veuillez saisir un montant valide.';
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+            if (amount < minDeposit) {
+                feedbackEl.textContent = `Montant minimum : ${formatFCFA(minDeposit)}.`;
                 feedbackEl.className = 'quiz-feedback error';
                 return;
             }
@@ -1182,12 +1189,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
                 <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}">
             </div>
+            <p class="task-modal-sub" id="withdraw-fee-preview" style="margin-top:-6px;"></p>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
             <button type="button" class="btn btn-primary btn-full" id="withdraw-submit-btn" disabled>Continuer</button>`;
 
         withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
         withdrawModalOverlay.querySelector('#withdraw-country-select').addEventListener('change', (e) => renderWithdrawMethods(e.target.value));
+
+        const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
+        const feePreviewEl = withdrawModalOverlay.querySelector('#withdraw-fee-preview');
+        const updateFeePreview = () => {
+            const val = Number(withdrawModalOverlay.querySelector('#withdraw-amount-input').value);
+            if (!val || val <= 0) { feePreviewEl.textContent = ''; return; }
+            if (!feePercent) { feePreviewEl.innerHTML = `Aucun frais. Vous recevrez <strong>${formatFCFA(val)}</strong>.`; return; }
+            const fee = Math.round(val * feePercent / 100);
+            const net = val - fee;
+            feePreviewEl.innerHTML = `Frais de retrait ${feePercent}% = ${formatFCFA(fee)}. Vous recevrez net : <strong>${formatFCFA(net)}</strong>.`;
+        };
+        withdrawModalOverlay.querySelector('#withdraw-amount-input').addEventListener('input', updateFeePreview);
 
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').addEventListener('click', () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-feedback');
@@ -1213,13 +1233,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Étape 2 (finale) : vérification du code PIN, puis envoi effectif de la demande.
     // Sans PIN correct, la demande de retrait n'est jamais envoyée.
     const renderWithdrawPinStep = (withdrawData) => {
+        const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
+        const feeAmount = feePercent ? Math.round(withdrawData.amount * feePercent / 100) : 0;
+        const netAmount = withdrawData.amount - feeAmount;
+        const feeLine = feePercent
+            ? `Frais de retrait ${feePercent}% = ${formatFCFA(feeAmount)}. Montant net que vous recevrez : <strong>${formatFCFA(netAmount)}</strong>.`
+            : `Aucun frais. Vous recevrez <strong>${formatFCFA(netAmount)}</strong>.`;
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Confirmez votre code PIN</h2>
-            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour envoyer votre demande de <strong>${formatFCFA(withdrawData.amount)}</strong>.</p>
+            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour envoyer votre demande de <strong>${formatFCFA(withdrawData.amount)}</strong>.<br>${feeLine}</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-pin-input">Code PIN</label>
