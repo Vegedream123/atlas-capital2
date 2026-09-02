@@ -165,14 +165,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.AtlasPaymentMethods.setCountryOverrides(siteSettings.country_payment_methods);
     }
 
-    // Bouton "Groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
-    const whatsappGroupBtn = document.getElementById('account-whatsapp-group-btn');
-    if (whatsappGroupBtn) {
-        if (siteSettings.whatsapp_group) {
-            whatsappGroupBtn.href = siteSettings.whatsapp_group;
-            whatsappGroupBtn.style.display = 'flex';
+    // Bouton "Groupe Telegram" — lien géré depuis l'admin (site_settings.telegram_group)
+    const telegramGroupBtn = document.getElementById('account-telegram-group-btn');
+    if (telegramGroupBtn) {
+        if (siteSettings.telegram_group) {
+            telegramGroupBtn.href = siteSettings.telegram_group;
+            telegramGroupBtn.style.display = 'flex';
         } else {
-            whatsappGroupBtn.style.display = 'none';
+            telegramGroupBtn.style.display = 'none';
+        }
+    }
+
+    // Bouton flottant "Service en ligne" (Accueil uniquement) — ouvre une
+    // conversation Telegram directe avec le username défini dans l'admin
+    // (site_settings.telegram_support_username)
+    const telegramSupportFab = document.getElementById('telegram-support-fab');
+    if (telegramSupportFab) {
+        const supportUsername = (siteSettings.telegram_support_username || '').trim().replace(/^@/, '');
+        if (supportUsername) {
+            telegramSupportFab.href = `https://t.me/${supportUsername}`;
+            telegramSupportFab.style.display = 'flex';
+        } else {
+            telegramSupportFab.style.display = 'none';
         }
     }
 
