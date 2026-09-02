@@ -31,6 +31,7 @@
             <button class="admin-nav-item" data-target="produits">📦 Produits</button>
             <button class="admin-nav-item" data-target="depots">⬆️ Dépôts</button>
             <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
+            <button class="admin-nav-item" data-target="achats">🛒 Achats Machines</button>
             <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
             <button class="admin-nav-item" data-target="codespromo">🎟️ Codes Promo</button>
             <button class="admin-nav-item" data-target="parrainage">🤝 Top Promoteurs</button>
@@ -228,6 +229,33 @@
                 </div>
             </div>
         </section>
+
+        <!-- VUE: ACHATS MACHINES -->
+        <section class="admin-view" id="view-achats">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Nouveaux achats de machines</h2>
+                </div>
+                <p class="text-secondary" style="margin:-6px 0 14px;">
+                    Chaque achat de produit (machine) par un utilisateur apparaît ici en temps réel, avec le détail
+                    de l'investissement et ce qu'il doit rapporter.
+                </p>
+                <div class="admin-subnav">
+                    <button class="admin-subnav-btn active" data-purchase-status="all">Tous</button>
+                    <button class="admin-subnav-btn" data-purchase-status="active">Actifs</button>
+                    <button class="admin-subnav-btn" data-purchase-status="completed">Terminés</button>
+                </div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Date d'achat</th><th>Utilisateur</th><th>Machine</th><th>Catégorie</th><th>Montant investi</th><th>Rendement</th><th>Durée / Échéance</th><th>Statut</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="purchases-tbody"><tr><td colspan="9">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
 
         <!-- VUE: CODES PROMO -->
         <section class="admin-view" id="view-codespromo">
@@ -596,8 +624,47 @@
     </div>
 </div>
 
+<!-- Modal détail d'un achat de machine -->
+<div class="modal-overlay" id="purchase-detail-modal">
+    <div class="modal admin-user-modal">
+        <div class="modal-header">
+            <div>
+                <h3>Détail de l'achat</h3>
+                <div id="pd-detail-status" class="admin-user-subtitle"></div>
+            </div>
+            <button class="modal-close" data-close-modal="purchase-detail-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="admin-net-highlight">
+                <span>Montant total à percevoir par l'utilisateur (capital + gain)</span>
+                <strong id="pd-detail-payout">0 FCFA</strong>
+            </div>
+
+            <div class="admin-user-stats-row">
+                <div class="admin-user-stat"><span>Montant investi</span><strong id="pd-detail-amount">0</strong></div>
+                <div class="admin-user-stat"><span>Date d'achat</span><strong id="pd-detail-date">—</strong></div>
+                <div class="admin-user-stat"><span>Échéance</span><strong id="pd-detail-matures">—</strong></div>
+            </div>
+
+            <h4>👤 Compte de l'utilisateur</h4>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Nom complet</div><div class="admin-user-value" id="pd-detail-fullname">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">E-mail du compte</div><div class="admin-user-value" id="pd-detail-email">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Téléphone</div><div class="admin-user-value" id="pd-detail-phone">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Solde actuel du compte</div><div class="admin-user-value" id="pd-detail-balance">—</div></div></div>
+
+            <h4>⚙️ Détail de la machine</h4>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Machine</div><div class="admin-user-value" id="pd-detail-product">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Catégorie</div><div class="admin-user-value" id="pd-detail-category">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Durée</div><div class="admin-user-value" id="pd-detail-duration">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Dernière tâche effectuée</div><div class="admin-user-value" id="pd-detail-last-task">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Terminé le</div><div class="admin-user-value" id="pd-detail-completed">—</div></div></div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal image plein écran (captures) -->
 <div class="modal-overlay" id="image-view-modal">
+
 
     <div class="modal admin-image-modal">
         <div class="modal-header">
