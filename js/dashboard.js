@@ -893,25 +893,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         depositModalOverlay.querySelector('#deposit-method-details').innerHTML = '';
         depositModalOverlay.querySelector('#deposit-submit-btn').disabled = true;
 
+        // Pour tous les pays sauf le Cameroun : si un lien de paiement est
+        // configuré, on le propose en plus des moyens habituels (dont l'USDT,
+        // qui reste la même adresse partout, configurée une seule fois dans
+        // l'admin). L'utilisateur choisit ce qui lui convient.
         const paymentLink = countryCode !== 'CM' ? window.AtlasPaymentMethods.getPaymentLink(countryCode) : '';
 
-        if (paymentLink) {
-            // Le lien gère tout : pas de liste de moyens, juste le bouton de redirection.
-            listEl.innerHTML = '';
+        if (paymentLink && linkEl) {
             linkEl.innerHTML = `
                 <a href="${paymentLink}" target="_blank" rel="noopener" id="deposit-online-link" class="btn btn-primary" style="display:block; text-align:center; margin-bottom:14px; text-decoration:none;">
                     Payer en ligne
                 </a>
                 <p class="text-secondary" style="font-size:0.82rem; margin:-8px 0 14px;">
                     Vous allez être redirigé vers la page de paiement. Une fois le paiement effectué, indiquez le montant ci-dessous et envoyez votre demande de dépôt.
-                </p>`;
+                </p>
+                <p class="text-secondary" style="font-size:0.82rem; margin:0 0 10px;">Ou choisissez un moyen ci-dessous :</p>`;
             // Le paiement est géré par le lien externe : on active directement l'envoi de la demande.
+            // (l'utilisateur peut aussi choisir un moyen ci-dessous, ce qui remplacera ce choix)
             selectedDepositMethod = { name: 'Paiement en ligne' };
             depositModalOverlay.querySelector('#deposit-submit-btn').disabled = false;
-            return;
+        } else if (linkEl) {
+            linkEl.innerHTML = '';
         }
 
-        if (linkEl) linkEl.innerHTML = '';
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
