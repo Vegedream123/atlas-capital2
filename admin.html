@@ -33,6 +33,7 @@
             <button class="admin-nav-item" data-target="retraits">⬇️ Retraits</button>
             <button class="admin-nav-item" data-target="utilisateurs">👥 Utilisateurs</button>
             <button class="admin-nav-item" data-target="codespromo">🎟️ Codes Promo</button>
+            <button class="admin-nav-item" data-target="parrainage">🤝 Top Promoteurs</button>
             <button class="admin-nav-item" data-target="parametres">⚙️ Paramètres</button>
         </nav>
         <div class="admin-sidebar-footer">
@@ -286,6 +287,37 @@
             </div>
         </section>
 
+        <!-- VUE: TOP PROMOTEURS -->
+        <section class="admin-view" id="view-parrainage">
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Promoteurs les plus actifs</h2>
+                    <input type="text" id="referrer-search" placeholder="Rechercher un nom ou un email…" class="admin-search-input">
+                </div>
+                <p class="text-secondary" style="font-size:0.85rem; margin:-8px 0 14px;">
+                    Classement de tous les utilisateurs ayant au moins un filleul, du plus grand nombre de filleuls directs au plus petit.
+                </p>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Rang</th>
+                                <th>Nom</th>
+                                <th>Contact</th>
+                                <th>Code parrainage</th>
+                                <th>Filleuls directs</th>
+                                <th>Gains de parrainage</th>
+                                <th>Solde</th>
+                                <th>Inscrit le</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="referrers-tbody"><tr><td colspan="9">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
         <!-- VUE: PARAMÈTRES -->
         <section class="admin-view" id="view-parametres">
             <div class="admin-panel">
@@ -405,10 +437,9 @@
                         <textarea id="setting-deposit-amounts" rows="6" placeholder="5000&#10;15000&#10;50000&#10;150000&#10;250000&#10;500000"></textarea>
                     </div>
 
-                    <h3 class="admin-form-subtitle">Liens de paiement par pays</h3>
+                    <h3 class="admin-form-subtitle">Paiement par pays</h3>
                     <p class="text-secondary" style="font-size:0.85rem;margin:-6px 0 14px;">
-                        Sur la page de dépôt, l'utilisateur choisit son pays et le moyen correspondant s'affiche.
-                        Vous pouvez ajouter jusqu'à 2 numéros (nom du titulaire et réseau) par pays, copiables en un clic.
+                        Sur la page de dépôt, l'utilisateur choisit son pays. <strong>Pour le Cameroun</strong>, vous pouvez configurer jusqu'à 2 numéros Mobile Money (nom du titulaire et réseau), copiables en un clic. <strong>Pour tous les autres pays</strong>, si vous renseignez un lien de paiement, c'est ce lien qui gère entièrement le dépôt : l'utilisateur clique dessus et est redirigé directement dessus (les numéros ne s'affichent pas pour ces pays).
                     </p>
                     <div id="country-payment-links-list"></div>
                     <button type="button" class="btn btn-outline" id="add-country-payment-link-btn" style="margin-bottom:18px;">+ Ajouter un pays</button>
