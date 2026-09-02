@@ -429,7 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `<tr>
                 <td>${formatDate(r.created_at)}</td>
                 <td>${u.full_name || u.email || r.user_id}</td>
-                <td>${formatFCFA(r.amount)}</td>
+                <td>${formatFCFA(r.amount)}${r.fee_amount ? `<br><span class="text-secondary" style="font-size:0.72rem;">frais ${r.fee_percent}% (${formatFCFA(r.fee_amount)}) → <strong>net ${formatFCFA(r.net_amount)}</strong></span>` : ''}</td>
                 <td>${r.method_name || '—'}</td>
                 <td>${r.destination || '—'}</td>
                 <td>${r.recipient_name || '—'}</td>
@@ -539,12 +539,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('user-detail-balance').textContent = formatFCFA(user.balance);
         await refreshUserDetailBlockUI(user);
 
-        const [{ data: deposits }, { data: withdrawals }, { count: referralCount }] = await Promise.all([
+        const [{ data: deposits }, { data: withdrawals }, { count: referralCount }, { data: investments }] = await Promise.all([
             window.supabaseClient.from('deposit_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             window.supabaseClient.from('withdrawal_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }),
             user.referral_code
                 ? window.supabaseClient.from('profiles').select('id', { count: 'exact', head: true }).eq('referred_by', user.referral_code)
-                : Promise.resolve({ count: 0 })
+                : Promise.resolve({ count: 0 }),
+            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, vip_level)').eq('user_id', userId).order('created_at', { ascending: false })
         ]);
 
         const depositsBody = document.getElementById('user-detail-deposits');
@@ -556,6 +557,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         withdrawalsBody.innerHTML = (withdrawals && withdrawals.length) ? withdrawals.map(w => `
             <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun retrait.</td></tr>`;
+
+        const investmentsBody = document.getElementById('user-detail-investments');
+        document.getElementById('user-detail-investments-count').textContent = (investments || []).length;
+        investmentsBody.innerHTML = (investments && investments.length) ? investments.map(i => {
+            const productName = (i.investment_products && i.investment_products.name) || i.product_name || 'Produit supprimé';
+            const category = (i.investment_products && i.investment_products.category) || '—';
+            const statusLabel = i.status === 'active' ? 'En cours' : (i.status === 'completed' ? 'Terminé' : (i.status || '—'));
+            const statusClass = i.status === 'active' ? 'validated' : (i.status === 'completed' ? 'active' : 'pending');
+            return `
+            <tr><td>${formatDate(i.created_at)}</td><td>${productName} <span style="color:var(--text-secondary); font-size:0.75rem;">(${category})</span></td><td>${formatFCFA(i.amount)}</td><td><span class="admin-badge ${statusClass}">${statusLabel}</span></td></tr>`;
+        }).join('') : `<tr><td>Aucune machine/produit acheté.</td></tr>`;
 
         document.getElementById('user-detail-deposits-count').textContent =
             (deposits || []).filter(d => d.status === 'approved').length;
@@ -570,48 +582,100 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (wallet) referralEarnings = wallet.referral_earnings || 0;
         document.getElementById('user-detail-referral-earnings').textContent = formatFCFA(referralEarnings);
 
-        renderAdminTree(userId);
+        document.getElementById('user-detail-tree-sponsor-label').textContent =
+            user.referred_by ? `(parrainé par ${user.referred_by})` : '';
+        loadUserGenealogyTree(user.referral_code);
 
         openModal('user-detail-modal');
     }
 
-    function adminTreeItemHtml(m) {
-        return `
-            <div class="admin-tree-item">
-                <div>
-                    <div class="admin-tree-item-name">${m.name}</div>
-                    <div class="admin-tree-item-sub">${m.has_deposit ? 'A déjà déposé' : "N'a pas encore déposé"}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="admin-tree-item-deposit">${formatFCFA(m.total_deposit)}</span>
-                    <span class="admin-tree-item-badge ${m.has_deposit ? 'actif' : 'inactif'}">${m.has_deposit ? 'Actif' : 'Inactif'}</span>
-                </div>
-            </div>`;
+    // ------------------------------------------------------------------
+    // Arbre généalogique (3 niveaux) — pour chaque filleul : nom, total
+    // déposé (dépôts approuvés) et statut actif (au moins un
+    // investissement au statut 'active' dans user_investments).
+    // ------------------------------------------------------------------
+    async function loadUserGenealogyTree(rootReferralCode) {
+        const listEls = {
+            1: document.getElementById('tree-l1-list'),
+            2: document.getElementById('tree-l2-list'),
+            3: document.getElementById('tree-l3-list'),
+        };
+        const countEls = {
+            1: document.getElementById('tree-l1-count'),
+            2: document.getElementById('tree-l2-count'),
+            3: document.getElementById('tree-l3-count'),
+        };
+        [1, 2, 3].forEach(n => {
+            listEls[n].innerHTML = `<span class="admin-tree-empty">Chargement…</span>`;
+            countEls[n].textContent = '0';
+        });
+
+        if (!rootReferralCode) {
+            [1, 2, 3].forEach(n => { listEls[n].innerHTML = `<span class="admin-tree-empty">Aucun</span>`; });
+            return;
+        }
+
+        const fetchLevel = async (codes) => {
+            if (!codes.length) return [];
+            const { data } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, phone, email, referral_code, created_at')
+                .in('referred_by', codes);
+            return data || [];
+        };
+
+        const level1 = await fetchLevel([rootReferralCode]);
+        const level2 = await fetchLevel(level1.map(u => u.referral_code).filter(Boolean));
+        const level3 = await fetchLevel(level2.map(u => u.referral_code).filter(Boolean));
+
+        const allIds = [...level1, ...level2, ...level3].map(u => u.id);
+        let depositsByUser = {};
+        let activeUserIds = new Set();
+
+        if (allIds.length) {
+            const [{ data: deposits }, { data: activeInv }] = await Promise.all([
+                window.supabaseClient.from('deposit_requests').select('user_id, amount, status').in('user_id', allIds),
+                window.supabaseClient.from('user_investments').select('user_id, status').in('user_id', allIds),
+            ]);
+            (deposits || []).forEach(d => {
+                if (d.status !== 'approved') return;
+                depositsByUser[d.user_id] = (depositsByUser[d.user_id] || 0) + Number(d.amount || 0);
+            });
+            (activeInv || []).forEach(i => { if (i.status === 'active') activeUserIds.add(i.user_id); });
+        }
+
+        const renderLevel = (n, users) => {
+            countEls[n].textContent = users.length;
+            if (!users.length) {
+                listEls[n].innerHTML = `<span class="admin-tree-empty">Aucun</span>`;
+                return;
+            }
+            listEls[n].innerHTML = users.map(u => {
+                const isActive = activeUserIds.has(u.id);
+                const deposited = depositsByUser[u.id] || 0;
+                return `
+                    <div class="admin-tree-item">
+                        <div>
+                            <div class="admin-tree-item-name">${u.full_name || u.email || 'Utilisateur'}</div>
+                            <div class="admin-tree-item-sub">${u.phone || u.email || '—'} · inscrit le ${formatDate(u.created_at)}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="admin-tree-item-deposit">${formatFCFA(deposited)}</span>
+                            <span class="admin-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        renderLevel(1, level1);
+        renderLevel(2, level2);
+        renderLevel(3, level3);
     }
 
-    function renderAdminTreeLevel(listId, countId, members) {
-        const listEl = document.getElementById(listId);
-        document.getElementById(countId).textContent = (members || []).length;
-        listEl.innerHTML = (members && members.length)
-            ? members.map(adminTreeItemHtml).join('')
-            : `<span class="admin-tree-empty">Aucun filleul</span>`;
-    }
-
-    async function renderAdminTree(userId) {
-        renderAdminTreeLevel('admin-tree-l1-list', 'admin-tree-l1-count', []);
-        renderAdminTreeLevel('admin-tree-l2-list', 'admin-tree-l2-count', []);
-        renderAdminTreeLevel('admin-tree-l3-list', 'admin-tree-l3-count', []);
-        const { data, error } = await window.supabaseClient.rpc('get_referral_tree', { p_user_id: userId });
-        if (error || !data) return;
-        renderAdminTreeLevel('admin-tree-l1-list', 'admin-tree-l1-count', data.l1);
-        renderAdminTreeLevel('admin-tree-l2-list', 'admin-tree-l2-count', data.l2);
-        renderAdminTreeLevel('admin-tree-l3-list', 'admin-tree-l3-count', data.l3);
-    }
-
-    const adminTreeToggle = document.getElementById('admin-tree-toggle');
-    if (adminTreeToggle) {
-        adminTreeToggle.addEventListener('click', () => {
-            document.getElementById('admin-tree-card').classList.toggle('collapsed');
+    const treeToggleBtn = document.getElementById('user-detail-tree-toggle');
+    if (treeToggleBtn) {
+        treeToggleBtn.addEventListener('click', () => {
+            treeToggleBtn.closest('.admin-tree-card').classList.toggle('collapsed');
         });
     }
 
@@ -782,15 +846,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
         document.getElementById('setting-min-deposit').value = data.min_deposit ?? '';
         document.getElementById('setting-min-withdrawal').value = data.min_withdrawal ?? '';
-        document.getElementById('setting-withdrawal-fee').value = data.withdrawal_fee_percent ?? '';
+        document.getElementById('setting-withdrawal-fee-percent').value = data.withdrawal_fee_percent ?? '';
+        document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
         document.getElementById('setting-withdrawal-hour-start').value = data.withdrawal_hour_start ?? '';
         document.getElementById('setting-withdrawal-hour-end').value = data.withdrawal_hour_end ?? '';
-        const allowedDays = Array.isArray(data.withdrawal_allowed_days) ? data.withdrawal_allowed_days.map(String) : [];
-        document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]').forEach(cb => {
+        const allowedDays = (data.withdrawal_allowed_days || []).map(String);
+        document.querySelectorAll('.setting-withdrawal-day').forEach(cb => {
             cb.checked = allowedDays.includes(cb.value);
         });
-        document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         settingsSubmitBtn.disabled = false;
     }
 
@@ -798,10 +862,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         e.preventDefault();
         settingsSubmitBtn.disabled = true;
         settingsSubmitBtn.textContent = 'Enregistrement…';
-
-        const maxDailyRaw = document.getElementById('setting-max-daily-withdrawal').value;
-        const allowedDays = Array.from(document.querySelectorAll('#setting-withdrawal-days input[type="checkbox"]:checked'))
-            .map(cb => Number(cb.value));
 
         const payload = {
             id: 1,
@@ -814,12 +874,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
             min_deposit: Number(document.getElementById('setting-min-deposit').value) || 0,
             min_withdrawal: Number(document.getElementById('setting-min-withdrawal').value) || 0,
-            withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee').value) || 0,
-            max_daily_withdrawal_amount: maxDailyRaw === '' ? null : Number(maxDailyRaw),
-            withdrawal_hour_start: Number(document.getElementById('setting-withdrawal-hour-start').value) || 0,
-            withdrawal_hour_end: Number(document.getElementById('setting-withdrawal-hour-end').value) || 23,
-            withdrawal_allowed_days: allowedDays,
-            maintenance_mode: document.getElementById('setting-maintenance-mode').checked
+            withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee-percent').value) || 0,
+            maintenance_mode: document.getElementById('setting-maintenance-mode').checked,
+            max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
+            withdrawal_hour_start: document.getElementById('setting-withdrawal-hour-start').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-start').value) : null,
+            withdrawal_hour_end: document.getElementById('setting-withdrawal-hour-end').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-end').value) : null,
+            withdrawal_allowed_days: Array.from(document.querySelectorAll('.setting-withdrawal-day:checked')).map(cb => Number(cb.value))
         };
 
         const { error } = await window.supabaseClient.from('site_settings').upsert(payload);
@@ -925,9 +985,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                     <button type="button" class="remove-country-btn" data-remove-country="${ci}">Supprimer le pays</button>
                 </div>
-                <div class="admin-form-group" style="margin-top:10px;">
-                    <input type="url" placeholder="https://lien-de-paiement.com/..." value="${(entry.payment_link || '').replace(/"/g, '&quot;')}" data-country-index="${ci}" data-country-field="payment_link">
-                </div>
                 <div class="country-payment-methods">
                     ${(entry.methods || []).map((m, mi) => `
                         <div class="payment-method-row">
@@ -942,13 +999,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${(entry.methods || []).length < 2 ? `<button type="button" class="add-method-btn" data-add-method="${ci}" style="margin-top:10px;">+ Ajouter un numéro</button>` : ''}
             </div>
         `).join('');
-
-        countryPaymentListEl.querySelectorAll('input[data-country-field]').forEach(input => {
-            input.addEventListener('input', () => {
-                const ci = Number(input.getAttribute('data-country-index'));
-                countryPaymentData[ci][input.getAttribute('data-country-field')] = input.value;
-            });
-        });
 
         countryPaymentListEl.querySelectorAll('.country-select').forEach(sel => {
             sel.addEventListener('change', () => {
@@ -989,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (addCountryBtn) {
         addCountryBtn.addEventListener('click', () => {
-            countryPaymentData.push({ country: '', payment_link: '', methods: [{ number: '', network: '', holder: '' }] });
+            countryPaymentData.push({ country: '', methods: [{ number: '', network: '', holder: '' }] });
             renderCountryPaymentLinks();
         });
     }
@@ -1003,7 +1053,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             .filter(c => c.country)
             .map(c => ({
                 country: c.country,
-                payment_link: (c.payment_link || '').trim(),
                 methods: (c.methods || []).filter(m => (m.number || '').trim() || (m.network || '').trim() || (m.holder || '').trim())
             }));
 
