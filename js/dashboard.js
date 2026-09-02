@@ -83,8 +83,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ------------------------------------------------------------------
     // Règles de déblocage progressif des catégories de produits :
-    //  1) "Actif" (constant / analyse) exige d'avoir déjà acheté au moins
-    //     un produit "Revenu Annuel" (Atlas), peu importe son statut actuel.
+    //  1) "Actif" (constant / analyse) exige d'avoir acheté un produit
+    //     "Revenu Annuel" (Atlas) du MÊME niveau VIP PLUS RÉCEMMENT que le
+    //     dernier achat de CETTE MÊME catégorie Actif (constant ou analyse
+    //     pris séparément). Autrement dit, un seul Atlas ne débloque QU'UN
+    //     SEUL achat de Constant ET QU'UN SEUL achat d'Analyse — dès que
+    //     l'un des deux est racheté, cet Atlas ne le débloque plus une
+    //     deuxième fois (même si l'autre catégorie, elle, n'a jamais été
+    //     achetée). Il faut alors un nouvel Atlas pour réinvestir dans
+    //     Constant/Analyse de ce niveau (ou du niveau suivant).
     //  2) "Quête Quotidienne" exige d'avoir acheté LES DEUX produits Actifs
     //     (constant ET analyse) du MÊME niveau VIP, dans les 24 DERNIÈRES
     //     HEURES (fenêtre glissante, pas "aujourd'hui" calendaire) — passé ce
@@ -92,11 +99,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Définies tôt (juste après `investments`) pour être utilisables aussi
     // bien dans le rendu des cartes que dans le gestionnaire de clic d'achat.
     // ------------------------------------------------------------------
-    const hasAtlasOwnedForLevel = (vipLevel) => investments.some(i =>
-        i.investment_products &&
-        i.investment_products.category === 'atlas' &&
-        i.investment_products.vip_level === vipLevel
-    );
+    const latestTimeOfCategoryForLevel = (cat, vipLevel) => investments
+        .filter(i => i.investment_products && i.investment_products.category === cat && i.investment_products.vip_level === vipLevel)
+        .reduce((max, i) => Math.max(max, i.created_at ? new Date(i.created_at).getTime() : 0), 0);
+
+    // category ici doit être 'constant' ou 'analyse' — chacun consomme
+    // l'Atlas indépendamment de l'autre.
+    const hasAtlasAvailableForActif = (vipLevel, category) => {
+        const lastAtlas = latestTimeOfCategoryForLevel('atlas', vipLevel);
+        if (!lastAtlas) return false;
+        const lastOfThisCategory = latestTimeOfCategoryForLevel(category, vipLevel);
+        return lastAtlas > lastOfThisCategory;
+    };
     const hasBothActifsRecentForLevel = (vipLevel) => {
         const cutoff = Date.now() - 24 * 60 * 60 * 1000;
         const recentOfCategory = (cat) => investments.some(i =>
@@ -106,6 +120,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             i.created_at && new Date(i.created_at).getTime() > cutoff
         );
         return recentOfCategory('constant') && recentOfCategory('analyse');
+    };
+
+    // "Quête Quotidienne" doit, comme les Actifs, être consommée à l'achat :
+    // une paire Constant+Analyse ne débloque qu'UN SEUL achat de Quête. On
+    // garde la fermeture après 24h déjà en place (hasBothActifsRecentForLevel)
+    // et on ajoute la même règle de consommation que pour l'Atlas : la paire
+    // doit être plus récente que le dernier achat de Quête pour ce niveau.
+    const hasQueteAvailableForLevel = (vipLevel) => {
+        if (!hasBothActifsRecentForLevel(vipLevel)) return false;
+        const lastConstant = latestTimeOfCategoryForLevel('constant', vipLevel);
+        const lastAnalyse = latestTimeOfCategoryForLevel('analyse', vipLevel);
+        const pairCompletedAt = Math.max(lastConstant, lastAnalyse);
+        const lastQuete = latestTimeOfCategoryForLevel('quete', vipLevel);
+        return pairCompletedAt > lastQuete;
     };
 
     // Revenu mensuel (12 valeurs FCFA, une par mois) défini PAR PRODUIT depuis
@@ -470,6 +498,38 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, duration / steps);
         });
 
+        // --- Graphique d'évolution (12 derniers mois, REVENUS réels de
+        //     l'utilisateur connecté uniquement : gains, commissions de
+        //     parrainage, récompenses de quêtes. Les dépôts ne sont pas
+        //     des revenus et ne sont donc pas comptabilisés ici). ---
+        const chartArea = document.getElementById('mainChart');
+        if (chartArea) {
+            const REVENUE_TYPES = new Set(['gain', 'referral_commission', 'quest']);
+            const now = new Date();
+            const months = [];
+            for (let i = 11; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label: d.toLocaleDateString('fr-FR', { month: 'short' }) });
+            }
+            const totalsByMonth = {};
+            months.forEach(m => totalsByMonth[m.key] = 0);
+            transactions.forEach(t => {
+                if (!t.created_at) return;
+                if (!REVENUE_TYPES.has(t.type)) return;
+                const d = new Date(t.created_at);
+                const key = `${d.getFullYear()}-${d.getMonth()}`;
+                if (key in totalsByMonth && Number(t.amount) > 0) {
+                    totalsByMonth[key] += Number(t.amount);
+                }
+            });
+            const maxVal = Math.max(1, ...Object.values(totalsByMonth));
+            chartArea.innerHTML = months.map(m => {
+                const val = totalsByMonth[m.key];
+                const heightPct = Math.max(4, Math.round((val / maxVal) * 100));
+                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatFCFA(val)}"></div><span class="x-label">${m.label}</span></div>`;
+            }).join('');
+        }
+
         // --- Produits disponibles par catégorie (Revenu Annuel / Actif / Quête) ---
         // Chaque produit reste affiché en permanence dans sa case (grille) de
         // catégorie, qu'il soit possédé ou non. Une fois acheté, le nombre de
@@ -518,9 +578,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // dans les dernières 24h glissantes. Le bouton reste visible et
             // cliquable (jamais un "Indisponible" figé) — un clic sans les
             // conditions requises affiche un message explicite au lieu d'agir.
-            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasOwnedForLevel(p.vip_level)
+            const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasAvailableForActif(p.vip_level, p.category)
                 ? `Achetez d'abord Revenu Annuel (Atlas) VIP ${p.vip_level || '?'}`
-                : (p.category === 'quete' && !hasBothActifsRecentForLevel(p.vip_level))
+                : (p.category === 'quete' && !hasQueteAvailableForLevel(p.vip_level))
                     ? `Achetez les 2 Actifs (Constant + Analyse) VIP ${p.vip_level || '?'} dans les dernières 24h`
                     : null;
 
@@ -789,11 +849,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const productId = btn.getAttribute('data-product-id');
             const vipLevel = btn.getAttribute('data-product-vip-level') || null;
 
-            if ((category === 'constant' || category === 'analyse') && !hasAtlasOwnedForLevel(vipLevel)) {
+            if ((category === 'constant' || category === 'analyse') && !hasAtlasAvailableForActif(vipLevel, category)) {
                 window.showToast(`Achetez d'abord le produit « Revenu Annuel » (Atlas) VIP ${vipLevel || '?'} pour débloquer ce produit Actif.`, 'error');
                 return;
             }
-            if (category === 'quete' && !hasBothActifsRecentForLevel(vipLevel)) {
+            if (category === 'quete' && !hasQueteAvailableForLevel(vipLevel)) {
                 window.showToast(`Achetez les DEUX produits Actifs (Constant ET Analyse) VIP ${vipLevel || '?'} dans les dernières 24h pour débloquer cette Quête Quotidienne.`, 'error');
                 return;
             }
@@ -818,33 +878,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const renderDepositMethods = (countryCode) => {
         const listEl = depositModalOverlay.querySelector('#deposit-methods-list');
-        const linkEl = depositModalOverlay.querySelector('#deposit-payment-link');
-        if (linkEl) linkEl.innerHTML = '';
         if (!countryCode || !window.AtlasPaymentMethods) {
             listEl.innerHTML = '';
             return;
         }
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
-        const paymentLink = window.AtlasPaymentMethods.getPaymentLink(countryCode);
         selectedDepositMethod = null;
         depositModalOverlay.querySelector('#deposit-method-details').innerHTML = '';
         depositModalOverlay.querySelector('#deposit-submit-btn').disabled = true;
-
-        // Le lien de paiement en ligne (configuré par pays depuis l'admin) est
-        // affiché comme un moyen de paiement à part entière : cliquer dessus
-        // redirige directement vers ce lien, sans passer par le formulaire de
-        // preuve manuelle utilisé pour les autres moyens.
-        const linkOptionHtml = paymentLink ? `
-            <a href="${paymentLink}" target="_blank" rel="noopener" class="quiz-option deposit-method-option deposit-method-link">
-                💳 Payer en ligne
-            </a>` : '';
-
-        listEl.innerHTML = linkOptionHtml + methods.map(m => `
+        listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
             </button>`).join('');
 
-        listEl.querySelectorAll('.deposit-method-option:not(.deposit-method-link)').forEach(btn => {
+        listEl.querySelectorAll('.deposit-method-option').forEach(btn => {
             btn.addEventListener('click', () => {
                 listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
@@ -888,7 +935,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                 </div>
 
-                <div id="deposit-payment-link"></div>
                 <div id="deposit-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
                 <div id="deposit-method-details" style="margin-bottom:14px;"></div>
 
@@ -898,7 +944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="deposit-proof-input">Capture / preuve de paiement (optionnel)</label>
+                    <label class="form-label" for="deposit-proof-input">Capture / preuve de paiement</label>
                     <div class="file-input-group">
                         <label class="file-input-btn" for="deposit-proof-input">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"></path></svg>
@@ -935,6 +981,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (!amount || amount <= 0) {
                 feedbackEl.textContent = 'Veuillez saisir un montant valide.';
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+            if (!proofInput.files || !proofInput.files[0]) {
+                feedbackEl.textContent = 'Veuillez joindre la capture / preuve de paiement avant d\'envoyer votre demande.';
                 feedbackEl.className = 'quiz-feedback error';
                 return;
             }
@@ -1000,6 +1051,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         return withdrawModalOverlay;
     };
 
+    // Le champ "Nom de réception" n'a pas de sens pour l'USDT (TRC-20) — un
+    // wallet crypto n'a pas de titulaire nommé — et "Numéro / compte de
+    // réception" devient "Adresse de réception" dans ce cas.
+    const updateWithdrawFieldsForMethod = (method) => {
+        const nameGroup = withdrawModalOverlay.querySelector('#withdraw-recipient-name-group');
+        const destLabel = withdrawModalOverlay.querySelector('#withdraw-destination-label');
+        const destInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
+        if (!nameGroup || !destLabel || !destInput) return;
+        const isUsdt = method && method.type === 'usdt';
+        nameGroup.style.display = isUsdt ? 'none' : '';
+        destLabel.textContent = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
+        destInput.placeholder = isUsdt ? 'Votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX';
+    };
+
     const renderWithdrawMethods = (countryCode) => {
         const listEl = withdrawModalOverlay.querySelector('#withdraw-methods-list');
         if (!listEl) return;
@@ -1007,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         selectedWithdrawMethod = null;
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = true;
+        updateWithdrawFieldsForMethod(null);
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
@@ -1016,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 listEl.querySelectorAll('.deposit-method-option').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedWithdrawMethod = methods.find(m => m.id === btn.getAttribute('data-method-id'));
+                updateWithdrawFieldsForMethod(selectedWithdrawMethod);
                 withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = false;
             });
         });
@@ -1025,13 +1092,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const renderWithdrawForm = () => {
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
+        // Seuls les GAINS sont retirables — un dépôt non encore investi reste
+        // bloqué (non_withdrawable_balance) tant qu'il n'a pas été placé sur
+        // un produit. Voir request_withdrawal() côté base, qui applique la
+        // même règle en dernier recours (source de vérité).
+        const withdrawable = Math.max(0, Math.floor(Number(wallet.balance) - Number(wallet.non_withdrawable_balance || 0)));
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
-            <p class="task-modal-sub">Solde disponible : <strong>${formatFCFA(wallet.balance)}</strong>. Choisissez comment vous souhaitez être payé.</p>
+            <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatFCFA(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
@@ -1043,19 +1115,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div id="withdraw-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:14px;"></div>
 
-            <div class="form-group">
+            <div class="form-group" id="withdraw-recipient-name-group">
                 <label class="form-label" for="withdraw-recipient-name-input">Nom de réception</label>
                 <input type="text" id="withdraw-recipient-name-input" class="form-control" placeholder="Nom complet du titulaire du compte">
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="withdraw-destination-input">Numéro / compte de réception</label>
+                <label class="form-label" for="withdraw-destination-input" id="withdraw-destination-label">Numéro / compte de réception</label>
                 <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Ex : +237 6XX XXX XXX">
             </div>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${Math.floor(wallet.balance)}">
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}">
             </div>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1074,10 +1146,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const destination = destinationInput.value.trim();
 
             if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!destination) { feedbackEl.textContent = 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            const isUsdt = selectedWithdrawMethod.type === 'usdt';
+            if (!isUsdt && !recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!destination) { feedbackEl.textContent = isUsdt ? 'Veuillez indiquer votre adresse de réception.' : 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (amount > wallet.balance) { feedbackEl.textContent = 'Le montant dépasse votre solde disponible.'; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatFCFA(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
             renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
@@ -1131,15 +1204,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             feedbackEl.textContent = '';
 
             try {
-                const { error: insertError } = await window.supabaseClient.from('withdrawal_requests').insert({
-                    user_id: authUser.id,
-                    amount: withdrawData.amount,
-                    method_name: withdrawData.method.name,
-                    recipient_name: withdrawData.recipientName,
-                    destination: withdrawData.destination,
-                    status: 'pending'
+                // Passe par la fonction serveur `request_withdrawal`, seule
+                // habilitée à vérifier le montant retirable réel (gains
+                // uniquement, hors dépôts non investis) ET à réserver le
+                // montant en le déduisant immédiatement du solde. Un simple
+                // insert() dans withdrawal_requests (ancien comportement)
+                // sautait ces deux vérifications : le solde n'était jamais
+                // débité et un dépôt brut pouvait être retiré comme un gain.
+                const { error: rpcError } = await window.supabaseClient.rpc('request_withdrawal', {
+                    p_amount: withdrawData.amount,
+                    p_method_name: withdrawData.method.name,
+                    p_destination: withdrawData.destination,
+                    p_recipient_name: withdrawData.recipientName
                 });
-                if (insertError) throw insertError;
+                if (rpcError) throw rpcError;
 
                 window.showToast('<strong>Demande envoyée ✅</strong><br>Votre retrait sera traité après validation par notre équipe.', 'success', { extraClass: 'investment-toast' });
                 closeWithdrawModal();
@@ -1339,17 +1417,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 12. Menu "Mon Compte" (navigation interne, code PIN, profil, code reçu)
     // ------------------------------------------------------------------
     const accountMenuRoot = document.getElementById('account-menu-root');
-    const redeemCards = document.querySelectorAll('.redeem-card');
+    const redeemCard = document.querySelector('.redeem-card');
     const redeemInputRow = document.getElementById('redeem-input-row');
     const accountSubviews = document.querySelectorAll('.account-subview');
 
     const showAccountMenu = () => {
         accountSubviews.forEach(v => v.classList.remove('active'));
         if (accountMenuRoot) accountMenuRoot.style.display = '';
-        redeemCards.forEach(c => { c.style.display = ''; });
+        if (redeemCard) redeemCard.style.display = '';
         if (redeemInputRow) redeemInputRow.style.display = redeemInputRow.classList.contains('open') ? '' : 'none';
-        const promoRow = document.getElementById('promo-redeem-input-row');
-        if (promoRow) promoRow.style.display = promoRow.classList.contains('open') ? '' : 'none';
     };
 
     const openAccountSubview = (target) => {
@@ -1358,10 +1434,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (view) {
             view.classList.add('active');
             if (accountMenuRoot) accountMenuRoot.style.display = 'none';
-            redeemCards.forEach(c => { c.style.display = 'none'; });
+            if (redeemCard) redeemCard.style.display = 'none';
             if (redeemInputRow) redeemInputRow.style.display = 'none';
-            const promoRow = document.getElementById('promo-redeem-input-row');
-            if (promoRow) promoRow.style.display = 'none';
             window.scrollTo(0, 0);
         }
     };
@@ -1473,10 +1547,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (referralLinkInput) {
         const referralCode = profile.referral_code || '';
-        // Lien propre pointant vers la racine du domaine (le serveur sert
-        // automatiquement index.html à cette adresse) : jamais "index.html"
-        // visible dans l'URL partagée.
-        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
+        // Lien de parrainage SANS "index.html" (juste le domaine/racine + le
+        // paramètre ?ref=). index.html étant servi par défaut sur la racine,
+        // l'inclure explicitement n'est pas nécessaire et alourdit le lien.
+        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', '')}?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
@@ -1488,6 +1562,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .eq('referred_by', referralCode)
                 .then(({ count }) => { referralCountEl.textContent = count || 0; });
         }
+
+        if (referralCode) loadMyTeamTree(referralCode);
+        loadMyCommissionHistory();
 
         if (referralCopyBtn) {
             referralCopyBtn.addEventListener('click', async () => {
@@ -1524,70 +1601,119 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Arbre de parrainage : détail des commissions reçues + évolution
-    // de l'équipe sur 3 niveaux (Mon Compte > Programme de Parrainage).
-    // ----------------------------------------------------------------
-    const teamTreeItemHtml = (m) => `
-        <div class="team-tree-item">
-            <div>
-                <div class="team-tree-item-name">${m.name}</div>
-                <div class="team-tree-item-sub">${m.has_deposit ? 'A déjà déposé' : "N'a pas encore déposé"}</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span class="team-tree-item-deposit">${formatFCFA(m.total_deposit)}</span>
-                <span class="team-tree-item-badge ${m.has_deposit ? 'actif' : 'inactif'}">${m.has_deposit ? 'Actif' : 'Inactif'}</span>
-            </div>
-        </div>`;
+    // ------------------------------------------------------------------
+    // "Évolution de mon équipe" — arbre généalogique sur 3 niveaux pour
+    // l'utilisateur connecté : pour chaque filleul, total déposé (dépôts
+    // approuvés) et statut actif (au moins un investissement 'active').
+    // ------------------------------------------------------------------
+    async function loadMyTeamTree(rootReferralCode) {
+        const listEls = {
+            1: document.getElementById('my-team-l1-list'),
+            2: document.getElementById('my-team-l2-list'),
+            3: document.getElementById('my-team-l3-list'),
+        };
+        const countEls = {
+            1: document.getElementById('my-team-l1-count'),
+            2: document.getElementById('my-team-l2-count'),
+            3: document.getElementById('my-team-l3-count'),
+        };
+        if (!listEls[1]) return;
 
-    const renderTeamLevel = (listId, countId, members) => {
-        const listEl = document.getElementById(listId);
-        const countEl = document.getElementById(countId);
-        if (!listEl) return;
-        countEl && (countEl.textContent = (members || []).length);
-        listEl.innerHTML = (members && members.length)
-            ? members.map(teamTreeItemHtml).join('')
-            : `<span class="team-tree-empty">Aucun filleul pour l'instant</span>`;
-    };
+        const formatShortDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
 
-    if (document.getElementById('my-team-l1-list')) {
-        window.supabaseClient.rpc('get_referral_tree').then(({ data, error }) => {
-            if (error || !data) return;
-            renderTeamLevel('my-team-l1-list', 'my-team-l1-count', data.l1);
-            renderTeamLevel('my-team-l2-list', 'my-team-l2-count', data.l2);
-            renderTeamLevel('my-team-l3-list', 'my-team-l3-count', data.l3);
-        });
+        const fetchLevel = async (codes) => {
+            if (!codes.length) return [];
+            const { data } = await window.supabaseClient
+                .from('profiles')
+                .select('id, full_name, phone, email, referral_code, created_at')
+                .in('referred_by', codes);
+            return data || [];
+        };
+
+        const level1 = await fetchLevel([rootReferralCode]);
+        const level2 = await fetchLevel(level1.map(u => u.referral_code).filter(Boolean));
+        const level3 = await fetchLevel(level2.map(u => u.referral_code).filter(Boolean));
+
+        const allIds = [...level1, ...level2, ...level3].map(u => u.id);
+        let depositsByUser = {};
+        let activeUserIds = new Set();
+
+        if (allIds.length) {
+            const [{ data: deposits }, { data: activeInv }] = await Promise.all([
+                window.supabaseClient.from('deposit_requests').select('user_id, amount, status').in('user_id', allIds),
+                window.supabaseClient.from('user_investments').select('user_id, status').in('user_id', allIds),
+            ]);
+            (deposits || []).forEach(d => {
+                if (d.status !== 'approved') return;
+                depositsByUser[d.user_id] = (depositsByUser[d.user_id] || 0) + Number(d.amount || 0);
+            });
+            (activeInv || []).forEach(i => { if (i.status === 'active') activeUserIds.add(i.user_id); });
+        }
+
+        const renderLevel = (n, users) => {
+            countEls[n].textContent = users.length;
+            if (!users.length) {
+                listEls[n].innerHTML = `<span class="team-tree-empty">Aucun filleul pour l'instant</span>`;
+                return;
+            }
+            listEls[n].innerHTML = users.map(u => {
+                const isActive = activeUserIds.has(u.id);
+                const deposited = depositsByUser[u.id] || 0;
+                return `
+                    <div class="team-tree-item">
+                        <div>
+                            <div class="team-tree-item-name">${u.full_name || 'Membre'}</div>
+                            <div class="team-tree-item-sub">Inscrit le ${formatShortDate(u.created_at)}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="team-tree-item-deposit">${formatFCFA(deposited)}</span>
+                            <span class="team-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
+                        </div>
+                    </div>`;
+            }).join('');
+        };
+
+        renderLevel(1, level1);
+        renderLevel(2, level2);
+        renderLevel(3, level3);
     }
 
-    const commissionHistoryList = document.getElementById('commission-history-list');
-    if (commissionHistoryList) {
-        window.supabaseClient
+    // ------------------------------------------------------------------
+    // Détail des commissions de parrainage : liste des transactions de
+    // type 'referral_commission' de l'utilisateur connecté, la plus
+    // récente en premier (date, niveau/produit concerné, montant).
+    // ------------------------------------------------------------------
+    async function loadMyCommissionHistory() {
+        const listEl = document.getElementById('commission-history-list');
+        const countEl = document.getElementById('commission-history-count');
+        if (!listEl) return;
+
+        const formatShortDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        const { data } = await window.supabaseClient
             .from('transactions')
             .select('amount, description, created_at')
             .eq('user_id', authUser.id)
             .eq('type', 'referral_commission')
-            .order('created_at', { ascending: false })
-            .then(({ data }) => {
-                const rows = data || [];
-                const countEl = document.getElementById('commission-history-count');
-                if (countEl) countEl.textContent = rows.length;
-                commissionHistoryList.innerHTML = rows.length
-                    ? rows.map(t => `
-                        <div class="team-tree-item">
-                            <div>
-                                <div class="team-tree-item-name">${t.description || 'Commission de parrainage'}</div>
-                                <div class="team-tree-item-sub">${new Date(t.created_at).toLocaleDateString('fr-FR')}</div>
-                            </div>
-                            <span class="team-tree-item-deposit">+${formatFCFA(t.amount)}</span>
-                        </div>`).join('')
-                    : `<span class="team-tree-empty">Aucune commission pour l'instant</span>`;
-            });
+            .order('created_at', { ascending: false });
+
+        countEl.textContent = (data || []).length;
+        if (!data || !data.length) {
+            listEl.innerHTML = `<span class="team-tree-empty">Aucune commission pour l'instant</span>`;
+            return;
+        }
+
+        listEl.innerHTML = data.map(t => `
+            <div class="team-tree-item">
+                <div>
+                    <div class="team-tree-item-name">${t.description || 'Commission de parrainage'}</div>
+                    <div class="team-tree-item-sub">${formatShortDate(t.created_at)}</div>
+                </div>
+                <span class="team-tree-item-deposit">+${formatFCFA(t.amount)}</span>
+            </div>`).join('');
     }
 
-    // Bonus personnel (case du haut "Mon Compte") : code à usage unique
-    // attribué par l'admin à CET utilisateur précis (voir redeem_promo_code
-    // côté serveur, qui vérifie que assigned_to correspond bien au compte
-    // connecté avant de créditer le solde).
+    // Saisie d'un code de parrainage reçu (utilisateur déjà inscrit)
     const redeemInput = document.getElementById('redeem-code-input');
     const redeemBtn = document.getElementById('redeem-code-btn');
     if (redeemBtn) {
@@ -1598,60 +1724,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             redeemBtn.disabled = true;
-            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
+            const { data: amount, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
             redeemBtn.disabled = false;
             if (error) {
-                window.showToast(error.message || 'Code invalide.', 'error');
+                window.showToast(error.message || 'Code invalide ou déjà utilisé.', 'error');
                 return;
             }
             redeemInput.value = '';
             redeemInputRow.classList.remove('open');
             if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
-            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
-        });
-    }
-
-    // ------------------------------------------------------------------
-    // 13bis. Code promo général (case du bas "Mon Compte") : même fonction
-    // serveur que ci-dessus, mais pour un code SANS destinataire précis —
-    // premier arrivé, premier servi (le code cesse de fonctionner dès
-    // qu'il a été utilisé une fois).
-    // ------------------------------------------------------------------
-    const promoRedeemInputRow = document.getElementById('promo-redeem-input-row');
-    const promoRedeemToggleBtn = document.getElementById('promo-redeem-toggle-btn');
-    if (promoRedeemToggleBtn && promoRedeemInputRow) {
-        promoRedeemInputRow.style.display = 'none';
-        promoRedeemToggleBtn.addEventListener('click', () => {
-            promoRedeemInputRow.classList.toggle('open');
-            promoRedeemToggleBtn.classList.toggle('open');
-            promoRedeemInputRow.style.display = promoRedeemInputRow.classList.contains('open') ? '' : 'none';
-            if (promoRedeemInputRow.classList.contains('open')) {
-                document.getElementById('promo-redeem-code-input').focus();
-            }
-        });
-    }
-    const promoRedeemInput = document.getElementById('promo-redeem-code-input');
-    const promoRedeemBtn = document.getElementById('promo-redeem-code-btn');
-    if (promoRedeemBtn) {
-        promoRedeemBtn.addEventListener('click', async () => {
-            const code = promoRedeemInput.value.trim().toUpperCase();
-            if (!code) {
-                window.showToast('Veuillez entrer un code.', 'error');
-                return;
-            }
-            promoRedeemBtn.disabled = true;
-            const { data, error } = await window.supabaseClient.rpc('redeem_promo_code', { p_code: code });
-            promoRedeemBtn.disabled = false;
-
-            if (error) {
-                window.showToast(error.message || 'Code promo invalide.', 'error');
-                return;
-            }
-            promoRedeemInput.value = '';
-            promoRedeemInputRow.classList.remove('open');
-            promoRedeemInputRow.style.display = 'none';
-            if (promoRedeemToggleBtn) promoRedeemToggleBtn.classList.remove('open');
-            window.showToast(`Bonus de ${new Intl.NumberFormat('fr-FR').format(data)} FCFA crédité 🎉`, 'success');
+            window.showToast(`🎁 Code validé ! +${formatFCFA(Number(amount))} crédités sur votre solde.`, 'success');
+            await refreshDashboardData();
         });
     }
 
