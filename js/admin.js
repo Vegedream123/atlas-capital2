@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     const navItems = document.querySelectorAll('.admin-nav-item');
     const views = document.querySelectorAll('.admin-view');
-    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', codespromo: 'Codes Promo', parametres: 'Paramètres' };
+    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', codespromo: 'Codes Promo', parrainage: 'Top Promoteurs', parametres: 'Paramètres' };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
             if (target === 'utilisateurs') loadUsers();
             if (target === 'codespromo') loadPromoCodes();
+            if (target === 'parrainage') loadTopReferrers();
             if (target === 'parametres') { loadSettings(); loadPaymentSettings(); }
         });
     });
@@ -518,6 +519,87 @@ document.addEventListener('DOMContentLoaded', async () => {
             (u.full_name || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q)
         ));
     });
+
+    // ------------------------------------------------------------------
+    // 2bis. Top Promoteurs — classement des utilisateurs par nombre de
+    //       filleuls directs (referred_by = leur referral_code), du plus
+    //       grand au plus petit. Calculé côté client à partir de tous les
+    //       profils + portefeuilles, pour éviter une requête par utilisateur.
+    // ------------------------------------------------------------------
+    let allReferrersData = [];
+
+    async function loadTopReferrers() {
+        const tbody = document.getElementById('referrers-tbody');
+        tbody.innerHTML = `<tr><td colspan="9">Chargement…</td></tr>`;
+
+        const [{ data: profiles, error }, { data: wallets }] = await Promise.all([
+            window.supabaseClient.from('profiles').select('id, full_name, email, phone, referral_code, referred_by, created_at'),
+            window.supabaseClient.from('wallets').select('user_id, balance, referral_earnings')
+        ]);
+
+        if (error) { tbody.innerHTML = `<tr><td colspan="9">Erreur de chargement.</td></tr>`; return; }
+
+        const walletMap = {};
+        (wallets || []).forEach(w => walletMap[w.user_id] = w);
+
+        // Compte le nombre de filleuls directs par code de parrainage.
+        const referralCounts = {};
+        (profiles || []).forEach(p => {
+            if (p.referred_by) referralCounts[p.referred_by] = (referralCounts[p.referred_by] || 0) + 1;
+        });
+
+        allReferrersData = (profiles || [])
+            .filter(p => p.referral_code && referralCounts[p.referral_code] > 0)
+            .map(p => ({
+                ...p,
+                referralCount: referralCounts[p.referral_code] || 0,
+                balance: (walletMap[p.id] && walletMap[p.id].balance) || 0,
+                referralEarnings: (walletMap[p.id] && walletMap[p.id].referral_earnings) || 0
+            }))
+            .sort((a, b) => b.referralCount - a.referralCount);
+
+        renderReferrersTable(allReferrersData);
+    }
+
+    function renderReferrersTable(list) {
+        const tbody = document.getElementById('referrers-tbody');
+        if (!list.length) { tbody.innerHTML = `<tr><td colspan="9">Aucun promoteur pour le moment.</td></tr>`; return; }
+        tbody.innerHTML = list.map((u, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${u.full_name || '—'}</td>
+                <td>${u.phone || u.email || '—'}</td>
+                <td>${u.referral_code || '—'}</td>
+                <td><strong>${u.referralCount}</strong></td>
+                <td>${formatFCFA(u.referralEarnings)}</td>
+                <td>${formatFCFA(u.balance)}</td>
+                <td>${formatDate(u.created_at)}</td>
+                <td><button class="admin-btn-sm admin-btn-view" data-view-referrer="${u.id}">Voir</button></td>
+            </tr>`).join('');
+
+        tbody.querySelectorAll('[data-view-referrer]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const userId = btn.getAttribute('data-view-referrer');
+                // viewUserDetail() s'appuie sur allUsersData (liste "Utilisateurs") ;
+                // on la charge si nécessaire avant d'ouvrir la fiche détaillée.
+                if (!allUsersData.length) await loadUsers();
+                if (!allUsersData.some(u => u.id === userId)) await loadUsers();
+                viewUserDetail(userId);
+            });
+        });
+    }
+
+    const referrerSearchInput = document.getElementById('referrer-search');
+    if (referrerSearchInput) {
+        referrerSearchInput.addEventListener('input', (e) => {
+            const q = e.target.value.trim().toLowerCase();
+            renderReferrersTable(allReferrersData.filter(u =>
+                (u.full_name || '').toLowerCase().includes(q) ||
+                (u.email || '').toLowerCase().includes(q) ||
+                (u.referral_code || '').toLowerCase().includes(q)
+            ));
+        });
+    }
 
     let currentDetailUserId = null;
 
@@ -985,6 +1067,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                     <button type="button" class="remove-country-btn" data-remove-country="${ci}">Supprimer le pays</button>
                 </div>
+                <div class="admin-form-group" style="margin:10px 0;">
+                    <label style="font-size:0.82rem;">Lien de paiement en ligne ${entry.country === 'CM' ? '(optionnel — le Cameroun utilise les numéros ci-dessous)' : "(ce lien gère tout le dépôt : l'utilisateur sera redirigé directement dessus)"}</label>
+                    <input type="text" placeholder="https://..." value="${(entry.payment_link || '').replace(/"/g, '&quot;')}" data-country-link-index="${ci}" class="payment-link-input">
+                </div>
                 <div class="country-payment-methods">
                     ${(entry.methods || []).map((m, mi) => `
                         <div class="payment-method-row">
@@ -999,6 +1085,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${(entry.methods || []).length < 2 ? `<button type="button" class="add-method-btn" data-add-method="${ci}" style="margin-top:10px;">+ Ajouter un numéro</button>` : ''}
             </div>
         `).join('');
+
+        countryPaymentListEl.querySelectorAll('.payment-link-input').forEach(input => {
+            input.addEventListener('input', () => {
+                countryPaymentData[Number(input.getAttribute('data-country-link-index'))].payment_link = input.value;
+            });
+        });
 
         countryPaymentListEl.querySelectorAll('.country-select').forEach(sel => {
             sel.addEventListener('change', () => {
@@ -1053,6 +1145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             .filter(c => c.country)
             .map(c => ({
                 country: c.country,
+                payment_link: (c.payment_link || '').trim(),
                 methods: (c.methods || []).filter(m => (m.number || '').trim() || (m.network || '').trim() || (m.holder || '').trim())
             }));
 
