@@ -434,7 +434,24 @@
                     </div>
                     <div class="invest-card" style="margin-top:16px;">
                         <div class="card-header"><h2 class="card-title">Mot de passe</h2></div>
-                        <button class="btn btn-outline btn-full">Modifier mon mot de passe</button>
+                        <button class="btn btn-outline btn-full" id="password-toggle-btn" type="button">Modifier mon mot de passe</button>
+
+                        <div id="password-form" style="display:none; margin-top:16px;">
+                            <div class="form-group">
+                                <label>Mot de passe actuel</label>
+                                <input type="password" class="form-control" id="password-current-input" autocomplete="current-password" placeholder="••••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label>Nouveau mot de passe</label>
+                                <input type="password" class="form-control" id="password-new-input" autocomplete="new-password" placeholder="8 caractères minimum">
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmer le nouveau mot de passe</label>
+                                <input type="password" class="form-control" id="password-confirm-input" autocomplete="new-password" placeholder="••••••••••">
+                            </div>
+                            <button class="btn btn-primary btn-full" id="password-save-btn" type="button">Enregistrer le nouveau mot de passe</button>
+                            <button class="btn btn-outline btn-full" id="password-cancel-btn" type="button" style="margin-top:8px;">Annuler</button>
+                        </div>
                     </div>
                 </div>
 
