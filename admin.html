@@ -541,8 +541,55 @@
     </div>
 </div>
 
+<!-- Modal détail d'une demande de retrait (montant net, e-mail, machines) -->
+<div class="modal-overlay" id="withdrawal-detail-modal">
+    <div class="modal admin-user-modal">
+        <div class="modal-header">
+            <div>
+                <h3>Détail du retrait</h3>
+                <div id="wd-detail-status" class="admin-user-subtitle"></div>
+            </div>
+            <button class="modal-close" data-close-modal="withdrawal-detail-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="admin-net-highlight">
+                <span>Montant NET à envoyer à l'utilisateur</span>
+                <strong id="wd-detail-net-amount">0 FCFA</strong>
+            </div>
+
+            <div class="admin-user-stats-row">
+                <div class="admin-user-stat"><span>Montant demandé</span><strong id="wd-detail-gross-amount">0</strong></div>
+                <div class="admin-user-stat"><span>Frais retenus</span><strong id="wd-detail-fee">Aucun</strong></div>
+                <div class="admin-user-stat"><span>Date de la demande</span><strong id="wd-detail-date">—</strong></div>
+            </div>
+
+            <h4>👤 Compte de l'utilisateur</h4>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Nom complet</div><div class="admin-user-value" id="wd-detail-fullname">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">E-mail du compte</div><div class="admin-user-value" id="wd-detail-email">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Téléphone</div><div class="admin-user-value" id="wd-detail-phone">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Inscrit le</div><div class="admin-user-value" id="wd-detail-registered">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Solde actuel du compte</div><div class="admin-user-value" id="wd-detail-balance">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Commissions de parrainage cumulées</div><div class="admin-user-value" id="wd-detail-referral-earnings">0 FCFA</div></div></div>
+
+            <h4>💳 Destination du paiement</h4>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Méthode</div><div class="admin-user-value" id="wd-detail-method">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Numéro / Destination</div><div class="admin-user-value" id="wd-detail-destination">—</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Nom du destinataire</div><div class="admin-user-value" id="wd-detail-recipient">—</div></div></div>
+
+            <h4>⚙️ Machines / Produits — d'où vient l'argent</h4>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead><tr><th>Produit</th><th>Montant investi</th><th>Date d'achat</th><th>Jours écoulés</th><th>Gain</th><th>Statut</th></tr></thead>
+                    <tbody id="wd-detail-investments"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal image plein écran (captures) -->
 <div class="modal-overlay" id="image-view-modal">
+
     <div class="modal admin-image-modal">
         <div class="modal-header">
             <h3>Capture</h3>
