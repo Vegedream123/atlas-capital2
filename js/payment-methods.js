@@ -186,6 +186,17 @@
     // d'exemple codés en dur ci-dessus pour ce pays.
     let countryOverrides = {};
 
+    // Lien de paiement en ligne par pays (site_settings.country_payment_methods
+    // → champ payment_link). Configuré depuis l'admin, page "Paiement par pays".
+    // Pour tous les pays SAUF le Cameroun, si un lien est configuré, c'est lui
+    // qui gère entièrement le dépôt : l'utilisateur clique dessus et est
+    // redirigé directement vers la page de paiement.
+    let countryLinks = {};
+
+    function getPaymentLink(countryCode) {
+        return countryLinks[countryCode] || '';
+    }
+
     function guessIcon(network) {
         const n = (network || '').toLowerCase();
         if (n.includes('orange')) return ICONS.orange;
@@ -199,8 +210,12 @@
 
     function setCountryOverrides(list) {
         countryOverrides = {};
+        countryLinks = {};
         (Array.isArray(list) ? list : []).forEach(entry => {
             if (!entry || !entry.country) return;
+            if ((entry.payment_link || '').trim()) {
+                countryLinks[entry.country] = entry.payment_link.trim();
+            }
             const methods = (entry.methods || [])
                 .filter(m => m && (m.number || '').trim())
                 .map((m, i) => ({
@@ -239,6 +254,7 @@
     global.AtlasPaymentMethods = {
         getCountryName,
         getPaymentMethods,
+        getPaymentLink,
         setUsdtAddress,
         setCountryOverrides,
         setUsdtWithdrawInfo,
