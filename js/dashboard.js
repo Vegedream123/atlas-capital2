@@ -876,16 +876,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     let selectedDepositMethod = null;
     const closeDepositModal = () => { if (depositModalOverlay) depositModalOverlay.classList.remove('active'); };
 
+    // Cameroun : moyens de paiement manuels (numéros Mobile Money configurés
+    // dans l'admin). TOUS LES AUTRES PAYS : si un lien de paiement est
+    // configuré pour ce pays (admin > Paiement par pays), c'est lui qui gère
+    // entièrement le dépôt — l'utilisateur clique et est redirigé directement
+    // vers ce lien, sans liste de moyens de paiement à choisir.
     const renderDepositMethods = (countryCode) => {
         const listEl = depositModalOverlay.querySelector('#deposit-methods-list');
+        const linkEl = depositModalOverlay.querySelector('#deposit-payment-link');
         if (!countryCode || !window.AtlasPaymentMethods) {
             listEl.innerHTML = '';
+            if (linkEl) linkEl.innerHTML = '';
             return;
         }
-        const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         selectedDepositMethod = null;
         depositModalOverlay.querySelector('#deposit-method-details').innerHTML = '';
         depositModalOverlay.querySelector('#deposit-submit-btn').disabled = true;
+
+        const paymentLink = countryCode !== 'CM' ? window.AtlasPaymentMethods.getPaymentLink(countryCode) : '';
+
+        if (paymentLink) {
+            // Le lien gère tout : pas de liste de moyens, juste le bouton de redirection.
+            listEl.innerHTML = '';
+            linkEl.innerHTML = `
+                <a href="${paymentLink}" target="_blank" rel="noopener" id="deposit-online-link" class="btn btn-primary" style="display:block; text-align:center; margin-bottom:14px; text-decoration:none;">
+                    Payer en ligne
+                </a>
+                <p class="text-secondary" style="font-size:0.82rem; margin:-8px 0 14px;">
+                    Vous allez être redirigé vers la page de paiement. Une fois le paiement effectué, indiquez le montant ci-dessous et envoyez votre demande de dépôt.
+                </p>`;
+            // Le paiement est géré par le lien externe : on active directement l'envoi de la demande.
+            selectedDepositMethod = { name: 'Paiement en ligne' };
+            depositModalOverlay.querySelector('#deposit-submit-btn').disabled = false;
+            return;
+        }
+
+        if (linkEl) linkEl.innerHTML = '';
+        const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
         listEl.innerHTML = methods.map(m => `
             <button type="button" class="quiz-option deposit-method-option" data-method-id="${m.id}">
                 <span style="margin-right:8px;">${m.icon || ''}</span>${m.name}
@@ -935,6 +962,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </select>
                 </div>
 
+                <div id="deposit-payment-link"></div>
                 <div id="deposit-methods-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:10px;"></div>
                 <div id="deposit-method-details" style="margin-bottom:14px;"></div>
 
