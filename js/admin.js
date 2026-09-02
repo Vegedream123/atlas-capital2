@@ -494,10 +494,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         ]);
         if (rErr || !r) { window.showToast('Impossible de charger cette demande.', 'error'); return; }
 
-        const [{ data: profile }, { data: wallet }, { data: investments }] = await Promise.all([
+        const [{ data: profile }, { data: wallet }, { data: investments }, { data: transactions }] = await Promise.all([
             window.supabaseClient.from('profiles').select('*').eq('id', r.user_id).maybeSingle(),
             window.supabaseClient.from('wallets').select('*').eq('user_id', r.user_id).maybeSingle(),
-            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate, vip_level)').eq('user_id', r.user_id).order('created_at', { ascending: false })
+            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate, vip_level)').eq('user_id', r.user_id).order('created_at', { ascending: false }),
+            window.supabaseClient.from('transactions').select('*').eq('user_id', r.user_id).order('created_at', { ascending: false }).limit(200)
         ]);
 
         const netAmount = r.net_amount != null ? r.net_amount : (r.amount - (r.fee_amount || 0));
@@ -546,6 +547,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </tr>`;
             }).join('');
         }
+
+        const txLabelMap = {
+            deposit: 'Dépôt', withdrawal: 'Retrait', investment: 'Investissement',
+            gain: 'Gain généré', referral_commission: 'Commission de parrainage', quest: 'Quête journalière'
+        };
+        const txBody = document.getElementById('wd-detail-transactions');
+        const txList = transactions || [];
+        txBody.innerHTML = txList.length ? txList.map(t => {
+            const amount = Number(t.amount) || 0;
+            const positive = amount >= 0;
+            return `<tr>
+                <td>${formatDate(t.created_at)}</td>
+                <td>${txLabelMap[t.type] || t.type || '—'}</td>
+                <td>${t.description || '—'}</td>
+                <td style="color:${positive ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">${positive ? '+' : ''}${formatFCFA(amount)}</td>
+            </tr>`;
+        }).join('') : `<tr><td colspan="4">Aucune transaction enregistrée.</td></tr>`;
 
         openModal('withdrawal-detail-modal');
     }
