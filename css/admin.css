@@ -76,6 +76,7 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
 .admin-btn-sm { padding: 6px 12px; border-radius: var(--radius-sm); border: none; font-size: 0.78rem; font-weight: 600; cursor: pointer; margin-right: 6px; }
 .admin-btn-approve { background: var(--success); color: var(--white); }
 .admin-btn-reject { background: var(--danger); color: var(--white); }
+.admin-btn-detail { background: var(--gray-100, #eef1f5); color: var(--primary); }
 .admin-btn-edit { background: var(--gray-100); color: var(--text-primary); }
 .admin-btn-block { background: var(--danger); color: var(--white); }
 .admin-btn-unblock { background: var(--success); color: var(--white); }
@@ -96,6 +97,9 @@ body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(
 
 .admin-user-subtitle { font-size: 0.78rem; color: var(--text-secondary); font-weight: 400; margin-top: 2px; }
 .admin-user-stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.admin-net-highlight { background: rgba(16,185,129,0.12); border: 1px solid var(--success); border-radius: var(--radius-sm); padding: 14px 16px; text-align: center; margin-bottom: 16px; }
+.admin-net-highlight span { display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
+.admin-net-highlight strong { font-size: 1.6rem; color: var(--success); }
 .admin-user-stat { background: var(--gray-50); border-radius: var(--radius-sm); padding: 10px 12px; text-align: center; }
 .admin-user-stat span { display: block; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 4px; }
 .admin-user-stat strong { font-size: 1.05rem; color: var(--primary); }
