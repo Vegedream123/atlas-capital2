@@ -415,7 +415,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const u = usersMap[r.user_id] || {};
             const actions = status === 'pending' ? `
                 <button class="admin-btn-sm admin-btn-approve" data-approve="${r.id}">Valider</button>
-                <button class="admin-btn-sm admin-btn-reject" data-reject="${r.id}">Rejeter</button>` : '—';
+                <button class="admin-btn-sm admin-btn-reject" data-reject="${r.id}">Rejeter</button>
+                ${kind === 'withdrawals' ? `<button class="admin-btn-sm admin-btn-detail" data-wd-detail="${r.id}">Détails</button>` : ''}` :
+                (kind === 'withdrawals' ? `<button class="admin-btn-sm admin-btn-detail" data-wd-detail="${r.id}">Détails</button>` : '—');
             if (kind === 'deposits') {
                 return `<tr>
                     <td>${formatDate(r.created_at)}</td>
@@ -451,6 +453,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         tbody.querySelectorAll('[data-reject]').forEach(btn => {
             btn.addEventListener('click', () => reviewRequest(kind, btn.getAttribute('data-reject'), false));
         });
+        tbody.querySelectorAll('[data-wd-detail]').forEach(btn => {
+            btn.addEventListener('click', () => viewWithdrawalDetail(btn.getAttribute('data-wd-detail')));
+        });
     }
 
     async function reviewRequest(kind, id, approve) {
@@ -461,6 +466,88 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
         loadRequests(kind, kind === 'deposits' ? currentDepositStatus : currentWithdrawalStatus);
         loadStats();
+    }
+
+    // ------------------------------------------------------------------
+    // Détail complet d'une demande de retrait : montant net à envoyer,
+    // e-mail du compte, et détail des machines/produits qui ont permis
+    // à l'utilisateur d'atteindre ce solde.
+    // ------------------------------------------------------------------
+    const dailyGainOfInvestment = (inv) => {
+        if (inv.locked_payout_amount != null) {
+            if (inv.duration_months) {
+                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+            }
+            if (inv.duration_days) {
+                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+            }
+        }
+        if (inv.duration_months && inv.locked_rate_percent != null) {
+            return Number(inv.amount) * Number(inv.locked_rate_percent) / 100 / (Number(inv.duration_months) * 30);
+        }
+        return Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
+    };
+
+    async function viewWithdrawalDetail(requestId) {
+        const [{ data: r, error: rErr }] = await Promise.all([
+            window.supabaseClient.from('withdrawal_requests').select('*').eq('id', requestId).single()
+        ]);
+        if (rErr || !r) { window.showToast('Impossible de charger cette demande.', 'error'); return; }
+
+        const [{ data: profile }, { data: wallet }, { data: investments }] = await Promise.all([
+            window.supabaseClient.from('profiles').select('*').eq('id', r.user_id).maybeSingle(),
+            window.supabaseClient.from('wallets').select('*').eq('user_id', r.user_id).maybeSingle(),
+            window.supabaseClient.from('user_investments').select('*, investment_products(name, category, daily_rate, vip_level)').eq('user_id', r.user_id).order('created_at', { ascending: false })
+        ]);
+
+        const netAmount = r.net_amount != null ? r.net_amount : (r.amount - (r.fee_amount || 0));
+
+        document.getElementById('wd-detail-net-amount').textContent = formatFCFA(netAmount);
+        document.getElementById('wd-detail-gross-amount').textContent = formatFCFA(r.amount);
+        document.getElementById('wd-detail-fee').textContent = r.fee_amount
+            ? `${formatFCFA(r.fee_amount)} (${r.fee_percent || 0}%)` : 'Aucun';
+        document.getElementById('wd-detail-status').innerHTML = `<span class="admin-badge ${r.status}">${r.status}</span>`;
+        document.getElementById('wd-detail-date').textContent = formatDate(r.created_at);
+        document.getElementById('wd-detail-method').textContent = r.method_name || '—';
+        document.getElementById('wd-detail-destination').textContent = r.destination || '—';
+        document.getElementById('wd-detail-recipient').textContent = r.recipient_name || '—';
+
+        document.getElementById('wd-detail-fullname').textContent = (profile && profile.full_name) || '—';
+        document.getElementById('wd-detail-email').textContent = (profile && profile.email) || '—';
+        document.getElementById('wd-detail-phone').textContent = (profile && profile.phone) || '—';
+        document.getElementById('wd-detail-registered').textContent = profile ? formatDate(profile.created_at) : '—';
+
+        document.getElementById('wd-detail-balance').textContent = wallet ? formatFCFA(wallet.balance) : '—';
+        document.getElementById('wd-detail-referral-earnings').textContent = wallet ? formatFCFA(wallet.referral_earnings || 0) : '0 FCFA';
+
+        const tbody = document.getElementById('wd-detail-investments');
+        const list = investments || [];
+        if (!list.length) {
+            tbody.innerHTML = `<tr><td colspan="6">Aucune machine/produit acheté par cet utilisateur.</td></tr>`;
+        } else {
+            tbody.innerHTML = list.map(inv => {
+                const prod = inv.investment_products || {};
+                const productName = prod.name || inv.product_name || 'Produit supprimé';
+                const category = prod.category || '—';
+                const daysElapsed = Math.max(0, Math.floor((Date.now() - new Date(inv.created_at).getTime()) / (24 * 60 * 60 * 1000)));
+                const dailyGain = dailyGainOfInvestment(inv);
+                const maxGain = inv.locked_payout_amount != null ? (Number(inv.locked_payout_amount) - Number(inv.amount)) : null;
+                let totalEarned = dailyGain * daysElapsed;
+                if (maxGain != null) totalEarned = Math.min(totalEarned, maxGain);
+                const statusLabel = inv.status === 'active' ? 'En cours' : (inv.status === 'completed' ? 'Terminé' : (inv.status || '—'));
+                const statusClass = inv.status === 'active' ? 'validated' : (inv.status === 'completed' ? 'active' : 'pending');
+                return `<tr>
+                    <td>${productName}<br><span class="text-secondary" style="font-size:0.72rem;">${category}${prod.vip_level ? ' · VIP ' + prod.vip_level : ''}</span></td>
+                    <td>${formatFCFA(inv.amount)}</td>
+                    <td>${formatDate(inv.created_at)}</td>
+                    <td>${daysElapsed} j</td>
+                    <td>${formatFCFA(Math.round(dailyGain))}/j<br><span class="text-secondary" style="font-size:0.72rem;">≈ ${formatFCFA(Math.round(totalEarned))} accumulé</span></td>
+                    <td><span class="admin-badge ${statusClass}">${statusLabel}</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        openModal('withdrawal-detail-modal');
     }
 
     // ----------------------------------------------------------------
