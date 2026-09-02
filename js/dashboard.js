@@ -1574,6 +1574,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // Mot de passe
+    const passwordToggleBtn = document.getElementById('password-toggle-btn');
+    const passwordForm = document.getElementById('password-form');
+    const passwordCurrentInput = document.getElementById('password-current-input');
+    const passwordNewInput = document.getElementById('password-new-input');
+    const passwordConfirmInput = document.getElementById('password-confirm-input');
+    const passwordSaveBtn = document.getElementById('password-save-btn');
+    const passwordCancelBtn = document.getElementById('password-cancel-btn');
+
+    const resetPasswordForm = () => {
+        passwordCurrentInput.value = '';
+        passwordNewInput.value = '';
+        passwordConfirmInput.value = '';
+        passwordForm.style.display = 'none';
+    };
+
+    if (passwordToggleBtn) {
+        passwordToggleBtn.addEventListener('click', () => {
+            const isHidden = passwordForm.style.display === 'none';
+            passwordForm.style.display = isHidden ? 'block' : 'none';
+            if (isHidden) passwordCurrentInput.focus();
+        });
+    }
+
+    if (passwordCancelBtn) {
+        passwordCancelBtn.addEventListener('click', resetPasswordForm);
+    }
+
+    if (passwordSaveBtn) {
+        passwordSaveBtn.addEventListener('click', async () => {
+            const currentPassword = passwordCurrentInput.value;
+            const newPassword = passwordNewInput.value;
+            const confirmPassword = passwordConfirmInput.value;
+
+            if (!currentPassword) {
+                window.showToast('Veuillez saisir votre mot de passe actuel.', 'error');
+                return;
+            }
+            if (newPassword.length < 8) {
+                window.showToast('Le nouveau mot de passe doit contenir au moins 8 caractères.', 'error');
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                window.showToast('Les deux mots de passe ne correspondent pas.', 'error');
+                return;
+            }
+            if (newPassword === currentPassword) {
+                window.showToast("Le nouveau mot de passe doit être différent de l'actuel.", 'error');
+                return;
+            }
+
+            const originalLabel = passwordSaveBtn.textContent;
+            passwordSaveBtn.disabled = true;
+            passwordSaveBtn.textContent = 'Enregistrement...';
+            try {
+                // Vérifie le mot de passe actuel en ré-authentifiant l'utilisateur
+                const { error: signInError } = await window.supabaseClient.auth.signInWithPassword({
+                    email: userEmail,
+                    password: currentPassword,
+                });
+                if (signInError) {
+                    window.showToast('Mot de passe actuel incorrect.', 'error');
+                    return;
+                }
+
+                const { error: updateError } = await window.supabaseClient.auth.updateUser({ password: newPassword });
+                if (updateError) throw updateError;
+
+                window.showToast('Mot de passe mis à jour !', 'success');
+                resetPasswordForm();
+                showAccountMenu();
+            } catch (err) {
+                window.showToast('Erreur : ' + (err.message || "impossible de modifier le mot de passe."), 'error');
+            } finally {
+                passwordSaveBtn.disabled = false;
+                passwordSaveBtn.textContent = originalLabel;
+            }
+        });
+    }
+
     // ------------------------------------------------------------------
     // 13. Programme de Parrainage — données réelles
     // ------------------------------------------------------------------
