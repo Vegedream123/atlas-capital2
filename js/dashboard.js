@@ -67,6 +67,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
     let siteSettings = settingsRes.data || { min_withdrawal: 0 };
+    if (settingsRes.error) {
+        // Si ce message apparaît dans la console, la page de dépôt n'affichera
+        // ni l'adresse USDT ni les liens de paiement par pays : c'est presque
+        // toujours un problème de policy RLS sur la table `site_settings`
+        // (l'utilisateur connecté n'a pas le droit de la lire).
+        console.error('Erreur chargement site_settings (USDT / paiement par pays indisponibles) :', settingsRes.error);
+    }
 
     // Tri du plus petit au plus grand niveau VIP (1, 2, 3, 4…) au sein de
     // chaque catégorie. `sort_order` n'étant jamais renseigné depuis l'admin
