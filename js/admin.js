@@ -922,7 +922,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-site-name').value = data.site_name || '';
         document.getElementById('setting-support-email').value = data.support_email || '';
         document.getElementById('setting-support-whatsapp').value = data.support_whatsapp || '';
-        document.getElementById('setting-whatsapp-group').value = data.whatsapp_group || '';
+        document.getElementById('setting-telegram-group').value = data.telegram_group || '';
+        document.getElementById('setting-telegram-username').value = data.telegram_support_username || '';
         document.getElementById('setting-referral-rate-l1').value = data.referral_rate_l1 ?? data.referral_rate ?? '';
         document.getElementById('setting-referral-rate-l2').value = data.referral_rate_l2 ?? '';
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
@@ -950,7 +951,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             site_name: document.getElementById('setting-site-name').value.trim(),
             support_email: document.getElementById('setting-support-email').value.trim(),
             support_whatsapp: document.getElementById('setting-support-whatsapp').value.trim(),
-            whatsapp_group: document.getElementById('setting-whatsapp-group').value.trim(),
+            telegram_group: document.getElementById('setting-telegram-group').value.trim(),
+            telegram_support_username: document.getElementById('setting-telegram-username').value.trim().replace(/^@/, ''),
             referral_rate_l1: Number(document.getElementById('setting-referral-rate-l1').value) || 0,
             referral_rate_l2: Number(document.getElementById('setting-referral-rate-l2').value) || 0,
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
