@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     const navItems = document.querySelectorAll('.admin-nav-item');
     const views = document.querySelectorAll('.admin-view');
-    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', utilisateurs: 'Utilisateurs', codespromo: 'Codes Promo', parrainage: 'Top Promoteurs', parametres: 'Paramètres' };
+    const titleMap = { apercu: 'Aperçu', produits: 'Produits', depots: 'Dépôts', retraits: 'Retraits', achats: 'Achats Machines', utilisateurs: 'Utilisateurs', codespromo: 'Codes Promo', parrainage: 'Top Promoteurs', parametres: 'Paramètres' };
 
     navItems.forEach(item => {
         item.addEventListener('click', () => {
@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'produits') { loadProducts(); }
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
+            if (target === 'achats') loadPurchases(currentPurchaseStatus);
             if (target === 'utilisateurs') loadUsers();
             if (target === 'codespromo') loadPromoCodes();
             if (target === 'parrainage') loadTopReferrers();
@@ -375,6 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ----------------------------------------------------------------
     let currentDepositStatus = 'pending';
     let currentWithdrawalStatus = 'pending';
+    let currentPurchaseStatus = 'all';
     let usersCache = null;
 
     async function getUsersMap() {
@@ -388,14 +390,97 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.admin-subnav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const list = btn.getAttribute('data-list');
+            const purchaseStatus = btn.getAttribute('data-purchase-status');
             const status = btn.getAttribute('data-status');
             const group = btn.closest('.admin-subnav');
             group.querySelectorAll('.admin-subnav-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            if (purchaseStatus) { currentPurchaseStatus = purchaseStatus; loadPurchases(purchaseStatus); return; }
             if (list === 'deposits') { currentDepositStatus = status; loadRequests('deposits', status); }
             else { currentWithdrawalStatus = status; loadRequests('withdrawals', status); }
         });
     });
+
+    // ------------------------------------------------------------------
+    // Achats de machines (user_investments) : tous les nouveaux achats
+    // de produits par les utilisateurs, avec filtre actif/terminé et un
+    // détail complet par ligne (compte, machine, rendement attendu).
+    // ------------------------------------------------------------------
+    async function loadPurchases(statusFilter) {
+        const tbody = document.getElementById('purchases-tbody');
+        tbody.innerHTML = '<tr><td colspan="9">Chargement…</td></tr>';
+
+        let query = window.supabaseClient
+            .from('user_investments')
+            .select('*, investment_products(name, category), profiles(full_name, email)')
+            .order('created_at', { ascending: false })
+            .limit(300);
+        if (statusFilter && statusFilter !== 'all') query = query.eq('status', statusFilter);
+
+        const { data, error } = await query;
+        if (error) { tbody.innerHTML = `<tr><td colspan="9">Erreur de chargement.</td></tr>`; return; }
+        if (!data.length) { tbody.innerHTML = `<tr><td colspan="9">Aucun achat.</td></tr>`; return; }
+
+        tbody.innerHTML = data.map(inv => {
+            const product = inv.investment_products || {};
+            const user = inv.profiles || {};
+            const dureeLabel = inv.duration_months
+                ? `${inv.duration_months} mois`
+                : (inv.duration_days ? `${inv.duration_days} jours` : '—');
+            const echeance = inv.matures_at ? formatDate(inv.matures_at) : '—';
+            const rendement = inv.locked_payout_amount
+                ? `${formatFCFA(inv.locked_payout_amount)} <span class="text-secondary" style="font-size:0.72rem;">(à l'échéance)</span>`
+                : '—';
+            return `<tr>
+                <td>${formatDate(inv.created_at)}</td>
+                <td>${user.full_name || user.email || inv.user_id}</td>
+                <td>${product.name || '—'}</td>
+                <td>${product.category || '—'}</td>
+                <td>${formatFCFA(inv.amount)}</td>
+                <td>${rendement}</td>
+                <td>${dureeLabel}<br><span class="text-secondary" style="font-size:0.72rem;">Échéance : ${echeance}</span></td>
+                <td><span class="admin-badge ${inv.status}">${inv.status}</span></td>
+                <td><button class="admin-btn-sm admin-btn-detail" data-purchase-detail="${inv.id}">Détails</button></td>
+            </tr>`;
+        }).join('');
+
+        tbody.querySelectorAll('[data-purchase-detail]').forEach(btn => {
+            btn.addEventListener('click', () => viewPurchaseDetail(btn.getAttribute('data-purchase-detail')));
+        });
+    }
+
+    async function viewPurchaseDetail(investmentId) {
+        const { data: inv, error } = await window.supabaseClient
+            .from('user_investments')
+            .select('*, investment_products(name, category), profiles(full_name, email, phone)')
+            .eq('id', investmentId)
+            .single();
+        if (error || !inv) { window.showToast('Impossible de charger cet achat.', 'error'); return; }
+
+        const { data: wallet } = await window.supabaseClient.from('wallets').select('balance').eq('user_id', inv.user_id).maybeSingle();
+        const product = inv.investment_products || {};
+        const user = inv.profiles || {};
+
+        document.getElementById('pd-detail-status').innerHTML = `<span class="admin-badge ${inv.status}">${inv.status}</span>`;
+        document.getElementById('pd-detail-payout').textContent = inv.locked_payout_amount ? formatFCFA(inv.locked_payout_amount) : '—';
+        document.getElementById('pd-detail-amount').textContent = formatFCFA(inv.amount);
+        document.getElementById('pd-detail-date').textContent = formatDate(inv.created_at);
+        document.getElementById('pd-detail-matures').textContent = inv.matures_at ? formatDate(inv.matures_at) : '—';
+
+        document.getElementById('pd-detail-fullname').textContent = user.full_name || '—';
+        document.getElementById('pd-detail-email').textContent = user.email || '—';
+        document.getElementById('pd-detail-phone').textContent = user.phone || '—';
+        document.getElementById('pd-detail-balance').textContent = wallet ? formatFCFA(wallet.balance) : '—';
+
+        document.getElementById('pd-detail-product').textContent = product.name || '—';
+        document.getElementById('pd-detail-category').textContent = product.category || '—';
+        document.getElementById('pd-detail-duration').textContent = inv.duration_months ? `${inv.duration_months} mois` : (inv.duration_days ? `${inv.duration_days} jours` : '—');
+        document.getElementById('pd-detail-last-task').textContent = inv.last_task_at ? formatDate(inv.last_task_at) : '—';
+        document.getElementById('pd-detail-completed').textContent = inv.completed_at ? formatDate(inv.completed_at) : '—';
+
+        openModal('purchase-detail-modal');
+    }
+
 
     async function loadRequests(kind, status) {
         const table = kind === 'deposits' ? 'deposit_requests' : 'withdrawal_requests';
