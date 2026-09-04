@@ -231,14 +231,27 @@
         });
     }
 
-    // Moyens de paiement LOCAUX (mobile money) : réservés au Cameroun pour
-    // le moment. Pour tout autre pays, seul l'USDT (TRC-20, universel) est
-    // proposé, en dépôt comme en retrait — le mobile money local reste
-    // indisponible tant qu'il n'a pas été activé pour ce pays.
+    // Moyens de paiement pour le DÉPÔT : réservés au Cameroun pour le
+    // moment (les numéros des autres pays sont des placeholders tant que
+    // l'admin ne les a pas configurés). Pour tout autre pays, seul l'USDT
+    // (TRC-20, universel) est proposé.
     function getPaymentMethods(countryCode) {
         const specific = countryCode === 'CM'
             ? (countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [])
             : [];
+        const usdt = getUsdtMethod();
+        return usdt ? [...specific, usdt] : [...specific];
+    }
+
+    // Moyens de paiement pour le RETRAIT : disponibles pour TOUS les pays
+    // qui ont un réseau Mobile Money renseigné dans PAYMENT_METHODS_BY_COUNTRY
+    // (ou configuré depuis l'admin). Contrairement au dépôt, aucun numéro
+    // Atlas Capital n'est exposé ici — c'est l'utilisateur qui saisit SON
+    // propre numéro de réception juste après avoir choisi le réseau ; le
+    // champ "number" ci-dessus ne sert donc, pour le retrait, qu'à obtenir
+    // le nom + l'icône du réseau, ce qui est sans risque pour tous les pays.
+    function getWithdrawalMethods(countryCode) {
+        const specific = countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
         const usdt = getUsdtMethod();
         return usdt ? [...specific, usdt] : [...specific];
     }
@@ -254,6 +267,7 @@
     global.AtlasPaymentMethods = {
         getCountryName,
         getPaymentMethods,
+        getWithdrawalMethods,
         getPaymentLink,
         setUsdtAddress,
         setCountryOverrides,
