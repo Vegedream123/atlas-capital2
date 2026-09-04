@@ -1129,7 +1129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const listEl = withdrawModalOverlay.querySelector('#withdraw-methods-list');
         if (!listEl) return;
         if (!countryCode || !window.AtlasPaymentMethods) { listEl.innerHTML = ''; return; }
-        const methods = window.AtlasPaymentMethods.getPaymentMethods(countryCode);
+        const methods = window.AtlasPaymentMethods.getWithdrawalMethods(countryCode);
         selectedWithdrawMethod = null;
         withdrawModalOverlay.querySelector('#withdraw-submit-btn').disabled = true;
         updateWithdrawFieldsForMethod(null);
