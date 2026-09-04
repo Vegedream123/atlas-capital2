@@ -176,6 +176,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Bouton "Groupe WhatsApp" — lien géré depuis l'admin (site_settings.whatsapp_group)
+    const whatsappGroupBtn = document.getElementById('account-whatsapp-group-btn');
+    if (whatsappGroupBtn) {
+        if (siteSettings.whatsapp_group) {
+            whatsappGroupBtn.href = siteSettings.whatsapp_group;
+            whatsappGroupBtn.style.display = 'flex';
+        } else {
+            whatsappGroupBtn.style.display = 'none';
+        }
+    }
+
     // Bouton flottant "Service en ligne" (Accueil uniquement) — ouvre une
     // conversation Telegram directe avec le username défini dans l'admin
     // (site_settings.telegram_support_username)
@@ -1118,11 +1129,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const nameGroup = withdrawModalOverlay.querySelector('#withdraw-recipient-name-group');
         const destLabel = withdrawModalOverlay.querySelector('#withdraw-destination-label');
         const destInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
+        const orangeHint = withdrawModalOverlay.querySelector('#withdraw-orange-hint');
         if (!nameGroup || !destLabel || !destInput) return;
         const isUsdt = method && method.type === 'usdt';
         nameGroup.style.display = isUsdt ? 'none' : '';
         destLabel.textContent = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
         destInput.placeholder = isUsdt ? 'Votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX';
+        if (orangeHint) orangeHint.style.display = (method && method.id === 'orange_money_cm') ? '' : 'none';
     };
 
     const renderWithdrawMethods = (countryCode) => {
@@ -1187,8 +1200,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}">
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}" step="1">
             </div>
+            <p class="task-modal-sub" id="withdraw-orange-hint" style="display:none; margin-top:-6px; color:var(--danger, #e0631e);">Avec Orange Money, le montant doit se terminer par 0 ou 5 (multiple de 5).</p>
             <p class="task-modal-sub" id="withdraw-fee-preview" style="margin-top:-6px;"></p>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
@@ -1224,6 +1238,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!destination) { feedbackEl.textContent = isUsdt ? 'Veuillez indiquer votre adresse de réception.' : 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
             if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatFCFA(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
+            // Orange Money (Cameroun) n'accepte que des montants multiples de 5
+            // (terminant par 0 ou 5) — contrainte propre à cet opérateur.
+            if (selectedWithdrawMethod.id === 'orange_money_cm' && amount % 5 !== 0) {
+                feedbackEl.textContent = 'Avec Orange Money, le montant doit être un multiple de 5 (se terminant par 0 ou 5).';
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
 
             // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
             renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
