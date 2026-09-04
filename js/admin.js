@@ -510,7 +510,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>${formatFCFA(r.amount)}</td>
                     <td>${r.method_name || '—'}</td>
                     <td>${r.proof_url ? `<span class="admin-proof-link" data-img="${r.proof_url}">Voir la capture</span>` : '—'}</td>
-                    <td><span class="admin-badge ${status}">${status}</span></td>
+                    <td><span class="admin-badge ${status}">${status}</span>${r.admin_note ? `<br><span class="text-secondary" style="font-size:0.72rem;">« ${r.admin_note} »</span>` : ''}</td>
                     <td>${actions}</td>
                 </tr>`;
             }
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${r.method_name || '—'}</td>
                 <td>${r.destination || '—'}</td>
                 <td>${r.recipient_name || '—'}</td>
-                <td><span class="admin-badge ${status}">${status}</span></td>
+                <td><span class="admin-badge ${status}">${status}</span>${r.admin_note ? `<br><span class="text-secondary" style="font-size:0.72rem;">« ${r.admin_note} »</span>` : ''}</td>
                 <td>${actions}</td>
             </tr>`;
         }).join('');
@@ -536,21 +536,46 @@ document.addEventListener('DOMContentLoaded', async () => {
             btn.addEventListener('click', () => reviewRequest(kind, btn.getAttribute('data-approve'), true));
         });
         tbody.querySelectorAll('[data-reject]').forEach(btn => {
-            btn.addEventListener('click', () => reviewRequest(kind, btn.getAttribute('data-reject'), false));
+            btn.addEventListener('click', () => promptRejectReason(kind, btn.getAttribute('data-reject')));
         });
         tbody.querySelectorAll('[data-wd-detail]').forEach(btn => {
             btn.addEventListener('click', () => viewWithdrawalDetail(btn.getAttribute('data-wd-detail')));
         });
     }
 
-    async function reviewRequest(kind, id, approve) {
-        if (!confirm(approve ? 'Valider cette demande ?' : 'Rejeter cette demande ?')) return;
+    async function reviewRequest(kind, id, approve, note) {
+        if (approve && !confirm('Valider cette demande ?')) return;
         const rpcName = kind === 'deposits' ? 'admin_review_deposit' : 'admin_review_withdrawal';
-        const { error } = await window.supabaseClient.rpc(rpcName, { p_request_id: id, p_approve: approve, p_note: null });
+        const { error } = await window.supabaseClient.rpc(rpcName, { p_request_id: id, p_approve: approve, p_note: note || null });
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
         window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
         loadRequests(kind, kind === 'deposits' ? currentDepositStatus : currentWithdrawalStatus);
         loadStats();
+    }
+
+    // ------------------------------------------------------------------
+    // Rejet d'une demande (dépôt ou retrait) : ouvre une fenêtre pour que
+    // l'admin puisse taper la raison du rejet, envoyée à l'utilisateur.
+    // ------------------------------------------------------------------
+    let pendingRejection = null;
+
+    function promptRejectReason(kind, id) {
+        pendingRejection = { kind, id };
+        const input = document.getElementById('reject-reason-input');
+        if (input) input.value = '';
+        openModal('reject-reason-modal');
+    }
+
+    const rejectReasonConfirmBtn = document.getElementById('reject-reason-confirm-btn');
+    if (rejectReasonConfirmBtn) {
+        rejectReasonConfirmBtn.addEventListener('click', async () => {
+            if (!pendingRejection) return;
+            const reason = (document.getElementById('reject-reason-input').value || '').trim();
+            const { kind, id } = pendingRejection;
+            pendingRejection = null;
+            closeModal('reject-reason-modal');
+            await reviewRequest(kind, id, false, reason);
+        });
     }
 
     // ------------------------------------------------------------------
@@ -1114,6 +1139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-support-whatsapp').value = data.support_whatsapp || '';
         document.getElementById('setting-telegram-group').value = data.telegram_group || '';
         document.getElementById('setting-telegram-username').value = data.telegram_support_username || '';
+        document.getElementById('setting-whatsapp-group').value = data.whatsapp_group || '';
         document.getElementById('setting-referral-rate-l1').value = data.referral_rate_l1 ?? data.referral_rate ?? '';
         document.getElementById('setting-referral-rate-l2').value = data.referral_rate_l2 ?? '';
         document.getElementById('setting-referral-rate-l3').value = data.referral_rate_l3 ?? '';
@@ -1143,6 +1169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             support_whatsapp: document.getElementById('setting-support-whatsapp').value.trim(),
             telegram_group: document.getElementById('setting-telegram-group').value.trim(),
             telegram_support_username: document.getElementById('setting-telegram-username').value.trim().replace(/^@/, ''),
+            whatsapp_group: document.getElementById('setting-whatsapp-group').value.trim(),
             referral_rate_l1: Number(document.getElementById('setting-referral-rate-l1').value) || 0,
             referral_rate_l2: Number(document.getElementById('setting-referral-rate-l2').value) || 0,
             referral_rate_l3: Number(document.getElementById('setting-referral-rate-l3').value) || 0,
