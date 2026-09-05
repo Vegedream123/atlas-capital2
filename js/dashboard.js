@@ -1734,16 +1734,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         referralLinkInput.value = referralLink;
 
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
+        // Le comptage et l'arbre d'équipe passent par la fonction serveur
+        // get_my_referral_team() (voir loadMyTeamTree) : les requêtes directes
+        // sur "profiles"/"deposit_requests" sont bloquées par la sécurité au
+        // niveau ligne (RLS) pour tout utilisateur normal (il ne peut lire
+        // que ses propres lignes), donc un comptage direct ici renverrait
+        // toujours 0 même quand des filleuls existent réellement.
 
-        if (referralCountEl && referralCode) {
-            window.supabaseClient
-                .from('profiles')
-                .select('id', { count: 'exact', head: true })
-                .eq('referred_by', referralCode)
-                .then(({ count }) => { referralCountEl.textContent = count || 0; });
-        }
-
-        if (referralCode) loadMyTeamTree(referralCode);
+        if (referralCode) loadMyTeamTree();
         loadMyCommissionHistory();
 
         if (referralCopyBtn) {
@@ -1786,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // l'utilisateur connecté : pour chaque filleul, total déposé (dépôts
     // approuvés) et statut actif (au moins un investissement 'active').
     // ------------------------------------------------------------------
-    async function loadMyTeamTree(rootReferralCode) {
+    async function loadMyTeamTree() {
         const listEls = {
             1: document.getElementById('my-team-l1-list'),
             2: document.getElementById('my-team-l2-list'),
@@ -1801,61 +1799,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const formatShortDate = (d) => d ? new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
 
-        const fetchLevel = async (codes) => {
-            if (!codes.length) return [];
-            const { data } = await window.supabaseClient
-                .from('profiles')
-                .select('id, full_name, phone, email, referral_code, created_at')
-                .in('referred_by', codes);
-            return data || [];
-        };
+        // Une seule fonction serveur (contourne la RLS proprement, sans
+        // exposer les profils de tout le monde) renvoie les 3 niveaux
+        // d'un coup, avec total déposé et statut actif déjà calculés.
+        const { data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team');
+        const allRows = error ? [] : (rows || []);
 
-        const level1 = await fetchLevel([rootReferralCode]);
-        const level2 = await fetchLevel(level1.map(u => u.referral_code).filter(Boolean));
-        const level3 = await fetchLevel(level2.map(u => u.referral_code).filter(Boolean));
-
-        const allIds = [...level1, ...level2, ...level3].map(u => u.id);
-        let depositsByUser = {};
-        let activeUserIds = new Set();
-
-        if (allIds.length) {
-            const [{ data: deposits }, { data: activeInv }] = await Promise.all([
-                window.supabaseClient.from('deposit_requests').select('user_id, amount, status').in('user_id', allIds),
-                window.supabaseClient.from('user_investments').select('user_id, status').in('user_id', allIds),
-            ]);
-            (deposits || []).forEach(d => {
-                if (d.status !== 'approved') return;
-                depositsByUser[d.user_id] = (depositsByUser[d.user_id] || 0) + Number(d.amount || 0);
-            });
-            (activeInv || []).forEach(i => { if (i.status === 'active') activeUserIds.add(i.user_id); });
+        if (referralCountEl) {
+            referralCountEl.textContent = allRows.filter(r => r.team_level === 1).length;
         }
 
-        const renderLevel = (n, users) => {
+        const renderLevel = (n) => {
+            const users = allRows.filter(r => r.team_level === n);
             countEls[n].textContent = users.length;
             if (!users.length) {
                 listEls[n].innerHTML = `<span class="team-tree-empty">Aucun filleul pour l'instant</span>`;
                 return;
             }
-            listEls[n].innerHTML = users.map(u => {
-                const isActive = activeUserIds.has(u.id);
-                const deposited = depositsByUser[u.id] || 0;
-                return `
+            listEls[n].innerHTML = users.map(u => `
                     <div class="team-tree-item">
                         <div>
                             <div class="team-tree-item-name">${u.full_name || 'Membre'}</div>
                             <div class="team-tree-item-sub">Inscrit le ${formatShortDate(u.created_at)}</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="team-tree-item-deposit">${formatFCFA(deposited)}</span>
-                            <span class="team-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
+                            <span class="team-tree-item-deposit">${formatFCFA(u.total_deposited)}</span>
+                            <span class="team-tree-item-badge ${u.is_active ? 'actif' : 'inactif'}">${u.is_active ? 'Actif' : 'Inactif'}</span>
                         </div>
-                    </div>`;
-            }).join('');
+                    </div>`).join('');
         };
 
-        renderLevel(1, level1);
-        renderLevel(2, level2);
-        renderLevel(3, level3);
+        renderLevel(1);
+        renderLevel(2);
+        renderLevel(3);
     }
 
     // ------------------------------------------------------------------
