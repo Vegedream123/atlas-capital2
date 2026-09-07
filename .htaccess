@@ -1,8 +1,14 @@
 RewriteEngine On
 
-# Les anciens liens directs (déjà partagés) vers index.html / dashboard.html /
-# admin.html à la racine n'existent plus à cet endroit (le site vit maintenant
-# dans /app/) : on les renvoie proprement vers la racine, qui affiche la
-# coquille et charge l'app en interne. Le paramètre ?ref=... est conservé
-# automatiquement par mod_rewrite.
-RewriteRule ^(index|dashboard|admin)\.html$ / [R=301,L,NC]
+# Empêche les navigateurs et proxys de garder en cache une ancienne version
+# des fichiers JS/CSS : ça évite qu'une correction déployée côté serveur
+# n'atteigne jamais certains utilisateurs (cause du bug "mon équipe à 0" qui
+# revenait après avoir déjà été corrigé).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+    <FilesMatch "\.(html)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
