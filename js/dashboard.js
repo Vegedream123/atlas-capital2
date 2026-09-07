@@ -1802,7 +1802,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Une seule fonction serveur (contourne la RLS proprement, sans
         // exposer les profils de tout le monde) renvoie les 3 niveaux
         // d'un coup, avec total déposé et statut actif déjà calculés.
-        const { data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team');
+        let { data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team');
+        if (error) {
+            console.error('get_my_referral_team a échoué, nouvelle tentative :', error);
+            // Ré-essaie une fois (connexion mobile instable, cold start, etc.)
+            // avant d'afficher 0 — évite l'effet "mon équipe affiche 0" alors
+            // que les filleuls existent bel et bien côté serveur.
+            ({ data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team'));
+            if (error) console.error('get_my_referral_team a échoué deux fois :', error);
+        }
         const allRows = error ? [] : (rows || []);
 
         if (referralCountEl) {
