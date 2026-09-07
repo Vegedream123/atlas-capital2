@@ -2454,30 +2454,21 @@
                     'rememberedEmail'
                 );
 
-
-            const rememberedPassword =
-                localStorage.getItem(
-                    'rememberedPassword'
-                );
-
+            // Le mot de passe n'est plus jamais stocké (voir plus bas) ; on
+            // supprime aussi toute ancienne valeur qui traînerait encore
+            // dans le téléphone d'un utilisateur depuis avant ce correctif.
+            localStorage.removeItem(
+                'rememberedPassword'
+            );
 
             if (
-                rememberedEmail &&
-                rememberedPassword
+                rememberedEmail
             ) {
 
                 document.getElementById(
                     'login-email'
                 ).value =
                     rememberedEmail;
-
-
-                document.getElementById(
-                    'login-password'
-                ).value =
-                    atob(
-                        rememberedPassword
-                    );
 
 
                 document.getElementById(
@@ -2675,12 +2666,12 @@
                             credentials.email
                         );
 
-
-                        localStorage.setItem(
-                            'rememberedPassword',
-                            btoa(
-                                credentials.password
-                            )
+                        // Sécurité : on ne stocke plus jamais le mot de passe,
+                        // même encodé (btoa n'est pas un chiffrement, il est
+                        // trivialement réversible). Seul l'email est retenu ;
+                        // le mot de passe doit toujours être ressaisi.
+                        localStorage.removeItem(
+                            'rememberedPassword'
                         );
 
                     }
