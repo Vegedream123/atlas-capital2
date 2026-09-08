@@ -1687,9 +1687,11 @@
 
                         <label for="terms">
 
-                            J'accepte les conditions générales
-                            d'utilisation et la politique de
-                            confidentialité
+                            J'accepte les
+                            <a href="cgu.html" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">conditions générales
+                            d'utilisation</a> et la
+                            <a href="confidentialite.html" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: underline;">politique de
+                            confidentialité</a>
 
                         </label>
 
@@ -1709,8 +1711,6 @@
                 </form>
 
             </div>
-
-
 
 
         </div>
@@ -1783,6 +1783,57 @@
             );
 
         }
+
+
+        /* =========================================================
+           REDIRECTION AUTOMATIQUE SI DÉJÀ CONNECTÉ
+           =========================================================
+         * Avant cette correction, l'utilisateur retombait sur ce
+         * formulaire de connexion à chaque fois qu'il rouvrait le
+         * site, même si sa session Supabase était encore valide en
+         * arrière-plan : rien ici ne vérifiait une session
+         * existante avant d'afficher le formulaire.
+         *
+         * On vérifie donc en premier s'il existe déjà une session
+         * valide ET que la fenêtre de connexion "maison" de 12h
+         * (posée à la connexion, voir plus bas) n'est pas dépassée.
+         * Si c'est le cas, on va directement au tableau de bord sans
+         * jamais demander le mot de passe. Sinon (session absente,
+         * expirée, ou fenêtre de 12h dépassée), on nettoie et on
+         * laisse le formulaire s'afficher normalement.
+         */
+        (async function redirectIfAlreadyLoggedIn() {
+            if (!window.supabaseClient) return;
+
+            const expiresAt = Number(localStorage.getItem('sessionExpiresAt') || 0);
+            if (!expiresAt || Date.now() > expiresAt) {
+                // Fenêtre de 12h dépassée (ou jamais posée) : on ne force
+                // pas la déconnexion Supabase elle-même, mais on n'auto-
+                // reconnecte pas non plus — l'utilisateur repasse par le
+                // formulaire, comme demandé.
+                localStorage.removeItem('sessionExpiresAt');
+                return;
+            }
+
+            try {
+                const { data } = await window.supabaseClient.auth.getSession();
+                let session = data && data.session;
+
+                if (!session) {
+                    // Le jeton d'accès a pu expirer entre-temps : on tente
+                    // un rafraîchissement explicite avant d'abandonner,
+                    // plutôt que de renvoyer directement au formulaire.
+                    const { data: refreshed } = await window.supabaseClient.auth.refreshSession();
+                    session = refreshed && refreshed.session;
+                }
+
+                if (session) {
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (err) {
+                console.error('Vérification de session existante impossible :', err);
+            }
+        })();
 
 
 
@@ -2446,27 +2497,6 @@
 
 
         /* =========================================================
-           MOT DE PASSE OUBLIÉ
-           ========================================================= */
-
-        document.getElementById(
-            'forgot-password-link'
-        ).addEventListener(
-            'click',
-            (e) => {
-                e.preventDefault();
-
-                showToast(
-                    "La réinitialisation du mot de passe n'est pas disponible en ligne pour le moment. Contactez notre service en ligne (Telegram) pour obtenir de l'aide.",
-                    'error'
-                );
-            }
-        );
-
-
-
-
-        /* =========================================================
            PRE-REMPLISSAGE — SE SOUVENIR DE MOI
            ========================================================= */
 
@@ -2477,21 +2507,30 @@
                     'rememberedEmail'
                 );
 
-            // Le mot de passe n'est plus jamais stocké (voir plus bas) ; on
-            // supprime aussi toute ancienne valeur qui traînerait encore
-            // dans le téléphone d'un utilisateur depuis avant ce correctif.
-            localStorage.removeItem(
-                'rememberedPassword'
-            );
+
+            const rememberedPassword =
+                localStorage.getItem(
+                    'rememberedPassword'
+                );
+
 
             if (
-                rememberedEmail
+                rememberedEmail &&
+                rememberedPassword
             ) {
 
                 document.getElementById(
                     'login-email'
                 ).value =
                     rememberedEmail;
+
+
+                document.getElementById(
+                    'login-password'
+                ).value =
+                    atob(
+                        rememberedPassword
+                    );
 
 
                 document.getElementById(
@@ -2662,6 +2701,15 @@
                         'true'
                     );
 
+                    // Fenêtre de "reste connecté" : 12h à partir de
+                    // maintenant. Tant qu'elle n'est pas dépassée, la
+                    // redirection automatique ci-dessus évitera de
+                    // redemander le mot de passe.
+                    localStorage.setItem(
+                        'sessionExpiresAt',
+                        String(Date.now() + 12 * 60 * 60 * 1000)
+                    );
+
 
                     localStorage.setItem(
                         'userEmail',
@@ -2689,12 +2737,12 @@
                             credentials.email
                         );
 
-                        // Sécurité : on ne stocke plus jamais le mot de passe,
-                        // même encodé (btoa n'est pas un chiffrement, il est
-                        // trivialement réversible). Seul l'email est retenu ;
-                        // le mot de passe doit toujours être ressaisi.
-                        localStorage.removeItem(
-                            'rememberedPassword'
+
+                        localStorage.setItem(
+                            'rememberedPassword',
+                            btoa(
+                                credentials.password
+                            )
                         );
 
                     }
@@ -2867,6 +2915,34 @@
 
                     regPasswordStrengthLabel.style.color =
                         result.color;
+
+                }
+            );
+
+        }
+
+
+
+        /* =========================================================
+           MOT DE PASSE OUBLIÉ
+           ========================================================= */
+
+        const forgotPasswordLink =
+            document.getElementById(
+                'forgot-password-link'
+            );
+
+        if (forgotPasswordLink) {
+
+            forgotPasswordLink.addEventListener(
+                'click',
+                event => {
+
+                    event.preventDefault();
+
+                    alert(
+                        'La réinitialisation du mot de passe n\'est pas disponible ici. Veuillez contacter votre responsable de recrutement pour obtenir de l\'aide.'
+                    );
 
                 }
             );
