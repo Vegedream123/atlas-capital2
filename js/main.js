@@ -876,6 +876,11 @@ document.addEventListener(
                             'true'
                         );
 
+                        localStorage.setItem(
+                            'sessionExpiresAt',
+                            String(Date.now() + 12 * 60 * 60 * 1000)
+                        );
+
 
                         localStorage.setItem(
                             'userEmail',
