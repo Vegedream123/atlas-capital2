@@ -283,6 +283,29 @@
         }
 
 
+        .auth-panel .auth-subtext {
+
+            margin: -24px 0 28px;
+
+            font-size: 15px;
+
+            line-height: 1.55;
+
+            color: var(--secondary);
+
+        }
+
+
+        #forgot-panel #back-to-login-link,
+        #reset-panel #back-to-login-link {
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+        }
+
+
         /* =====================================================
            FORMULAIRE
            ===================================================== */
@@ -1711,6 +1734,207 @@
             </div>
 
 
+
+            <!-- =====================================================
+                 MOT DE PASSE OUBLIÉ (demande du lien)
+                 ===================================================== -->
+
+            <div
+                class="auth-panel"
+                id="forgot-panel"
+            >
+
+                <h2>
+                    Mot de passe oublié
+                </h2>
+
+                <p class="auth-subtext">
+                    Indiquez l'adresse email de votre compte, nous vous
+                    enverrons un lien pour créer un nouveau mot de passe.
+                </p>
+
+                <form id="forgot-form">
+
+                    <div class="form-group">
+
+                        <label for="forgot-email">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="forgot-email"
+                            class="form-control"
+                            placeholder="jean.dupont@email.com"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Envoyer le lien de réinitialisation
+                    </button>
+
+
+                    <div class="modal-actions" style="justify-content:center; margin-top:14px;">
+
+                        <a href="#" id="back-to-login-link">
+                            &larr; Retour à la connexion
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+
+
+            <!-- =====================================================
+                 MOT DE PASSE OUBLIÉ (nouveau mot de passe)
+                 ===================================================== -->
+
+            <div
+                class="auth-panel"
+                id="reset-panel"
+            >
+
+                <h2>
+                    Choisir un nouveau mot de passe
+                </h2>
+
+                <p class="auth-subtext">
+                    Ce lien est à usage unique. Choisissez votre nouveau
+                    mot de passe ci-dessous.
+                </p>
+
+                <form id="reset-form">
+
+                    <div class="form-group">
+
+                        <label for="reset-password">
+                            Nouveau mot de passe
+                        </label>
+
+                        <div class="password-input">
+
+                            <input
+                                type="password"
+                                id="reset-password"
+                                class="form-control"
+                                placeholder="8 caractères minimum"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="reset-password"
+                                aria-label="Afficher ou masquer le mot de passe"
+                            >
+
+                                <svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+
+                                    <path
+                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                    ></path>
+
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="3"
+                                    ></circle>
+
+                                </svg>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="reset-password-confirm">
+                            Confirmer le nouveau mot de passe
+                        </label>
+
+                        <div class="password-input">
+
+                            <input
+                                type="password"
+                                id="reset-password-confirm"
+                                class="form-control"
+                                placeholder="8 caractères minimum"
+                                autocomplete="new-password"
+                                required
+                            >
+
+                            <button
+                                type="button"
+                                class="password-toggle"
+                                data-target="reset-password-confirm"
+                                aria-label="Afficher ou masquer le mot de passe"
+                            >
+
+                                <svg
+                                    width="22"
+                                    height="22"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+
+                                    <path
+                                        d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
+                                    ></path>
+
+                                    <circle
+                                        cx="12"
+                                        cy="12"
+                                        r="3"
+                                    ></circle>
+
+                                </svg>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        Réinitialiser le mot de passe
+                    </button>
+
+                </form>
+
+            </div>
+
+
         </div>
 
     </main>
@@ -2438,6 +2662,153 @@
                     'active'
                 );
 
+            }
+        );
+
+
+
+        /* =========================================================
+           MOT DE PASSE OUBLIÉ
+           ========================================================= */
+
+        function showOnlyAuthPanel(panelId) {
+
+            document.querySelectorAll('.auth-panel').forEach((panel) => {
+                panel.classList.toggle('active', panel.id === panelId);
+            });
+
+            const tabsEl = document.querySelector('.auth-tabs');
+            const showTabs = panelId === 'login-panel' || panelId === 'register-panel';
+            if (tabsEl) tabsEl.style.display = showTabs ? '' : 'none';
+
+            if (panelId === 'login-panel') {
+                document.getElementById('tab-login').classList.add('active');
+                document.getElementById('tab-register').classList.remove('active');
+            } else if (panelId === 'register-panel') {
+                document.getElementById('tab-register').classList.add('active');
+                document.getElementById('tab-login').classList.remove('active');
+            }
+        }
+
+
+        document.getElementById(
+            'forgot-password-link'
+        ).addEventListener(
+            'click',
+            (e) => {
+                e.preventDefault();
+                document.getElementById('forgot-email').value =
+                    document.getElementById('login-email').value || '';
+                showOnlyAuthPanel('forgot-panel');
+            }
+        );
+
+
+        document.getElementById(
+            'back-to-login-link'
+        ).addEventListener(
+            'click',
+            (e) => {
+                e.preventDefault();
+                showOnlyAuthPanel('login-panel');
+            }
+        );
+
+
+        document.getElementById(
+            'forgot-form'
+        ).addEventListener(
+            'submit',
+            async (e) => {
+
+                e.preventDefault();
+
+                if (!window.supabaseClient) {
+                    showToast('Connexion au serveur indisponible, réessayez.', 'error');
+                    return;
+                }
+
+                const email = document.getElementById('forgot-email').value.trim();
+                const button = e.target.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Envoi en cours...';
+
+                const { error } = await window.supabaseClient.auth.resetPasswordForEmail(
+                    email,
+                    { redirectTo: window.location.origin + window.location.pathname }
+                );
+
+                button.disabled = false;
+                button.textContent = originalText;
+
+                // On affiche toujours ce même message, que l'email existe ou
+                // non dans la base : ça évite qu'une personne mal intentionnée
+                // devine quels emails sont inscrits sur la plateforme.
+                if (error) {
+                    console.error('resetPasswordForEmail a échoué :', error);
+                }
+                showToast(
+                    'Si un compte existe avec cet email, un lien de réinitialisation vient de lui être envoyé.',
+                    'success'
+                );
+                showOnlyAuthPanel('login-panel');
+            }
+        );
+
+
+        // Supabase place l'utilisateur en session "recovery" temporaire dès
+        // qu'il clique sur le lien reçu par email, et déclenche cet événement.
+        if (window.supabaseClient) {
+            window.supabaseClient.auth.onAuthStateChange((event) => {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showOnlyAuthPanel('reset-panel');
+                }
+            });
+        }
+
+
+        document.getElementById(
+            'reset-form'
+        ).addEventListener(
+            'submit',
+            async (e) => {
+
+                e.preventDefault();
+
+                const newPassword = document.getElementById('reset-password').value;
+                const confirmPassword = document.getElementById('reset-password-confirm').value;
+
+                if (newPassword.length < 8) {
+                    showToast('Le mot de passe doit contenir au moins 8 caractères.', 'error');
+                    return;
+                }
+                if (newPassword !== confirmPassword) {
+                    showToast('Les deux mots de passe ne correspondent pas.', 'error');
+                    return;
+                }
+
+                const button = e.target.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                button.disabled = true;
+                button.textContent = 'Mise à jour...';
+
+                const { error } = await window.supabaseClient.auth.updateUser({
+                    password: newPassword
+                });
+
+                button.disabled = false;
+                button.textContent = originalText;
+
+                if (error) {
+                    showToast('Erreur : ' + error.message, 'error');
+                    return;
+                }
+
+                showToast('Mot de passe mis à jour ! Redirection vers votre tableau de bord...', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
             }
         );
 
