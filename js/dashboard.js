@@ -706,7 +706,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             const labelFor = (type) => ({
                 deposit: 'Dépôt', withdrawal: 'Retrait', investment: 'Investissement',
-                gain: 'Gain généré', referral_commission: 'Commission de parrainage', quest: 'Quête journalière'
+                gain: 'Gain généré', referral_commission: 'Commission de parrainage', quest: 'Quête journalière',
+                investment_payout: 'Placement arrivé à échéance', adjustment: 'Ajustement du solde'
             }[type] || type);
 
             transactionsList.innerHTML = transactions.length ? transactions.map(t => {
