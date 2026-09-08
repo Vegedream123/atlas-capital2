@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const session = sessionData && sessionData.session;
     if (!session) { window.location.href = 'index.html'; return; }
+    // Renouvelle la fenêtre de "reste connecté" de 12h à chaque visite.
+    localStorage.setItem('sessionExpiresAt', String(Date.now() + 12 * 60 * 60 * 1000));
 
     const authUser = session.user;
     const { data: profile, error: profileError } = await window.supabaseClient
@@ -51,6 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('admin-logout-btn').addEventListener('click', async () => {
         await window.supabaseClient.auth.signOut();
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('sessionExpiresAt');
         window.location.href = 'index.html';
     });
 
