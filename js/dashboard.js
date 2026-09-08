@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     const authUser = session.user;
+    // Renouvelle la fenêtre de "reste connecté" de 12h à chaque visite,
+    // pour ne redemander le mot de passe qu'après 12h d'inactivité réelle.
+    localStorage.setItem('sessionExpiresAt', String(Date.now() + 12 * 60 * 60 * 1000));
 
     // ------------------------------------------------------------------
     // 2. Chargement des données réelles : profil, portefeuille, produits,
@@ -1509,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.showToast('Déconnexion en cours...', 'info');
             await window.supabaseClient.auth.signOut();
             localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('sessionExpiresAt');
             setTimeout(() => window.location.href = 'index.html', 800);
         });
     });
@@ -1802,15 +1806,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Une seule fonction serveur (contourne la RLS proprement, sans
         // exposer les profils de tout le monde) renvoie les 3 niveaux
         // d'un coup, avec total déposé et statut actif déjà calculés.
-        let { data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team');
-        if (error) {
-            console.error('get_my_referral_team a échoué, nouvelle tentative :', error);
-            // Ré-essaie une fois (connexion mobile instable, cold start, etc.)
-            // avant d'afficher 0 — évite l'effet "mon équipe affiche 0" alors
-            // que les filleuls existent bel et bien côté serveur.
-            ({ data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team'));
-            if (error) console.error('get_my_referral_team a échoué deux fois :', error);
-        }
+        const { data: rows, error } = await window.supabaseClient.rpc('get_my_referral_team');
         const allRows = error ? [] : (rows || []);
 
         if (referralCountEl) {
