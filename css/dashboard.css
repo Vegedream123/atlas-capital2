@@ -127,7 +127,6 @@ svg { flex-shrink: 0; }
 .notif-item:last-child { border-bottom: none; }
 .notif-item.unread { background: var(--gray-50); }
 .notif-item.unread:hover { background: var(--gray-100); }
-.notif-item:not(.unread) { cursor: default; }
 .notif-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(249,115,22,0.14); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .notif-item[data-notif-id] .notif-icon { position: relative; }
 .notif-body { flex: 1; min-width: 0; position: relative; }
