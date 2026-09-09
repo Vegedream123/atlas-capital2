@@ -27,8 +27,126 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
-    // 1. Vérification d'accès admin
+    // 1bis. Générateur de reçu (image PNG dessinée en Canvas) — réutilisé
+    // à la fois pour le reçu AUTOMATIQUE à la validation d'un retrait et
+    // pour l'outil de reçu MANUEL/personnalisé du panel.
     // ----------------------------------------------------------------
+    function drawReceiptCanvas({ statusLabel, statusColor, amount, netAmount, feeLabel, method, destination, recipientName, userName, userEmail, date, reference }) {
+        const W = 1000, H = 1250;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Fond
+        ctx.fillStyle = '#f4f1ee';
+        ctx.fillRect(0, 0, W, H);
+
+        // Carte blanche centrale avec ombre légère
+        const pad = 50;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.12)';
+        ctx.shadowBlur = 30;
+        ctx.fillRect(pad, pad, W - pad * 2, H - pad * 2);
+        ctx.shadowBlur = 0;
+
+        // Bandeau haut (couleur marque Atlas Capital)
+        ctx.fillStyle = '#c45a18';
+        ctx.fillRect(pad, pad, W - pad * 2, 170);
+
+        // Logo texte
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 42px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('🏛 Atlas Capital', pad + 40, pad + 100);
+
+        ctx.font = '22px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillText('Reçu officiel de transaction', pad + 40, pad + 140);
+
+        // Badge de statut
+        ctx.font = 'bold 24px sans-serif';
+        const statusText = statusLabel || 'VALIDÉ';
+        const statusWidth = ctx.measureText(statusText).width + 50;
+        ctx.fillStyle = statusColor || '#1f9d55';
+        const badgeX = W - pad - statusWidth - 30;
+        const badgeY = pad + 55;
+        ctx.beginPath();
+        ctx.roundRect(badgeX, badgeY, statusWidth, 48, 24);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(statusText, badgeX + statusWidth / 2, badgeY + 32);
+
+        // Montant principal
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1a1a1a';
+        ctx.font = 'bold 64px sans-serif';
+        ctx.fillText(amount, W / 2, pad + 280);
+        if (netAmount) {
+            ctx.font = '22px sans-serif';
+            ctx.fillStyle = '#6b6b6b';
+            ctx.fillText(netAmount, W / 2, pad + 320);
+        }
+
+        // Ligne séparatrice
+        ctx.strokeStyle = '#e6e2dd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(pad + 40, pad + 360);
+        ctx.lineTo(W - pad - 40, pad + 360);
+        ctx.stroke();
+
+        // Lignes de détail (label / valeur)
+        const rows = [
+            ['Bénéficiaire', userName || '—'],
+            ['E-mail du compte', userEmail || '—'],
+            ['Nom du destinataire', recipientName || '—'],
+            ['Méthode', method || '—'],
+            ['Destination', destination || '—'],
+            ...(feeLabel ? [['Frais', feeLabel]] : []),
+            ['Référence', reference || '—'],
+            ['Date', date || '—'],
+        ];
+
+        let y = pad + 420;
+        ctx.textAlign = 'left';
+        rows.forEach(([label, value]) => {
+            ctx.font = '22px sans-serif';
+            ctx.fillStyle = '#8a8580';
+            ctx.fillText(label, pad + 40, y);
+            ctx.font = 'bold 24px sans-serif';
+            ctx.fillStyle = '#1a1a1a';
+            ctx.textAlign = 'right';
+            ctx.fillText(value, W - pad - 40, y);
+            ctx.textAlign = 'left';
+            y += 58;
+        });
+
+        // Pied de page
+        ctx.textAlign = 'center';
+        ctx.font = '18px sans-serif';
+        ctx.fillStyle = '#a8a29b';
+        ctx.fillText('Document généré automatiquement — Atlas Capital', W / 2, H - pad - 30);
+
+        return canvas;
+    }
+
+    function canvasToBlob(canvas) {
+        return new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+    }
+
+    async function uploadReceiptImage(canvas, filenamePrefix) {
+        const blob = await canvasToBlob(canvas);
+        const path = `${filenamePrefix}-${Date.now()}.png`;
+        const { error: uploadError } = await window.supabaseClient.storage
+            .from('receipts')
+            .upload(path, blob, { contentType: 'image/png', upsert: true });
+        if (uploadError) throw uploadError;
+        const { data } = window.supabaseClient.storage.from('receipts').getPublicUrl(path);
+        return data.publicUrl;
+    }
+
+
     if (!window.supabaseClient) { window.location.href = 'index.html'; return; }
 
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
@@ -550,7 +668,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function reviewRequest(kind, id, approve, note) {
         if (approve && !confirm('Valider cette demande ?')) return;
         const rpcName = kind === 'deposits' ? 'admin_review_deposit' : 'admin_review_withdrawal';
-        const { error } = await window.supabaseClient.rpc(rpcName, { p_request_id: id, p_approve: approve, p_note: note || null });
+
+        let receiptImageUrl = null;
+        if (kind === 'withdrawals' && approve) {
+            try {
+                const { data: reqRow } = await window.supabaseClient
+                    .from('withdrawal_requests')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                if (reqRow) {
+                    const { data: profileRow } = await window.supabaseClient
+                        .from('profiles')
+                        .select('full_name, email')
+                        .eq('id', reqRow.user_id)
+                        .single();
+                    const canvas = drawReceiptCanvas({
+                        statusLabel: 'RETRAIT VALIDÉ',
+                        statusColor: '#1f9d55',
+                        amount: formatFCFA(reqRow.amount),
+                        netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
+                        feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
+                        method: reqRow.method_name,
+                        destination: reqRow.destination,
+                        recipientName: reqRow.recipient_name,
+                        userName: (profileRow && profileRow.full_name) || '—',
+                        userEmail: (profileRow && profileRow.email) || '—',
+                        date: formatDate(new Date()),
+                        reference: reqRow.id,
+                    });
+                    receiptImageUrl = await uploadReceiptImage(canvas, `withdrawal-${id}`);
+                }
+            } catch (err) {
+                console.error('Génération du reçu impossible :', err);
+                // On ne bloque jamais la validation du retrait si le reçu échoue.
+            }
+        }
+
+        const { error } = await window.supabaseClient.rpc(rpcName, {
+            p_request_id: id,
+            p_approve: approve,
+            p_note: note || null,
+            ...(kind === 'withdrawals' ? { p_receipt_image_url: receiptImageUrl } : {}),
+        });
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
         window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
         loadRequests(kind, kind === 'deposits' ? currentDepositStatus : currentWithdrawalStatus);
@@ -1465,6 +1625,68 @@ document.addEventListener('DOMContentLoaded', async () => {
                 window.showToast('Test envoyé — vérifiez votre cloche et votre téléphone.', 'success');
             });
         }
+    }
+
+    // ----------------------------------------------------------------
+    // 7quater. Reçu personnalisé — outil manuel, indépendant des retraits
+    // ----------------------------------------------------------------
+    const receiptForm = document.getElementById('receipt-form');
+    if (receiptForm) {
+        const previewWrap = document.getElementById('receipt-preview-wrap');
+        const previewImg = document.getElementById('receipt-preview-img');
+
+        function buildReceiptCanvasFromForm() {
+            const feeInput = ''; // pas de champ frais dédié dans l'outil manuel
+            return drawReceiptCanvas({
+                statusLabel: document.getElementById('receipt-status').value,
+                statusColor: document.getElementById('receipt-status').value === 'REJETÉ' ? '#d9534f' : '#1f9d55',
+                amount: document.getElementById('receipt-amount').value.trim() || '—',
+                netAmount: null,
+                feeLabel: feeInput || null,
+                method: document.getElementById('receipt-method').value.trim(),
+                destination: document.getElementById('receipt-destination').value.trim(),
+                recipientName: document.getElementById('receipt-recipient').value.trim(),
+                userName: document.getElementById('receipt-username').value.trim(),
+                userEmail: document.getElementById('receipt-email').value.trim(),
+                date: formatDate(new Date()),
+                reference: document.getElementById('receipt-reference').value.trim() || ('REF-' + Date.now()),
+            });
+        }
+
+        document.getElementById('receipt-preview-btn').addEventListener('click', async () => {
+            const canvas = buildReceiptCanvasFromForm();
+            const blob = await canvasToBlob(canvas);
+            previewImg.src = URL.createObjectURL(blob);
+            previewWrap.style.display = 'block';
+        });
+
+        document.getElementById('receipt-download-btn').addEventListener('click', async () => {
+            const canvas = buildReceiptCanvasFromForm();
+            const blob = await canvasToBlob(canvas);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'recu-atlas-capital.png';
+            a.click();
+        });
+
+        const uploadBtn = document.getElementById('receipt-upload-btn');
+        uploadBtn.addEventListener('click', async () => {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Upload...';
+            try {
+                const canvas = buildReceiptCanvasFromForm();
+                const url = await uploadReceiptImage(canvas, 'manual');
+                await navigator.clipboard.writeText(url);
+                window.showToast('Lien copié dans le presse-papier : ' + url, 'success');
+                previewImg.src = url;
+                previewWrap.style.display = 'block';
+            } catch (err) {
+                window.showToast('Erreur upload : ' + err.message, 'error');
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Uploader et copier le lien';
+            }
+        });
     }
 
     // ----------------------------------------------------------------
