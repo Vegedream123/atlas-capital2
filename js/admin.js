@@ -1390,6 +1390,57 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
+    // 7ter. Annonces — notification + push envoyée à tous les utilisateurs
+    // ----------------------------------------------------------------
+    const broadcastForm = document.getElementById('broadcast-form');
+    if (broadcastForm) {
+        const titleInput = document.getElementById('broadcast-title');
+        const bodyInput = document.getElementById('broadcast-body');
+        const imageInput = document.getElementById('broadcast-image');
+        const previewTitle = document.getElementById('broadcast-preview-title');
+        const previewBody = document.getElementById('broadcast-preview-body');
+        const previewImg = document.getElementById('broadcast-preview-img');
+
+        const updatePreview = () => {
+            previewTitle.textContent = titleInput.value.trim() || 'Titre de la notification';
+            previewBody.textContent = bodyInput.value.trim() || 'Le message apparaîtra ici au fur et à mesure que vous tapez.';
+            const url = imageInput.value.trim();
+            if (url) { previewImg.src = url; previewImg.style.display = 'block'; }
+            else { previewImg.style.display = 'none'; }
+        };
+        [titleInput, bodyInput, imageInput].forEach(el => el.addEventListener('input', updatePreview));
+        updatePreview();
+
+        broadcastForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = titleInput.value.trim();
+            const body = bodyInput.value.trim();
+            const image = imageInput.value.trim();
+
+            if (!title) { window.showToast('Le titre est obligatoire.', 'error'); return; }
+            if (!confirm(`Envoyer cette annonce à TOUS les utilisateurs ?\n\n"${title}"`)) return;
+
+            const submitBtn = document.getElementById('broadcast-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+
+            const { data, error } = await window.supabaseClient.rpc('admin_broadcast_notification', {
+                p_title: title,
+                p_body: body,
+                p_image_url: image || null,
+            });
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Envoyer à tous les utilisateurs';
+
+            if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+            window.showToast(`Annonce envoyée à ${data} utilisateur(s).`, 'success');
+            broadcastForm.reset();
+            updatePreview();
+        });
+    }
+
+    // ----------------------------------------------------------------
     // 8. Chargement initial
     // ----------------------------------------------------------------
     loadStats();
