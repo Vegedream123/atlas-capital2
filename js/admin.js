@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const formatFCFA = (amount) => new Intl.NumberFormat('fr-FR').format(Math.round(amount || 0)) + ' FCFA';
     const formatDate = (d) => d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
-    window.showToast = (message, type = 'info') => {
+    window.showToast = (message, type = 'info', duration = 4000) => {
         const container = document.getElementById('toast-container');
         if (!container) return;
         const toast = document.createElement('div');
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         toast.innerHTML = `<div>${message}</div>`;
         container.appendChild(toast);
         setTimeout(() => toast.classList.add('show'), 10);
-        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, duration);
     };
 
     const openModal = (id) => document.getElementById(id).classList.add('active');
@@ -27,10 +27,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ----------------------------------------------------------------
-    // 1bis. Générateur de reçu (image PNG dessinée en Canvas) — réutilisé
-    // à la fois pour le reçu AUTOMATIQUE à la validation d'un retrait et
-    // pour l'outil de reçu MANUEL/personnalisé du panel.
+    // 1bis. Générateur de reçu (image PNG dessinée en Canvas, habillage
+    // "Atlas Capital") — utilisé à la fois pour le reçu AUTOMATIQUE à la
+    // validation d'un retrait et pour l'outil de reçu MANUEL du panel.
+    // Compatible avec TOUS les navigateurs (y compris anciens
+    // Android/WebView) : ctx.roundRect() est une API Canvas récente
+    // absente sur certains téléphones, remplacée ici par un tracé manuel.
     // ----------------------------------------------------------------
+    function tracePath(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
     function drawReceiptCanvas({ statusLabel, statusColor, amount, netAmount, feeLabel, method, destination, recipientName, userName, userEmail, date, reference }) {
         const W = 1000, H = 1250;
         const canvas = document.createElement('canvas');
@@ -70,8 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.fillStyle = statusColor || '#1f9d55';
         const badgeX = W - pad - statusWidth - 30;
         const badgeY = pad + 55;
-        ctx.beginPath();
-        ctx.roundRect(badgeX, badgeY, statusWidth, 48, 24);
+        tracePath(ctx, badgeX, badgeY, statusWidth, 48, 24);
         ctx.fill();
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
@@ -624,7 +636,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button class="admin-btn-sm admin-btn-approve" data-approve="${r.id}">Valider</button>
                 <button class="admin-btn-sm admin-btn-reject" data-reject="${r.id}">Rejeter</button>
                 ${kind === 'withdrawals' ? `<button class="admin-btn-sm admin-btn-detail" data-wd-detail="${r.id}">Détails</button>` : ''}` :
-                (kind === 'withdrawals' ? `<button class="admin-btn-sm admin-btn-detail" data-wd-detail="${r.id}">Détails</button>` : '—');
+                (kind === 'withdrawals' ? `<button class="admin-btn-sm admin-btn-detail" data-wd-detail="${r.id}">Détails</button>${status === 'approved' ? `<button class="admin-btn-sm admin-btn-edit" data-resend-receipt="${r.id}">Renvoyer le reçu</button>` : ''}` : '—');
             if (kind === 'deposits') {
                 return `<tr>
                     <td>${formatDate(r.created_at)}</td>
@@ -663,6 +675,67 @@ document.addEventListener('DOMContentLoaded', async () => {
         tbody.querySelectorAll('[data-wd-detail]').forEach(btn => {
             btn.addEventListener('click', () => viewWithdrawalDetail(btn.getAttribute('data-wd-detail')));
         });
+        tbody.querySelectorAll('[data-resend-receipt]').forEach(btn => {
+            btn.addEventListener('click', () => resendWithdrawalReceipt(btn.getAttribute('data-resend-receipt'), btn));
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Renvoie/régénère le reçu d'un retrait déjà validé (ex: retraits
+    // validés avant la correction du bug de compatibilité Canvas). Crée
+    // une NOUVELLE notification avec l'image du reçu jointe, visible
+    // immédiatement par l'utilisateur.
+    // ------------------------------------------------------------------
+    async function resendWithdrawalReceipt(id, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Génération…';
+        try {
+            const { data: reqRow, error: reqError } = await window.supabaseClient
+                .from('withdrawal_requests')
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (reqError || !reqRow) throw new Error("Demande de retrait introuvable.");
+
+            const { data: profileRow } = await window.supabaseClient
+                .from('profiles')
+                .select('full_name, email')
+                .eq('id', reqRow.user_id)
+                .single();
+
+            const canvas = drawReceiptCanvas({
+                statusLabel: 'RETRAIT VALIDÉ',
+                statusColor: '#1f9d55',
+                amount: formatFCFA(reqRow.amount),
+                netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
+                feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
+                method: reqRow.method_name,
+                destination: reqRow.destination,
+                recipientName: reqRow.recipient_name,
+                userName: (profileRow && profileRow.full_name) || '—',
+                userEmail: (profileRow && profileRow.email) || '—',
+                date: formatDate(reqRow.reviewed_at || reqRow.created_at),
+                reference: reqRow.id,
+            });
+            const receiptImageUrl = await uploadReceiptImage(canvas, `withdrawal-resend-${id}`);
+
+            const { error: notifError } = await window.supabaseClient.from('notifications').insert({
+                user_id: reqRow.user_id,
+                type: 'withdrawal',
+                title: 'Reçu de votre retrait',
+                body: `Voici le reçu de votre retrait de ${formatFCFA(reqRow.amount)}.`,
+                image_url: receiptImageUrl,
+                is_read: false
+            });
+            if (notifError) throw notifError;
+
+            window.showToast(`Reçu envoyé à l'utilisateur. <a href="${receiptImageUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-weight:600;">Télécharger le reçu</a>`, 'success', 15000);
+        } catch (err) {
+            window.showToast("Erreur : " + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Renvoyer le reçu';
+        }
     }
 
     async function reviewRequest(kind, id, approve, note) {
@@ -701,6 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 console.error('Génération du reçu impossible :', err);
+                window.showToast("Le retrait sera validé, mais le reçu n'a pas pu être généré (" + err.message + ").", 'error');
                 // On ne bloque jamais la validation du retrait si le reçu échoue.
             }
         }
@@ -712,7 +786,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...(kind === 'withdrawals' ? { p_receipt_image_url: receiptImageUrl } : {}),
         });
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
-        window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
+        if (approve && kind === 'withdrawals' && receiptImageUrl) {
+            window.showToast(`Demande validée. <a href="${receiptImageUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-weight:600;">Télécharger le reçu</a>`, 'success', 15000);
+        } else {
+            window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
+        }
         loadRequests(kind, kind === 'deposits' ? currentDepositStatus : currentWithdrawalStatus);
         loadStats();
     }
