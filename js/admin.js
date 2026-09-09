@@ -1428,6 +1428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 p_title: title,
                 p_body: body,
                 p_image_url: image || null,
+                p_test_only: false,
             });
 
             submitBtn.disabled = false;
@@ -1438,6 +1439,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             broadcastForm.reset();
             updatePreview();
         });
+
+        const testBtn = document.getElementById('broadcast-test-btn');
+        if (testBtn) {
+            testBtn.addEventListener('click', async () => {
+                const title = titleInput.value.trim();
+                const body = bodyInput.value.trim();
+                const image = imageInput.value.trim();
+                if (!title) { window.showToast('Le titre est obligatoire.', 'error'); return; }
+
+                testBtn.disabled = true;
+                testBtn.textContent = 'Envoi du test...';
+
+                const { error } = await window.supabaseClient.rpc('admin_broadcast_notification', {
+                    p_title: title,
+                    p_body: body,
+                    p_image_url: image || null,
+                    p_test_only: true,
+                });
+
+                testBtn.disabled = false;
+                testBtn.textContent = 'Envoyer un test (à moi uniquement)';
+
+                if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+                window.showToast('Test envoyé — vérifiez votre cloche et votre téléphone.', 'success');
+            });
+        }
     }
 
     // ----------------------------------------------------------------
