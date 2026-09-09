@@ -1568,7 +1568,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Pop-up de rappel — appareil/navigateur COMPATIBLE mais utilisateur
+    // ayant cliqué "Refuser" au niveau du navigateur (permission "denied").
+    // Un navigateur ne permet JAMAIS de rouvrir sa propre demande native une
+    // fois refusée : impossible de redéclencher "Activer" par du code, il
+    // faut que l'utilisateur le réautorise lui-même dans les réglages.
+    // On ne bloque PAS l'accès au site — juste un rappel à chaque connexion.
+    function openPushDeniedModal() {
+        if (!pushModalOverlay) {
+            pushModalOverlay = document.createElement('div');
+            pushModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(pushModalOverlay);
+        }
+        pushModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <div style="text-align:center; padding:8px 4px;">
+                    <div style="font-size:2.6rem; margin-bottom:10px;">🔕</div>
+                    <h2 class="task-modal-title">Notifications désactivées</h2>
+                    <p class="task-modal-sub">Vous avez précédemment refusé les notifications sur cet appareil. Pour les recevoir (dépôts, retraits, gains, machines à échéance...), autorisez-les manuellement : réglages du navigateur/téléphone → Notifications → Atlas Capital → Autoriser.</p>
+                    <button type="button" class="btn btn-primary btn-full" id="push-denied-close-btn" style="margin-top:16px;">Continuer sans notifications</button>
+                </div>
+            </div>`;
+        pushModalOverlay.querySelector('#push-denied-close-btn').addEventListener('click', () => {
+            pushModalOverlay.classList.remove('active');
+        });
+        pushModalOverlay.classList.add('active');
+    }
+
     (async function initPush() {
+        // Appareil/navigateur SANS support de la Push API (ex: iPhone avec
+        // iOS < 16.4) : cette fonctionnalité n'existe tout simplement pas
+        // sur cet appareil, aucun code ne peut la faire apparaître. On ne
+        // montre donc jamais de pop-up et on ne bloque jamais l'accès au
+        // site : l'utilisateur garde la cloche de notifications in-app
+        // (refreshNotifications, déjà 100% compatible tous appareils).
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
 
         if (Notification.permission === 'granted') {
@@ -1595,6 +1628,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             // juste la pop-up pour cette visite ; elle reviendra à la
             // prochaine connexion.
             openPushPermissionModal();
+        } else if (Notification.permission === 'denied') {
+            // Refusé au niveau du navigateur : rappel non bloquant à CHAQUE
+            // connexion (le message ne doit disparaître pour de bon que le
+            // jour où l'utilisateur réautorise réellement, ce que le
+            // navigateur signalera alors via permission === 'granted').
+            openPushDeniedModal();
         }
     })();
 
