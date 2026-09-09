@@ -1621,16 +1621,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (notifListEl) {
         notifListEl.addEventListener('click', async (e) => {
-            const item = e.target.closest('.notif-item.unread');
+            const item = e.target.closest('.notif-item');
             if (!item) return;
             const id = item.getAttribute('data-notif-id');
-            item.classList.remove('unread');
-            const notif = notifications.find(n => n.id === id);
-            if (notif) notif.is_read = true;
-            renderNotifications();
-            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('id', id);
+            openNotifDetail(id);
         });
     }
+
+    // ------------------------------------------------------------------
+    // Détail d'une notification — s'ouvre au tap sur un message (lu ou
+    // non), ainsi qu'automatiquement quand l'utilisateur arrive via une
+    // notification push (lien ?notif=<id>), pour qu'il voie vraiment le
+    // message envoyé au lieu d'atterrir sur le tableau de bord générique.
+    // ------------------------------------------------------------------
+    let notifDetailOverlay = null;
+    const closeNotifDetail = () => { if (notifDetailOverlay) notifDetailOverlay.classList.remove('active'); };
+
+    const openNotifDetail = async (id) => {
+        let notif = notifications.find(n => n.id === id);
+        if (!notif) {
+            const { data } = await window.supabaseClient.from('notifications').select('*').eq('id', id).maybeSingle();
+            notif = data;
+        }
+        if (!notif) { window.showToast && window.showToast("Ce message n'existe plus.", 'error'); return; }
+
+        if (!notif.is_read) {
+            notif.is_read = true;
+            document.querySelectorAll(`.notif-item[data-notif-id="${id}"]`).forEach(el => el.classList.remove('unread'));
+            renderNotifications();
+            await window.supabaseClient.from('notifications').update({ is_read: true }).eq('id', id);
+        }
+
+        if (!notifDetailOverlay) {
+            notifDetailOverlay = document.createElement('div');
+            notifDetailOverlay.className = 'modal-overlay';
+            document.body.appendChild(notifDetailOverlay);
+            notifDetailOverlay.addEventListener('click', (e) => { if (e.target === notifDetailOverlay) closeNotifDetail(); });
+        }
+
+        notifDetailOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-notif-detail>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                ${notif.image_url ? `<img src="${notif.image_url}" alt="" style="width:100%; border-radius: var(--radius-sm); margin-bottom: 14px;">` : ''}
+                <h2 class="task-modal-title">${notif.title}</h2>
+                <p class="task-modal-sub" style="white-space: pre-wrap;">${notif.body || ''}</p>
+                <div class="notif-time" style="margin-top: 10px;">${timeAgo(notif.created_at)}</div>
+            </div>`;
+        notifDetailOverlay.querySelector('[data-close-notif-detail]').addEventListener('click', closeNotifDetail);
+        notifDetailOverlay.classList.add('active');
+        if (notifPanel) notifPanel.classList.remove('active');
+    };
+
+    // Arrivée depuis une notification push (lien ?notif=<id>) : ouvre
+    // directement le message concerné, puis nettoie l'URL.
+    (() => {
+        const notifIdFromUrl = new URLSearchParams(window.location.search).get('notif');
+        if (notifIdFromUrl) {
+            openNotifDetail(notifIdFromUrl);
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, '', cleanUrl);
+        }
+    })();
 
     if (notifMarkAllBtn) {
         notifMarkAllBtn.addEventListener('click', async () => {
