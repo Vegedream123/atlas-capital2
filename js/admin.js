@@ -719,13 +719,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             const receiptImageUrl = await uploadReceiptImage(canvas, `withdrawal-resend-${id}`);
 
-            const { error: notifError } = await window.supabaseClient.from('notifications').insert({
-                user_id: reqRow.user_id,
-                type: 'withdrawal',
-                title: 'Reçu de votre retrait',
-                body: `Voici le reçu de votre retrait de ${formatFCFA(reqRow.amount)}.`,
-                image_url: receiptImageUrl,
-                is_read: false
+            const { error: notifError } = await window.supabaseClient.rpc('admin_send_receipt_notification', {
+                p_user_id: reqRow.user_id,
+                p_title: 'Reçu de votre retrait',
+                p_body: `Voici le reçu de votre retrait de ${formatFCFA(reqRow.amount)}.`,
+                p_image_url: receiptImageUrl
             });
             if (notifError) throw notifError;
 
