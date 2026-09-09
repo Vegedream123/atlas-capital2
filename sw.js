@@ -42,6 +42,13 @@ self.addEventListener('notificationclick', (event) => {
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
             for (const client of clientsArr) {
                 if (client.url.includes('dashboard.html') && 'focus' in client) {
+                    // L'onglet est déjà ouvert : on le fait naviguer vers le
+                    // message précis (?notif=<id>) avant de le mettre au
+                    // premier plan, sinon il resterait sur l'écran où il
+                    // était et l'utilisateur ne verrait jamais le message.
+                    if ('navigate' in client) {
+                        return client.navigate(targetUrl).then((navigated) => (navigated || client).focus());
+                    }
                     return client.focus();
                 }
             }
