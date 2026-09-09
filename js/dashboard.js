@@ -1460,6 +1460,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     renderNotifications();
 
+    // ------------------------------------------------------------------
+    // Notifications PUSH (téléphone / navigateur)
+    // ------------------------------------------------------------------
+    // Clé publique VAPID — publique par nature, sans risque à exposer ici
+    // (contrairement à la clé privée, qui reste uniquement côté serveur).
+    const VAPID_PUBLIC_KEY = 'BKqxq-ZopxKamyi5Xcixpe4oKw_HiBtVW_lamqQO_2max4TVZUGI19zg4j6Yjc-yxQiiQJgHWQdbIriJqjw8wjI';
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = atob(base64);
+        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    async function savePushSubscription(subscription) {
+        const json = subscription.toJSON();
+        await window.supabaseClient.from('push_subscriptions').upsert({
+            user_id: authUser.id,
+            endpoint: json.endpoint,
+            p256dh: json.keys.p256dh,
+            auth: json.keys.auth,
+        }, { onConflict: 'endpoint' });
+    }
+
+    async function enablePushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            window.showToast && window.showToast("Les notifications push ne sont pas prises en charge par ce navigateur.", 'error');
+            return;
+        }
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            let subscription = await registration.pushManager.getSubscription();
+            if (!subscription) {
+                subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                });
+            }
+            await savePushSubscription(subscription);
+            const banner = document.getElementById('push-enable-banner');
+            if (banner) banner.style.display = 'none';
+        } catch (err) {
+            console.error('Abonnement aux notifications push impossible :', err);
+        }
+    }
+
+    (async function initPush() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
+
+        const banner = document.getElementById('push-enable-banner');
+        const btn = document.getElementById('push-enable-btn');
+        if (btn) btn.addEventListener('click', enablePushNotifications);
+
+        if (Notification.permission === 'granted') {
+            // Déjà autorisé : on (ré)enregistre discrètement en arrière-plan,
+            // sans rien demander à l'utilisateur (utile si un nouvel appareil
+            // ou un cache navigateur a perdu l'abonnement précédent).
+            try {
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                let subscription = await registration.pushManager.getSubscription();
+                if (!subscription) {
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+                    });
+                }
+                await savePushSubscription(subscription);
+            } catch (err) {
+                console.error('Ré-abonnement push impossible :', err);
+            }
+        } else if (Notification.permission === 'default' && banner) {
+            // Jamais demandé : on propose l'activation via un bandeau discret
+            // dans le centre de notifications, plutôt qu'une pop-up imposée
+            // dès l'arrivée sur le site.
+            banner.style.display = 'flex';
+        }
+    })();
+
     const refreshNotifications = async () => {
         const { data } = await window.supabaseClient
             .from('notifications')
@@ -1511,6 +1592,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', async (e) => {
             e.preventDefault();
             window.showToast('Déconnexion en cours...', 'info');
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+                    const subscription = registration && await registration.pushManager.getSubscription();
+                    if (subscription) {
+                        await window.supabaseClient.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
+                        await subscription.unsubscribe();
+                    }
+                }
+            } catch (err) {
+                console.error('Nettoyage de l\'abonnement push impossible :', err);
+            }
             await window.supabaseClient.auth.signOut();
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('sessionExpiresAt');
