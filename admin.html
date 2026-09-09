@@ -532,6 +532,64 @@
                     </div>
                 </form>
             </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>🧾 Reçu personnalisé</h2>
+                </div>
+                <p class="text-secondary" style="margin:-6px 0 14px;">
+                    Fabrique toi-même un reçu avec les données de ton choix (utile pour un cas particulier, une preuve
+                    à renvoyer manuellement, etc.). Les retraits validés depuis "Retraits" génèrent déjà leur reçu
+                    automatiquement — cet outil est pour tout le reste.
+                </p>
+                <form id="receipt-form" class="admin-form" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div class="admin-form-group">
+                        <label>Statut affiché</label>
+                        <select id="receipt-status">
+                            <option value="RETRAIT VALIDÉ">Retrait validé</option>
+                            <option value="DÉPÔT VALIDÉ">Dépôt validé</option>
+                            <option value="PAIEMENT CONFIRMÉ">Paiement confirmé</option>
+                            <option value="REJETÉ">Rejeté</option>
+                        </select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Montant (ex : 20 000 FCFA)</label>
+                        <input type="text" id="receipt-amount" placeholder="20 000 FCFA">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Nom du bénéficiaire (compte)</label>
+                        <input type="text" id="receipt-username" placeholder="Nom complet">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>E-mail du compte</label>
+                        <input type="text" id="receipt-email" placeholder="email@exemple.com">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Nom du destinataire</label>
+                        <input type="text" id="receipt-recipient" placeholder="Nom sur le moyen de paiement">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Méthode</label>
+                        <input type="text" id="receipt-method" placeholder="MTN Mobile Money">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Destination (numéro/compte)</label>
+                        <input type="text" id="receipt-destination" placeholder="6XX XXX XXX">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Référence (optionnel)</label>
+                        <input type="text" id="receipt-reference" placeholder="Laisser vide pour une référence auto">
+                    </div>
+                    <div class="admin-form-actions" style="grid-column:1/-1; gap:10px;">
+                        <button type="button" class="btn btn-outline" id="receipt-preview-btn">Aperçu</button>
+                        <button type="button" class="btn btn-outline" id="receipt-download-btn">Télécharger l'image</button>
+                        <button type="button" class="btn btn-primary" id="receipt-upload-btn">Uploader et copier le lien</button>
+                    </div>
+                </form>
+                <div id="receipt-preview-wrap" style="margin-top:16px; display:none; text-align:center;">
+                    <img id="receipt-preview-img" style="max-width:100%; border:1px solid var(--gray-200,#e5e7eb); border-radius:12px;">
+                </div>
+            </div>
         </section>
 
     </main>
