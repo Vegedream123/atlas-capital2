@@ -1534,23 +1534,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             const activateBtn = document.getElementById('push-modal-activate-btn');
             activateBtn.disabled = true;
             activateBtn.textContent = 'Activation...';
-            const success = await enablePushNotifications();
-            if (success) {
+            const result = await enablePushNotifications();
+            if (result.ok) {
                 showPushCongrats();
             } else {
                 pushModalOverlay.classList.remove('active');
-                window.showToast && window.showToast("Impossible d'activer les notifications (permission refusée ou navigateur non compatible).", 'error');
+                const messages = {
+                    unsupported: "Votre navigateur ne propose pas les notifications push sur cet appareil. Vous pouvez quand même utiliser le site normalement — la cloche de notifications dans l'application reste disponible.",
+                    denied: "Vous avez refusé l'autorisation. Vous pouvez la réactiver à tout moment dans les réglages de votre navigateur/téléphone (Notifications → Atlas Capital → Autoriser).",
+                    dismissed: "L'activation a été annulée. Vous pourrez réessayer à la prochaine connexion.",
+                    technical: "Une erreur technique est survenue pendant l'activation. Réessayez dans un instant.",
+                };
+                window.showToast && window.showToast(messages[result.reason] || "Impossible d'activer les notifications.", 'error');
             }
         });
         pushModalOverlay.classList.add('active');
     }
 
-    // Retourne true/false selon que l'abonnement a réellement réussi.
+    // Retourne un objet { ok, reason } — "reason" précise EXACTEMENT pourquoi
+    // ça a échoué (au lieu de mélanger "refusé" et "non compatible" comme
+    // avant), pour afficher le bon message à l'utilisateur.
     async function enablePushNotifications() {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+        if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+            return { ok: false, reason: 'unsupported' };
+        }
         try {
             const permission = await Notification.requestPermission();
-            if (permission !== 'granted') return false;
+            if (permission === 'denied') return { ok: false, reason: 'denied' };
+            if (permission !== 'granted') return { ok: false, reason: 'dismissed' };
 
             const registration = await navigator.serviceWorker.register('/sw.js');
             let subscription = await registration.pushManager.getSubscription();
@@ -1561,10 +1572,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             await savePushSubscription(subscription);
-            return true;
+            return { ok: true, reason: null };
         } catch (err) {
             console.error('Abonnement aux notifications push impossible :', err);
-            return false;
+            return { ok: false, reason: 'technical' };
         }
     }
 
