@@ -6,6 +6,12 @@
     <title>Espace Client - Atlas Capital</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icons/icon-192.png">
+    <!-- Safari sur iPhone ignore manifest.json pour "Sur l'écran d'accueil" —
+         il lui faut ces balises précises pour afficher l'icône et le nom. -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Atlas Capital">
     <meta name="theme-color" content="#EA580C">
     <meta name="description" content="Gérez vos investissements avec Atlas Capital.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
