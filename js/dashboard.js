@@ -1484,14 +1484,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, { onConflict: 'endpoint' });
     }
 
-    async function enablePushNotifications() {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            window.showToast && window.showToast("Les notifications push ne sont pas prises en charge par ce navigateur.", 'error');
-            return;
+    // ------------------------------------------------------------------
+    // Pop-up d'activation — s'affiche automatiquement à chaque connexion
+    // tant que l'utilisateur n'a jamais répondu (ni accepté, ni refusé au
+    // niveau du navigateur). Elle ne se ferme QUE sur clic explicite
+    // ("Activer" ou "Annuler") — jamais toute seule, jamais en cliquant à
+    // côté — et réapparaîtra à la prochaine connexion si l'utilisateur a
+    // cliqué "Annuler" cette fois-ci.
+    // ------------------------------------------------------------------
+    let pushModalOverlay = null;
+
+    function showPushCongrats() {
+        if (!pushModalOverlay) return;
+        pushModalOverlay.querySelector('.modal-card').innerHTML = `
+            <div style="text-align:center; padding:8px 4px;">
+                <div style="font-size:2.6rem; margin-bottom:10px;">🎉</div>
+                <h2 class="task-modal-title">Notifications activées !</h2>
+                <p class="task-modal-sub">Félicitations, vous recevrez désormais vos notifications Atlas Capital (dépôts, retraits, gains, etc.) directement sur cet appareil, même quand le site est fermé.</p>
+                <button type="button" class="btn btn-primary btn-full" id="push-congrats-close-btn" style="margin-top:14px;">Parfait !</button>
+            </div>`;
+        pushModalOverlay.querySelector('#push-congrats-close-btn').addEventListener('click', () => {
+            pushModalOverlay.classList.remove('active');
+        });
+    }
+
+    function openPushPermissionModal() {
+        if (!pushModalOverlay) {
+            pushModalOverlay = document.createElement('div');
+            pushModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(pushModalOverlay);
+            // Volontairement PAS de fermeture au clic sur le fond : la pop-up
+            // ne doit se fermer que via le bouton "Annuler" explicite.
         }
+        pushModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <div style="text-align:center; padding:8px 4px;">
+                    <div style="font-size:2.6rem; margin-bottom:10px;">🔔</div>
+                    <h2 class="task-modal-title">Activer les notifications</h2>
+                    <p class="task-modal-sub">Recevez vos alertes Atlas Capital (dépôts validés, retraits, gains, machines à échéance...) directement sur cet appareil, même quand le site est fermé.</p>
+                    <button type="button" class="btn btn-primary btn-full" id="push-modal-activate-btn" style="margin-top:16px;">Activer</button>
+                    <button type="button" class="btn btn-full" id="push-modal-cancel-btn" style="margin-top:8px; background:transparent; color:var(--text-secondary);">Annuler</button>
+                </div>
+            </div>`;
+
+        pushModalOverlay.querySelector('#push-modal-cancel-btn').addEventListener('click', () => {
+            pushModalOverlay.classList.remove('active');
+        });
+        pushModalOverlay.querySelector('#push-modal-activate-btn').addEventListener('click', async () => {
+            const activateBtn = document.getElementById('push-modal-activate-btn');
+            activateBtn.disabled = true;
+            activateBtn.textContent = 'Activation...';
+            const success = await enablePushNotifications();
+            if (success) {
+                showPushCongrats();
+            } else {
+                pushModalOverlay.classList.remove('active');
+                window.showToast && window.showToast("Impossible d'activer les notifications (permission refusée ou navigateur non compatible).", 'error');
+            }
+        });
+        pushModalOverlay.classList.add('active');
+    }
+
+    // Retourne true/false selon que l'abonnement a réellement réussi.
+    async function enablePushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
         try {
             const permission = await Notification.requestPermission();
-            if (permission !== 'granted') return;
+            if (permission !== 'granted') return false;
 
             const registration = await navigator.serviceWorker.register('/sw.js');
             let subscription = await registration.pushManager.getSubscription();
@@ -1502,19 +1561,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             await savePushSubscription(subscription);
-            const banner = document.getElementById('push-enable-banner');
-            if (banner) banner.style.display = 'none';
+            return true;
         } catch (err) {
             console.error('Abonnement aux notifications push impossible :', err);
+            return false;
         }
     }
 
     (async function initPush() {
         if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return;
-
-        const banner = document.getElementById('push-enable-banner');
-        const btn = document.getElementById('push-enable-btn');
-        if (btn) btn.addEventListener('click', enablePushNotifications);
 
         if (Notification.permission === 'granted') {
             // Déjà autorisé : on (ré)enregistre discrètement en arrière-plan,
@@ -1533,11 +1588,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err) {
                 console.error('Ré-abonnement push impossible :', err);
             }
-        } else if (Notification.permission === 'default' && banner) {
-            // Jamais demandé : on propose l'activation via un bandeau discret
-            // dans le centre de notifications, plutôt qu'une pop-up imposée
-            // dès l'arrivée sur le site.
-            banner.style.display = 'flex';
+        } else if (Notification.permission === 'default') {
+            // Jamais répondu : pop-up automatique à CHAQUE connexion, comme
+            // demandé, tant que l'utilisateur n'a pas donné sa réponse au
+            // navigateur (accepter/bloquer). Un clic sur "Annuler" ferme
+            // juste la pop-up pour cette visite ; elle reviendra à la
+            // prochaine connexion.
+            openPushPermissionModal();
         }
     })();
 
