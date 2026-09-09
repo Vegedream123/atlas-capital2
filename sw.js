@@ -22,7 +22,10 @@ self.addEventListener('push', (event) => {
     const options = {
         body: data.body,
         icon: '/icons/icon-192.png',
-        badge: '/icons/icon-192.png',
+        badge: '/icons/badge-96.png',
+        // "image" = grande bannière affichée dans la notification déployée
+        // (parfait pour une annonce/promo). Ignoré si absent, aucun risque.
+        image: data.image || undefined,
         data: { url: data.url || '/dashboard.html' },
         vibrate: [100, 50, 100],
     };
