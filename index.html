@@ -1759,6 +1759,27 @@
 
 
         /*
+         * Filet de sécurité réseau : certains opérateurs/réseaux
+         * bloquent ou ralentissent fortement un CDN précis (ici
+         * jsdelivr) sans bloquer le reste du site (hébergé sur
+         * Vercel). Côté utilisateur, ça donne l'impression que
+         * "le réseau est bon" alors que SEULE la librairie Supabase
+         * n'a pas pu se charger. Si elle est absente, on bascule
+         * automatiquement sur un second CDN (unpkg, infrastructure
+         * différente de jsdelivr) via document.write, ce qui reste
+         * synchrone pendant le chargement de la page.
+         */
+
+        if (typeof window.supabase === 'undefined') {
+
+            document.write(
+                '<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>'
+            );
+
+        }
+
+
+        /*
          * IMPORTANT : si le CDN Supabase ne charge pas
          * (réseau lent, bloqueur de script, coupure momentanée),
          * "window.supabase" est indéfini. Avant cette correction,
