@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             views.forEach(v => v.classList.remove('active'));
             document.getElementById('view-' + target).classList.add('active');
             document.getElementById('admin-view-title').textContent = titleMap[target] || '';
-            if (target === 'apercu') loadStats();
+            if (target === 'apercu') { loadStats(); loadUpcomingMaturities(); }
             if (target === 'produits') { loadProducts(); }
             if (target === 'depots') loadRequests('deposits', currentDepositStatus);
             if (target === 'retraits') loadRequests('withdrawals', currentWithdrawalStatus);
@@ -229,6 +229,61 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ----------------------------------------------------------------
+    // 3ter. Échéances à venir — vue anticipée des placements Revenu
+    // Annuel encore actifs, triés par date d'échéance la plus proche,
+    // pour préparer la liquidité (FCFA / USDT) avant les retraits.
+    // ----------------------------------------------------------------
+    async function loadUpcomingMaturities() {
+        const tbody = document.getElementById('maturities-tbody');
+        const summaryEl = document.getElementById('maturities-summary');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="5">Chargement…</td></tr>';
+
+        const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const { data, error } = await window.supabaseClient
+            .from('user_investments')
+            .select('amount, matures_at, locked_payout_amount, profiles(full_name, phone), investment_products(category)')
+            .eq('status', 'active')
+            .not('matures_at', 'is', null)
+            .lte('matures_at', in30Days)
+            .order('matures_at', { ascending: true })
+            .limit(100);
+
+        if (error) { tbody.innerHTML = `<tr><td colspan="5">Erreur de chargement.</td></tr>`; return; }
+
+        const rows = (data || []).filter(inv => inv.investment_products && inv.investment_products.category === 'atlas');
+
+        if (!rows.length) {
+            tbody.innerHTML = `<tr><td colspan="5">Aucune échéance dans les 30 prochains jours.</td></tr>`;
+            if (summaryEl) summaryEl.textContent = '';
+            return;
+        }
+
+        const totalToPay = rows.reduce((sum, r) => sum + Number(r.locked_payout_amount || r.amount || 0), 0);
+        if (summaryEl) {
+            summaryEl.innerHTML = `<strong>${rows.length}</strong> placement(s) arrivent à échéance sous 30 jours, pour un total à payer d'environ <strong>${formatFCFA(totalToPay)}</strong>.`;
+        }
+
+        const now = Date.now();
+        tbody.innerHTML = rows.map(inv => {
+            const user = inv.profiles || {};
+            const maturesDate = new Date(inv.matures_at);
+            const daysLeft = Math.round((maturesDate.getTime() - now) / (24 * 60 * 60 * 1000));
+            const daysLabel = daysLeft < 0
+                ? `<span style="color:var(--danger,#e11);">en retard de ${Math.abs(daysLeft)} j</span>`
+                : (daysLeft === 0 ? `<strong>aujourd'hui</strong>` : `dans ${daysLeft} j`);
+            const payout = inv.locked_payout_amount ? formatFCFA(inv.locked_payout_amount) : formatFCFA(inv.amount);
+            return `<tr>
+                <td>${formatDate(inv.matures_at)}<br><span class="text-secondary" style="font-size:0.72rem;">${daysLabel}</span></td>
+                <td>${user.full_name || '—'}</td>
+                <td>${user.phone || '—'}</td>
+                <td>${formatFCFA(inv.amount)}</td>
+                <td><strong>${payout}</strong></td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ----------------------------------------------------------------
     // 3bis. Placements Revenu Annuel arrivés à échéance — crédit manuel
     // ----------------------------------------------------------------
     const processMaturedBtn = document.getElementById('process-matured-btn');
@@ -248,6 +303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     : 'Aucun placement en attente de crédit pour le moment.';
                 window.showToast(count > 0 ? `${count} placement(s) crédité(s).` : 'Rien à créditer pour le moment.', 'success');
                 loadStats();
+                loadUpcomingMaturities();
             } catch (err) {
                 window.showToast('Erreur : ' + err.message, 'error');
             } finally {
@@ -1769,4 +1825,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 8. Chargement initial
     // ----------------------------------------------------------------
     loadStats();
+    loadUpcomingMaturities();
 });
