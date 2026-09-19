@@ -190,6 +190,45 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Popup "Rejoindre le groupe WhatsApp" — affiché à CHAQUE entrée sur
+    // le site (chaque chargement du tableau de bord), avec un vrai bouton
+    // d'action bien visible, pour maximiser les adhésions à la communauté.
+    // Reste discret : un seul clic (rejoindre ou fermer) suffit à le
+    // fermer, il ne bloque rien d'autre sur la page.
+    // ------------------------------------------------------------------
+    if (siteSettings.whatsapp_group) {
+        setTimeout(() => {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-card" style="text-align:center;">
+                    <button type="button" class="modal-close" id="whatsapp-popup-close">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                    <div style="width:64px; height:64px; margin:0 auto 14px; border-radius:50%; background:rgba(37,211,102,0.12); display:flex; align-items:center; justify-content:center;">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.148.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"></path><path d="M20.52 3.449C12.831-3.984.361 1.407.36 11.945c0 2.099.552 4.146 1.601 5.943L0 24l6.315-1.657c1.75.951 3.723 1.454 5.729 1.455h.005c8.061 0 14.518-6.634 14.552-14.755a12.6 12.6 0 0 0-6.081-5.594zM12.05 21.786h-.004a10.87 10.87 0 0 1-5.212-1.394l-.373-.221-3.741.982.998-3.648-.243-.375a10.803 10.803 0 0 1-1.657-5.75c.002-5.98 4.867-10.845 10.844-10.845 2.897 0 5.617 1.13 7.663 3.183a10.767 10.767 0 0 1 3.169 7.669c-.003 5.98-4.867 10.844-10.844 10.844z"></path></svg>
+                    </div>
+                    <h2 class="task-modal-title">Rejoignez la communauté Atlas Capital</h2>
+                    <p class="task-modal-sub">Annonces, jeux bonus, codes promo et actus en direct sur notre groupe WhatsApp.</p>
+                    <a href="${siteSettings.whatsapp_group}" target="_blank" rel="noopener" id="whatsapp-popup-join"
+                        class="btn btn-full" style="background:#25D366; color:#fff; display:flex; align-items:center; justify-content:center; gap:8px; text-decoration:none; margin-top:6px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.472-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.148-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.148.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"></path><path d="M20.52 3.449C12.831-3.984.361 1.407.36 11.945c0 2.099.552 4.146 1.601 5.943L0 24l6.315-1.657c1.75.951 3.723 1.454 5.729 1.455h.005c8.061 0 14.518-6.634 14.552-14.755a12.6 12.6 0 0 0-6.081-5.594zM12.05 21.786h-.004a10.87 10.87 0 0 1-5.212-1.394l-.373-.221-3.741.982.998-3.648-.243-.375a10.803 10.803 0 0 1-1.657-5.75c.002-5.98 4.867-10.845 10.844-10.845 2.897 0 5.617 1.13 7.663 3.183a10.767 10.767 0 0 1 3.169 7.669c-.003 5.98-4.867 10.844-10.844 10.844z"></path></svg>
+                        Rejoindre le groupe WhatsApp
+                    </a>
+                    <button type="button" id="whatsapp-popup-later" class="btn btn-full" style="background:transparent; color:var(--text-secondary,#888); margin-top:8px; box-shadow:none;">Plus tard</button>
+                </div>`;
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.classList.add('active'));
+
+            const closePopup = () => { overlay.classList.remove('active'); setTimeout(() => overlay.remove(), 300); };
+            overlay.querySelector('#whatsapp-popup-close').addEventListener('click', closePopup);
+            overlay.querySelector('#whatsapp-popup-later').addEventListener('click', closePopup);
+            overlay.querySelector('#whatsapp-popup-join').addEventListener('click', closePopup);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closePopup(); });
+        }, 1500);
+    }
+
     // Bouton flottant "Service en ligne" (Accueil uniquement) — ouvre une
     // conversation Telegram directe avec le username défini dans l'admin
     // (site_settings.telegram_support_username)
