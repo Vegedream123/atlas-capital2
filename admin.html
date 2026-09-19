@@ -91,6 +91,21 @@
                     <button type="button" class="btn btn-primary" id="process-matured-btn">Vérifier et créditer maintenant</button>
                 </div>
                 <div class="admin-computed" id="process-matured-result" style="margin-top:14px; display:none;"></div>
+
+                <h3 class="admin-form-subtitle">Échéances à venir (prochains 30 jours)</h3>
+                <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
+                    Placements Revenu Annuel encore actifs, du plus proche au plus lointain — pour anticiper
+                    la liquidité (FCFA / USDT) à préparer avant que ces clients ne demandent un retrait.
+                </p>
+                <div class="admin-computed" id="maturities-summary" style="margin-bottom:14px;"></div>
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
+                            <tr><th>Échéance</th><th>Client</th><th>Téléphone</th><th>Montant investi</th><th>À payer au client</th></tr>
+                        </thead>
+                        <tbody id="maturities-tbody"><tr><td colspan="5">Chargement…</td></tr></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
