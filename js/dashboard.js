@@ -532,6 +532,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             .filter(t => t.category === 'quete' && t.type === 'quest')
             .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
 
+        // Carte "Offres Express" — même principe que Constant/Analyse/Quête :
+        // le gain s'accumule ici SANS être crédité au solde ; le montant
+        // total (gain journalier × nombre de jours) est versé en une fois
+        // au solde à l'échéance du cycle.
+        const expressActive = activeInvestments.filter(i => i.investment_products && i.investment_products.category === 'express');
+        const totalInvestedExpress = expressActive.reduce((sum, i) => sum + Number(i.amount), 0);
+        const expressGainsPending = transactions
+            .filter(t => t.category === 'express' && t.type === 'gain')
+            .reduce((sum, t) => sum + Number(t.gain_amount != null ? t.gain_amount : t.amount), 0);
+
         const setKpi = (id, value) => {
             const el = document.getElementById(id);
             if (el) { el.setAttribute('data-target', value); }
@@ -540,6 +550,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setKpi('kpi-annual-rate', atlasGainsRecovered);
         setKpi('kpi-active-investments', capitalGainsPending);
         setKpi('kpi-daily-quest', questGainsPending);
+        setKpi('kpi-express', expressGainsPending);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
@@ -554,6 +565,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             'kpi-quest-change',
             questActive.length
                 ? `${questActive.length} placement(s) actif(s) · ${formatFCFA(totalInvestedQuest)} investis`
+                : 'Investissez pour démarrer'
+        );
+        changeEl(
+            'kpi-express-change',
+            expressActive.length
+                ? `${expressActive.length} placement(s) actif(s) · ${formatFCFA(totalInvestedExpress)} investis`
                 : 'Investissez pour démarrer'
         );
 
