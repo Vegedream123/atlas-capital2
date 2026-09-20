@@ -1460,6 +1460,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // masqués à droite, pour que "Offres Express" ne passe pas inaperçu.
     const subnavEl = document.querySelector('.finances-subnav');
     const subnavWrapEl = document.querySelector('.finances-subnav-wrap');
+    const subnavArrowBtn = document.getElementById('finances-subnav-arrow');
     if (subnavEl && subnavWrapEl) {
         const updateSubnavHint = () => {
             const atEnd = subnavEl.scrollLeft + subnavEl.clientWidth >= subnavEl.scrollWidth - 4;
@@ -1468,6 +1469,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         subnavEl.addEventListener('scroll', updateSubnavHint);
         window.addEventListener('resize', updateSubnavHint);
         updateSubnavHint();
+    }
+    // Clic sur la flèche : fait défiler les onglets vers la droite (dans le
+    // sens de la flèche), pour révéler directement les onglets masqués
+    // (ex: "Offres Express") sans avoir à glisser manuellement.
+    if (subnavArrowBtn && subnavEl) {
+        subnavArrowBtn.addEventListener('click', () => {
+            subnavEl.scrollBy({ left: Math.round(subnavEl.clientWidth * 0.7), behavior: 'smooth' });
+        });
     }
 
     // ------------------------------------------------------------------
