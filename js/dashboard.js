@@ -1437,8 +1437,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             subViews.forEach(v => v.classList.remove('active'));
             const targetView = document.getElementById('sub-' + target);
             if (targetView) targetView.classList.add('active');
+            btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
         });
     });
+
+    // Affiche un indice (flèche + dégradé) tant qu'il reste des onglets
+    // masqués à droite, pour que "Offres Express" ne passe pas inaperçu.
+    const subnavEl = document.querySelector('.finances-subnav');
+    const subnavWrapEl = document.querySelector('.finances-subnav-wrap');
+    if (subnavEl && subnavWrapEl) {
+        const updateSubnavHint = () => {
+            const atEnd = subnavEl.scrollLeft + subnavEl.clientWidth >= subnavEl.scrollWidth - 4;
+            subnavWrapEl.classList.toggle('at-end', atEnd);
+        };
+        subnavEl.addEventListener('scroll', updateSubnavHint);
+        window.addEventListener('resize', updateSubnavHint);
+        updateSubnavHint();
+    }
 
     // ------------------------------------------------------------------
     // 10. Centre de notifications — données réelles, générées automatiquement
