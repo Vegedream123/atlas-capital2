@@ -1439,12 +1439,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ------------------------------------------------------------------
-    // 9. Navigation rapide de l'onglet Finances — désormais TOUTES les
-    //    catégories (Revenu Annuel, Actifs, Quêtes, Express) sont affichées
-    //    en même temps, empilées les unes sous les autres. Les boutons ne
-    //    font plus que défiler jusqu'à la section correspondante, et se
-    //    surlignent automatiquement selon la section actuellement visible
-    //    à l'écran (scroll-spy) — plus rien n'est jamais caché.
+    // 9. Navigation de l'onglet Finances — les 4 catégories (Revenu Annuel,
+    //    Actifs, Quêtes, Express) restent TOUJOURS visibles comme boutons
+    //    (elles passent à la ligne s'il n'y a pas la place, jamais cachées),
+    //    mais un seul bloc de contenu est affiché à la fois : cliquer sur
+    //    un bouton montre uniquement sa catégorie et masque les autres.
     // ------------------------------------------------------------------
     const quicknavBtns = document.querySelectorAll('.quicknav-btn');
     const financesGroups = document.querySelectorAll('.finances-group');
@@ -1452,20 +1451,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             const targetId = btn.getAttribute('data-target');
-            const targetEl = targetId && document.getElementById(targetId);
-            if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (!targetId) return;
+            quicknavBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            financesGroups.forEach(g => g.classList.remove('active'));
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.add('active');
         });
     });
-    if (financesGroups.length && quicknavBtns.length && 'IntersectionObserver' in window) {
-        const setActiveQuicknav = (id) => {
-            quicknavBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-target') === id));
-        };
-        const spyObserver = new IntersectionObserver((entries) => {
-            const visible = entries.filter(en => en.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-            if (visible.length) setActiveQuicknav(visible[0].target.id);
-        }, { rootMargin: '-80px 0px -60% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
-        financesGroups.forEach(group => spyObserver.observe(group));
-    }
 
     // ------------------------------------------------------------------
     // 10. Centre de notifications — données réelles, générées automatiquement
