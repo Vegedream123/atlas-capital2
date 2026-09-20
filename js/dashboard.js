@@ -328,12 +328,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // calcul retombe à tort sur daily_rate (qui vaut volontairement 0 pour
     // ces catégories), affichant 0 FCFA/jour malgré un cycle bien configuré.
     const dailyGainOf = (inv) => {
+        // Offres Express : le montant fixé à l'achat (locked_payout_amount)
+        // est déjà le gain PUR (aucun capital restitué) — ne pas soustraire
+        // inv.amount dans ce cas, sinon le gain/jour affiché est faux.
+        const isExpressGainOnly = inv.investment_products && inv.investment_products.category === 'express';
         if (inv.locked_payout_amount != null) {
+            const totalGain = isExpressGainOnly ? Number(inv.locked_payout_amount) : (Number(inv.locked_payout_amount) - Number(inv.amount));
             if (inv.duration_months) {
-                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+                return totalGain / (Number(inv.duration_months) * 30);
             }
             if (inv.duration_days) {
-                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+                return totalGain / Number(inv.duration_days);
             }
         }
         if (inv.duration_months && inv.locked_rate_percent != null) {
@@ -614,12 +619,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete', express: 'section-stats-express' };
 
         const dailyGainOf = (inv) => {
+            // Offres Express : locked_payout_amount est déjà le gain PUR (le
+            // prix payé n'est jamais restitué) — ne pas soustraire inv.amount.
+            const isExpressGainOnly = inv.investment_products && inv.investment_products.category === 'express';
             if (inv.locked_payout_amount != null) {
+                const totalGain = isExpressGainOnly ? Number(inv.locked_payout_amount) : (Number(inv.locked_payout_amount) - Number(inv.amount));
                 if (inv.duration_months) {
-                    return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+                    return totalGain / (Number(inv.duration_months) * 30);
                 }
                 if (inv.duration_days) {
-                    return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+                    return totalGain / Number(inv.duration_days);
                 }
             }
             if (inv.duration_months && inv.locked_rate_percent != null) {
@@ -636,8 +645,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             // jours), donc on calcule le gain/jour depuis ce montant plutôt
             // que depuis daily_rate — sinon la carte produit affiche
             // toujours 0 FCFA.
+            // Offres Express : cycle_payout_amount est le gain PUR (le prix payé
+            // n'est jamais restitué au client) — ne pas soustraire p.price.
+            // Constant/Analyse/Quête : cycle_payout_amount = capital + gain,
+            // donc on soustrait p.price pour obtenir le gain net.
             const dailyGain = isCycle
-                ? Math.round((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1))
+                ? (p.category === 'express'
+                    ? Math.round(Number(p.cycle_payout_amount || 0) / Math.max(1, Number(p.duration_days) || 1))
+                    : Math.round((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1)))
                 : Math.round(Number(p.price) * Number(p.daily_rate) / 100);
             const affordable = wallet.balance >= Number(p.price);
 
