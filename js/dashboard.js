@@ -610,8 +610,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // placements actifs sur CE produit précis et le gain journalier qui en
         // découle s'affichent directement sous sa carte, tant que
         // l'investissement est actif (statut 'active' dans user_investments).
-        const gridIds = { atlas: 'vip-grid-atlas', constant: 'vip-grid-constant', analyse: 'vip-grid-analyse', quete: 'vip-grid-quete' };
-        const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete' };
+        const gridIds = { atlas: 'vip-grid-atlas', constant: 'vip-grid-constant', analyse: 'vip-grid-analyse', quete: 'vip-grid-quete', express: 'vip-grid-express' };
+        const sectionStatsIds = { atlas: 'section-stats-atlas', constant: 'section-stats-constant', analyse: 'section-stats-analyse', quete: 'section-stats-quete', express: 'section-stats-express' };
 
         const dailyGainOf = (inv) => {
             if (inv.locked_payout_amount != null) {
@@ -630,7 +630,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const renderProductCard = (p) => {
             const isAtlas = p.category === 'atlas';
-            const isCycle = ['constant', 'analyse', 'quete'].includes(p.category);
+            const isCycle = ['constant', 'analyse', 'quete', 'express'].includes(p.category);
             // Pour Constant/Analyse/Quête, daily_rate vaut volontairement 0 (le
             // gain vient du cycle_payout_amount fixé à la fin de la durée en
             // jours), donc on calcule le gain/jour depuis ce montant plutôt
@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Message de validation affiché après l'achat, avec les infos réelles du produit activé
-    const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne' };
+    const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne', express: 'Offre Express' };
     const showPurchaseConfirmation = (btn, durationMonths) => {
         const name = btn.getAttribute('data-product-name');
         const category = btn.getAttribute('data-product-category');
