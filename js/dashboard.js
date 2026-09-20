@@ -1439,44 +1439,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ------------------------------------------------------------------
-    // 9. Sous-navigation de l'onglet Finances
+    // 9. Navigation rapide de l'onglet Finances — désormais TOUTES les
+    //    catégories (Revenu Annuel, Actifs, Quêtes, Express) sont affichées
+    //    en même temps, empilées les unes sous les autres. Les boutons ne
+    //    font plus que défiler jusqu'à la section correspondante, et se
+    //    surlignent automatiquement selon la section actuellement visible
+    //    à l'écran (scroll-spy) — plus rien n'est jamais caché.
     // ------------------------------------------------------------------
-    const subnavBtns = document.querySelectorAll('.subnav-btn');
-    const subViews = document.querySelectorAll('.sub-view');
-    subnavBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const target = btn.getAttribute('data-sub');
-            if (!target) return;
-            subnavBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            subViews.forEach(v => v.classList.remove('active'));
-            const targetView = document.getElementById('sub-' + target);
-            if (targetView) targetView.classList.add('active');
-            btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+    const quicknavBtns = document.querySelectorAll('.quicknav-btn');
+    const financesGroups = document.querySelectorAll('.finances-group');
+    quicknavBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = btn.getAttribute('data-target');
+            const targetEl = targetId && document.getElementById(targetId);
+            if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
-
-    // Affiche un indice (flèche + dégradé) tant qu'il reste des onglets
-    // masqués à droite, pour que "Offres Express" ne passe pas inaperçu.
-    const subnavEl = document.querySelector('.finances-subnav');
-    const subnavWrapEl = document.querySelector('.finances-subnav-wrap');
-    const subnavArrowBtn = document.getElementById('finances-subnav-arrow');
-    if (subnavEl && subnavWrapEl) {
-        const updateSubnavHint = () => {
-            const atEnd = subnavEl.scrollLeft + subnavEl.clientWidth >= subnavEl.scrollWidth - 4;
-            subnavWrapEl.classList.toggle('at-end', atEnd);
+    if (financesGroups.length && quicknavBtns.length && 'IntersectionObserver' in window) {
+        const setActiveQuicknav = (id) => {
+            quicknavBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-target') === id));
         };
-        subnavEl.addEventListener('scroll', updateSubnavHint);
-        window.addEventListener('resize', updateSubnavHint);
-        updateSubnavHint();
-    }
-    // Clic sur la flèche : fait défiler les onglets vers la droite (dans le
-    // sens de la flèche), pour révéler directement les onglets masqués
-    // (ex: "Offres Express") sans avoir à glisser manuellement.
-    if (subnavArrowBtn && subnavEl) {
-        subnavArrowBtn.addEventListener('click', () => {
-            subnavEl.scrollBy({ left: Math.round(subnavEl.clientWidth * 0.7), behavior: 'smooth' });
-        });
+        const spyObserver = new IntersectionObserver((entries) => {
+            const visible = entries.filter(en => en.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+            if (visible.length) setActiveQuicknav(visible[0].target.id);
+        }, { rootMargin: '-80px 0px -60% 0px', threshold: [0, 0.25, 0.5, 0.75, 1] });
+        financesGroups.forEach(group => spyObserver.observe(group));
     }
 
     // ------------------------------------------------------------------
