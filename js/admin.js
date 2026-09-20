@@ -379,6 +379,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (durationGroup) durationGroup.style.display = isAtlas ? 'none' : 'block';
         if (dailyGainGroup) dailyGainGroup.style.display = (isAtlas || isActifCycle) ? 'none' : 'block';
         if (cyclePayoutGroup) cyclePayoutGroup.style.display = isActifCycle ? 'block' : 'none';
+
+        // Le champ "montant à la fin du cycle" a un sens différent pour
+        // Offres Express (un seul revenu final, sans notion de capital
+        // séparé) que pour Constant/Analyse/Quête (capital + gain rendus
+        // ensemble) : on adapte le libellé et l'explication en conséquence.
+        const cyclePayoutLabel = document.getElementById('product-cycle-payout-label');
+        const cyclePayoutHelp = document.getElementById('product-cycle-payout-help');
+        if (cyclePayoutLabel && cyclePayoutHelp) {
+            if (productCategoryInput.value === 'express') {
+                cyclePayoutLabel.textContent = 'Revenu final versé à la fin du cycle (FCFA)';
+                cyclePayoutHelp.textContent = "Somme totale et unique reçue par l'utilisateur à la fin du cycle (il n'y a pas de capital distinct restitué séparément). Le gain/jour affiché est simplement ce montant divisé par la durée.";
+            } else {
+                cyclePayoutLabel.textContent = 'Montant total à la fin du cycle (FCFA)';
+                cyclePayoutHelp.textContent = 'Capital + gain rendus en une fois à la fin du cycle (doit être supérieur au Prix). Remplace le %/jour pour les produits Actif.';
+            }
+        }
         productRateInput.required = !isAtlas && !isActifCycle;
         productDurationInput.required = !isAtlas;
         productCyclePayoutInput.required = isActifCycle;
@@ -435,12 +451,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const total = Number(productCyclePayoutInput.value) || 0;
         const days = Number(productDurationInput.value) || 0;
         if (!price || !total || !days) { cycleGainPreview.textContent = '—'; return; }
-        const gain = total - price;
-        cycleGainPreview.textContent = `Gain total : ${formatFCFA(gain)} sur ${days} j (~${formatFCFA(gain / days)} / jour)`;
+        if (productCategoryInput.value === 'express') {
+            // Offres Express : on affiche le montant total réparti sur la
+            // durée (capital + gain confondus), pas le profit net —
+            // demande explicite pour ce type d'offre.
+            cycleGainPreview.textContent = `Total à verser : ${formatFCFA(total)} sur ${days} j (~${formatFCFA(total / days)} / jour)`;
+        } else {
+            const gain = total - price;
+            cycleGainPreview.textContent = `Gain total : ${formatFCFA(gain)} sur ${days} j (~${formatFCFA(gain / days)} / jour)`;
+        }
     };
     productPriceInput.addEventListener('input', updateCycleGainPreview);
     productDurationInput.addEventListener('input', updateCycleGainPreview);
     productCyclePayoutInput.addEventListener('input', updateCycleGainPreview);
+    productCategoryInput.addEventListener('change', updateCycleGainPreview);
 
     const resetProductForm = () => {
         productForm.reset();
@@ -479,7 +503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 imageUrl = await uploadProductImage(selectedImageFile);
             }
             const category = productCategoryInput.value;
-            const isActifCycle = ['constant', 'analyse', 'quete'].includes(category);
+            const isActifCycle = ['constant', 'analyse', 'quete', 'express'].includes(category);
             const { error } = await window.supabaseClient.rpc('admin_upsert_product', {
                 p_id: productIdInput.value || null,
                 p_name: productNameInput.value.trim(),
@@ -534,7 +558,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${p.category}</td>
                 <td>${p.vip_level || '—'}</td>
                 <td>${formatFCFA(p.price)}</td>
-                <td>${['constant', 'analyse', 'quete'].includes(p.category) ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
+                <td>${['constant', 'analyse', 'quete', 'express'].includes(p.category) ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
                 <td>${p.duration_days} j</td>
                 <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
