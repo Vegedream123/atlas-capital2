@@ -176,21 +176,21 @@
                     </div>
                 </div>
                 
-                <!-- Sous-onglets Finances -->
-                <div class="finances-subnav-wrap">
-                    <div class="finances-subnav">
-                        <button class="subnav-btn active" data-sub="revenu">Revenu Annuel</button>
-                        <button class="subnav-btn" data-sub="actifs">Actifs</button>
-                        <button class="subnav-btn" data-sub="quetes">Quêtes Quotidiennes</button>
-                        <button class="subnav-btn" data-sub="express">Offres Express</button>
+                <!-- Navigation rapide (défile vers la section, ne cache plus rien) -->
+                <div class="finances-quicknav-wrap">
+                    <div class="finances-quicknav">
+                        <a href="#sub-revenu" class="quicknav-btn active" data-target="sub-revenu">Revenu Annuel</a>
+                        <a href="#sub-actifs" class="quicknav-btn" data-target="sub-actifs">Actifs</a>
+                        <a href="#sub-quetes" class="quicknav-btn" data-target="sub-quetes">Quêtes Quotidiennes</a>
+                        <a href="#sub-express" class="quicknav-btn" data-target="sub-express">Offres Express</a>
                     </div>
-                    <button type="button" class="finances-subnav-arrow" id="finances-subnav-arrow" aria-label="Voir plus d'onglets">›</button>
                 </div>
 
                 <div class="finances-content">
-                    
-                    <!-- Sous-onglet 1: Revenu Annuel -->
-                    <div id="sub-revenu" class="sub-view active">
+
+                    <!-- Bloc 1: Revenu Annuel -->
+                    <div id="sub-revenu" class="finances-group">
+                        <h3 class="finances-group-title"><span class="finances-group-icon">📈</span> Revenu Annuel</h3>
                         <div class="vip-section">
                             <h4 class="vip-section-title">Atlas <span class="vip-section-stats" id="section-stats-atlas">Aucun placement actif</span></h4>
                             <div class="vip-grid" id="vip-grid-atlas">
@@ -199,8 +199,9 @@
                         </div>
                     </div>
 
-                    <!-- Sous-onglet 2: Investissements Actifs (2 colonnes: Constant et Analyse) -->
-                    <div id="sub-actifs" class="sub-view">
+                    <!-- Bloc 2: Actifs (2 catégories: Constant et Analyse) -->
+                    <div id="sub-actifs" class="finances-group">
+                        <h3 class="finances-group-title"><span class="finances-group-icon">💼</span> Actifs</h3>
                         <div class="vip-section">
                             <h4 class="vip-section-title">Constant <span class="vip-section-stats" id="section-stats-constant">Aucun placement actif</span></h4>
                             <div class="vip-grid" id="vip-grid-constant">
@@ -216,8 +217,9 @@
                         </div>
                     </div>
 
-                    <!-- Sous-onglet 3: Quêtes Quotidiennes -->
-                    <div id="sub-quetes" class="sub-view">
+                    <!-- Bloc 3: Quêtes Quotidiennes -->
+                    <div id="sub-quetes" class="finances-group">
+                        <h3 class="finances-group-title"><span class="finances-group-icon">🎯</span> Quêtes Quotidiennes</h3>
                         <div class="vip-section">
                             <h4 class="vip-section-title">VIP 0 <span class="vip-section-stats" id="section-stats-quete">Aucun placement actif</span></h4>
                             <div class="vip-grid" id="vip-grid-quete">
@@ -226,8 +228,9 @@
                         </div>
                     </div>
 
-                    <!-- Sous-onglet 4: Offres Express — achat direct, sans aucune condition -->
-                    <div id="sub-express" class="sub-view">
+                    <!-- Bloc 4: Offres Express — achat direct, sans aucune condition -->
+                    <div id="sub-express" class="finances-group">
+                        <h3 class="finances-group-title"><span class="finances-group-icon">⚡</span> Offres Express</h3>
                         <div class="vip-section">
                             <h4 class="vip-section-title">Express <span class="vip-section-stats" id="section-stats-express">Aucun placement actif</span></h4>
                             <p class="text-secondary" style="margin:-4px 0 12px; font-size:0.8rem;">Achat direct, sans condition préalable.</p>
