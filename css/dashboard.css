@@ -160,7 +160,8 @@ svg { flex-shrink: 0; }
 .kpi-card.accent-border,
 .kpi-card.success-border,
 .kpi-card.primary-border,
-.kpi-card.warning-border { border-left-color: var(--accent); }
+.kpi-card.warning-border,
+.kpi-card.express-border { border-left-color: var(--accent); }
 .kpi-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .kpi-label { font-size: 0.82rem; color: var(--text-secondary); font-weight: 500; }
 .kpi-icon { width: 34px; height: 34px; border-radius: 8px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; color: var(--accent); }
