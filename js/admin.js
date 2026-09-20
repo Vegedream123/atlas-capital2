@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const tbody = document.getElementById('maturities-tbody');
         const summaryEl = document.getElementById('maturities-summary');
         if (!tbody) return;
-        tbody.innerHTML = '<tr><td colspan="5">Chargement…</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6">Chargement…</td></tr>';
 
         const in30Days = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         const { data, error } = await window.supabaseClient
@@ -249,12 +249,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             .order('matures_at', { ascending: true })
             .limit(100);
 
-        if (error) { tbody.innerHTML = `<tr><td colspan="5">Erreur de chargement.</td></tr>`; return; }
+        if (error) { tbody.innerHTML = `<tr><td colspan="6">Erreur de chargement.</td></tr>`; return; }
 
-        const rows = (data || []).filter(inv => inv.investment_products && inv.investment_products.category === 'atlas');
+        // Toutes les catégories à échéance (pas seulement Atlas) : chacune
+        // représente une vraie obligation de paiement au client à sa date.
+        const PAYOUT_CATEGORIES = ['atlas', 'constant', 'analyse', 'quete', 'express'];
+        const rows = (data || []).filter(inv => inv.investment_products && PAYOUT_CATEGORIES.includes(inv.investment_products.category));
 
         if (!rows.length) {
-            tbody.innerHTML = `<tr><td colspan="5">Aucune échéance dans les 30 prochains jours.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6">Aucune échéance dans les 30 prochains jours.</td></tr>`;
             if (summaryEl) summaryEl.textContent = '';
             return;
         }
@@ -264,6 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             summaryEl.innerHTML = `<strong>${rows.length}</strong> placement(s) arrivent à échéance sous 30 jours, pour un total à payer d'environ <strong>${formatFCFA(totalToPay)}</strong>.`;
         }
 
+        const MATURITY_CATEGORY_LABEL = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête', express: 'Express' };
         const now = Date.now();
         tbody.innerHTML = rows.map(inv => {
             const user = inv.profiles || {};
@@ -273,8 +277,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<span style="color:var(--danger,#e11);">en retard de ${Math.abs(daysLeft)} j</span>`
                 : (daysLeft === 0 ? `<strong>aujourd'hui</strong>` : `dans ${daysLeft} j`);
             const payout = inv.locked_payout_amount ? formatFCFA(inv.locked_payout_amount) : formatFCFA(inv.amount);
+            const categoryName = (inv.investment_products && MATURITY_CATEGORY_LABEL[inv.investment_products.category]) || '—';
             return `<tr>
                 <td>${formatDate(inv.matures_at)}<br><span class="text-secondary" style="font-size:0.72rem;">${daysLabel}</span></td>
+                <td>${categoryName}</td>
                 <td>${user.full_name || '—'}</td>
                 <td>${user.phone || '—'}</td>
                 <td>${formatFCFA(inv.amount)}</td>
@@ -352,17 +358,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function toggleMonthlyRevenuesVisibility() {
         const isAtlas = productCategoryInput.value === 'atlas';
-        // 'quete' fonctionne maintenant exactement comme 'constant'/'analyse' :
-        // cycle en jours + montant de fin de cycle (pas de %/jour), gains
-        // accumulés et versés (capital + gains) à l'échéance.
-        const isActifCycle = ['constant', 'analyse', 'quete'].includes(productCategoryInput.value);
+        // 'quete' et 'express' fonctionnent maintenant exactement comme
+        // 'constant'/'analyse' : cycle en jours + montant de fin de cycle
+        // (pas de %/jour), gains accumulés et versés (capital + gains) à
+        // l'échéance. Seule différence : 'express' n'a aucune condition
+        // de déblocage (voir purchase_investment côté serveur).
+        const isActifCycle = ['constant', 'analyse', 'quete', 'express'].includes(productCategoryInput.value);
         if (monthlyRevenuesGroup) monthlyRevenuesGroup.style.display = isAtlas ? 'block' : 'none';
 
         // Pour "Revenu Annuel", le %/jour et l'échéance en jours ne servent à
         // rien (le montant et la durée viennent du revenu mensuel ci-dessus) :
         // on les cache et on les rend optionnels pour éviter toute confusion.
-        // Pour les produits Actif (constant/analyse), le %/jour est remplacé
-        // par un montant total fixe versé à la fin du cycle.
+        // Pour les produits Actif (constant/analyse/quete/express), le %/jour
+        // est remplacé par un montant total fixe versé à la fin du cycle.
         const rateGroup = document.getElementById('product-rate-group');
         const durationGroup = document.getElementById('product-duration-group');
         const dailyGainGroup = document.getElementById('product-daily-gain-preview-group');
@@ -374,6 +382,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         productRateInput.required = !isAtlas && !isActifCycle;
         productDurationInput.required = !isAtlas;
         productCyclePayoutInput.required = isActifCycle;
+
+        // Le niveau VIP relie les catégories entre elles pour le déblocage
+        // progressif — sauf pour 'express', qui n'a aucune condition : le
+        // champ reste juste une étiquette libre (ex: pour numéroter l'offre).
+        const vipHint = document.getElementById('product-vip-level-hint');
+        if (vipHint) {
+            vipHint.textContent = productCategoryInput.value === 'express'
+                ? "Simple étiquette pour ce produit Express (ex: 1, 2, 3…) — n'a aucun effet de déblocage, contrairement aux autres catégories."
+                : "Relie ce produit aux autres catégories du même niveau : un Atlas VIP 1 débloque le Constant et l'Analyse VIP 1 (et uniquement ceux-là) ; les deux Actifs VIP 1 débloquent la Quête VIP 1 pendant 24h.";
+        }
     }
     productCategoryInput.addEventListener('change', toggleMonthlyRevenuesVisibility);
 
