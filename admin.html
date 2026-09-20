@@ -101,7 +101,7 @@
                 <div class="admin-table-wrap">
                     <table class="admin-table">
                         <thead>
-                            <tr><th>Échéance</th><th>Client</th><th>Téléphone</th><th>Montant investi</th><th>À payer au client</th></tr>
+                            <tr><th>Échéance</th><th>Catégorie</th><th>Client</th><th>Téléphone</th><th>Montant investi</th><th>À payer au client</th></tr>
                         </thead>
                         <tbody id="maturities-tbody"><tr><td colspan="5">Chargement…</td></tr></tbody>
                     </table>
@@ -129,12 +129,13 @@
                                 <option value="constant">Actif — Constant</option>
                                 <option value="analyse">Actif — Analyse</option>
                                 <option value="quete">Quête Quotidienne</option>
+                                <option value="express">Offres Express (achat direct)</option>
                             </select>
                         </div>
                         <div class="admin-form-group">
                             <label>Niveau VIP</label>
                             <input type="text" id="product-vip-level" required placeholder="Ex: 1">
-                            <p style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
+                            <p id="product-vip-level-hint" style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
                                 Relie ce produit aux autres catégories du même niveau : un Atlas VIP 1 débloque
                                 le Constant et l'Analyse VIP 1 (et uniquement ceux-là) ; les deux Actifs VIP 1
                                 débloquent la Quête VIP 1 pendant 24h.
