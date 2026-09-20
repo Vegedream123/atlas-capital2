@@ -200,8 +200,9 @@ svg { flex-shrink: 0; }
 
 .finances-group { display: none; margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
 .finances-group.active { display: block; animation: fadeIn 0.3s ease; }
-.finances-group-title { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 0 0 16px; }
+.finances-group-title { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; color: var(--primary); margin: 0 0 6px; }
 .finances-group-icon { font-size: 1.1rem; line-height: 1; }
+.finances-group-desc { font-size: 0.82rem; line-height: 1.5; color: var(--text-secondary); background: var(--gray-50); border-left: 3px solid var(--accent); border-radius: var(--radius-sm); padding: 10px 12px; margin: 0 0 18px; }
 
 .vip-section { margin-bottom: 24px; }
 .vip-section:last-child { margin-bottom: 0; }
