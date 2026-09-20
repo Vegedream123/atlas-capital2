@@ -922,12 +922,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // à l'utilisateur d'atteindre ce solde.
     // ------------------------------------------------------------------
     const dailyGainOfInvestment = (inv) => {
+        // Offres Express : locked_payout_amount est déjà le gain PUR (le prix
+        // payé n'est jamais restitué) — ne pas soustraire inv.amount.
+        const isExpressGainOnly = inv.investment_products && inv.investment_products.category === 'express';
         if (inv.locked_payout_amount != null) {
+            const totalGain = isExpressGainOnly ? Number(inv.locked_payout_amount) : (Number(inv.locked_payout_amount) - Number(inv.amount));
             if (inv.duration_months) {
-                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / (Number(inv.duration_months) * 30);
+                return totalGain / (Number(inv.duration_months) * 30);
             }
             if (inv.duration_days) {
-                return (Number(inv.locked_payout_amount) - Number(inv.amount)) / Number(inv.duration_days);
+                return totalGain / Number(inv.duration_days);
             }
         }
         if (inv.duration_months && inv.locked_rate_percent != null) {
@@ -980,7 +984,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const category = prod.category || '—';
                 const daysElapsed = Math.max(0, Math.floor((Date.now() - new Date(inv.created_at).getTime()) / (24 * 60 * 60 * 1000)));
                 const dailyGain = dailyGainOfInvestment(inv);
-                const maxGain = inv.locked_payout_amount != null ? (Number(inv.locked_payout_amount) - Number(inv.amount)) : null;
+                const maxGain = inv.locked_payout_amount != null
+                    ? (category === 'express' ? Number(inv.locked_payout_amount) : (Number(inv.locked_payout_amount) - Number(inv.amount)))
+                    : null;
                 let totalEarned = dailyGain * daysElapsed;
                 if (maxGain != null) totalEarned = Math.min(totalEarned, maxGain);
                 const statusLabel = inv.status === 'active' ? 'En cours' : (inv.status === 'completed' ? 'Terminé' : (inv.status || '—'));
