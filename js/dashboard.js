@@ -1321,9 +1321,73 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Formulaire valide -> le code PIN est la dernière étape avant l'envoi
-            renderWithdrawPinStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
+            // Formulaire valide -> étape de confirmation (récap + retape du
+            // numéro) avant le code PIN, pour éviter toute perte due à une
+            // erreur de saisie (mauvais numéro / mauvais nom).
+            renderWithdrawConfirmStep({ amount, recipientName, destination, method: selectedWithdrawMethod });
         });
+    };
+
+    // Étape 2 : confirmation — récapitulatif complet + obligation de retaper
+    // le numéro/compte de réception à l'identique. Objectif : qu'aucun
+    // retrait ne parte vers un mauvais numéro par simple faute de frappe,
+    // ce qui serait une perte définitive une fois l'argent envoyé.
+    const renderWithdrawConfirmStep = (withdrawData) => {
+        const isUsdt = withdrawData.method.type === 'usdt';
+        const destLabel = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
+        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+            <button type="button" class="modal-close" data-close-withdraw-modal>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <span class="task-modal-badge">Retrait</span>
+            <h2 class="task-modal-title">Vérifiez vos informations</h2>
+            <p class="task-modal-sub">Une fois envoyé, un retrait ne peut plus être annulé. Merci de bien vérifier chaque information avant de continuer.</p>
+
+            <div class="withdraw-recap">
+                <div class="withdraw-recap-row"><span>Montant</span><strong>${formatFCFA(withdrawData.amount)}</strong></div>
+                <div class="withdraw-recap-row"><span>Moyen</span><strong>${withdrawData.method.icon || ''} ${withdrawData.method.name}</strong></div>
+                ${!isUsdt ? `<div class="withdraw-recap-row"><span>Nom de réception</span><strong>${withdrawData.recipientName}</strong></div>` : ''}
+                <div class="withdraw-recap-row"><span>${destLabel}</span><strong>${withdrawData.destination}</strong></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-confirm-destination-input">Retapez votre ${destLabel.toLowerCase()} pour confirmer</label>
+                <input type="text" id="withdraw-confirm-destination-input" class="form-control" placeholder="${isUsdt ? 'Retapez votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX'}" autocomplete="off">
+            </div>
+
+            <div class="quiz-feedback" id="withdraw-confirm-feedback"></div>
+            <button type="button" class="btn btn-outline btn-full" id="withdraw-confirm-back-btn" style="margin-bottom:10px;">Modifier mes informations</button>
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-confirm-submit-btn">C'est bien correct, continuer</button>`;
+
+        withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
+        withdrawModalOverlay.querySelector('#withdraw-confirm-back-btn').addEventListener('click', renderWithdrawForm);
+
+        const confirmInputEl = withdrawModalOverlay.querySelector('#withdraw-confirm-destination-input');
+        const proceedToConfirm = () => {
+            const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-confirm-feedback');
+            const retyped = confirmInputEl.value.trim();
+            // Comparaison normalisée (espaces retirés) pour ne pas rejeter
+            // à tort un numéro identique mais tapé avec/sans espaces.
+            const normalize = (s) => s.replace(/\s+/g, '');
+            if (!retyped) {
+                feedbackEl.textContent = `Merci de retaper votre ${destLabel.toLowerCase()}.`;
+                feedbackEl.className = 'quiz-feedback error';
+                return;
+            }
+            if (normalize(retyped) !== normalize(withdrawData.destination)) {
+                feedbackEl.textContent = isUsdt
+                    ? "Les adresses ne correspondent pas. Vérifiez et réessayez."
+                    : "Les numéros ne correspondent pas. Vérifiez et réessayez.";
+                feedbackEl.className = 'quiz-feedback error';
+                confirmInputEl.value = '';
+                confirmInputEl.focus();
+                return;
+            }
+            renderWithdrawPinStep(withdrawData);
+        };
+        withdrawModalOverlay.querySelector('#withdraw-confirm-submit-btn').addEventListener('click', proceedToConfirm);
+        confirmInputEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') proceedToConfirm(); });
+        confirmInputEl.focus();
     };
 
     // Étape 2 (finale) : vérification du code PIN, puis envoi effectif de la demande.
@@ -1353,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <button type="button" class="btn btn-primary btn-full" id="withdraw-pin-submit-btn">Envoyer ma demande de retrait</button>`;
 
         withdrawModalOverlay.querySelector('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
-        withdrawModalOverlay.querySelector('#withdraw-pin-back-btn').addEventListener('click', renderWithdrawForm);
+        withdrawModalOverlay.querySelector('#withdraw-pin-back-btn').addEventListener('click', () => renderWithdrawConfirmStep(withdrawData));
 
         const pinInputEl = withdrawModalOverlay.querySelector('#withdraw-pin-input');
         const submitPin = async () => {
