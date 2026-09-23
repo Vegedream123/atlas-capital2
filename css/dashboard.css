@@ -542,6 +542,12 @@ svg { flex-shrink: 0; }
 }
 .task-modal-title { font-size: 1.15rem; margin-bottom: 4px; }
 .task-modal-sub { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; }
+
+/* Récapitulatif de retrait, affiché avant la retape du numéro/compte */
+.withdraw-recap { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 10px; }
+.withdraw-recap-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; font-size: 0.85rem; }
+.withdraw-recap-row span { color: var(--text-secondary); flex-shrink: 0; }
+.withdraw-recap-row strong { color: var(--primary); text-align: right; word-break: break-word; }
 .quiz-question { font-weight: 600; color: var(--primary); margin-bottom: 16px; font-size: 1rem; }
 .quiz-options { display: flex; flex-direction: column; gap: 10px; }
 .quiz-option {
