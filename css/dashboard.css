@@ -158,14 +158,94 @@ svg { flex-shrink: 0; }
 
 .home-banner-img.is-cover { object-fit: cover; }
 
-.home-banner-caption {
+/* Voile sombre en bas de l'image pour que le texte reste lisible */
+.home-banner-slide.has-caption::after {
+    content: '';
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    padding: 14px 18px;
-    background: linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0));
+    height: 65%;
+    background: linear-gradient(to top, rgba(10,10,10,0.72), rgba(10,10,10,0));
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Carte de texte "verre dépoli" : titre + sous-titre + bouton */
+.home-banner-caption {
+    position: absolute;
+    z-index: 2;
+    left: 12px; right: 12px; bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 16px;
     color: #fff;
-    font-weight: 600;
-    font-size: 0.95rem;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.28);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s;
+}
+
+.home-banner-slide.is-active .home-banner-caption {
+    opacity: 1;
+    transform: none;
+}
+
+.home-banner-caption-bar {
+    flex: 0 0 4px;
+    align-self: stretch;
+    border-radius: 4px;
+    background: linear-gradient(to bottom, #ff8a3d, #ff4d00);
+}
+
+.home-banner-caption-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.home-banner-caption-text strong {
+    font-size: 1.02rem;
+    font-weight: 800;
+    line-height: 1.25;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+}
+
+.home-banner-caption-text small {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    opacity: 0.92;
+}
+
+.home-banner-caption-cta {
+    flex: 0 0 auto;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ff8a3d, #ff4d00);
+    font-size: 0.78rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(255,77,0,0.4);
+}
+
+/* Léger zoom lent sur l'image active (uniquement en plein cadre) */
+.home-banner-slide.is-active .home-banner-img.is-cover {
+    animation: homeBannerZoom 7s ease-out both;
+}
+
+@keyframes homeBannerZoom {
+    from { transform: scale(1); }
+    to   { transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .home-banner-caption { transition: none; opacity: 1; transform: none; }
+    .home-banner-slide.is-active .home-banner-img.is-cover { animation: none; }
 }
 
 .home-banner-draft {
