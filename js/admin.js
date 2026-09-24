@@ -1992,6 +1992,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <input type="text" placeholder="Ex : Nouveau ! Retraits instantanés" value="${(b.title || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="title">
                         </div>
                         <div class="admin-form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.8rem;">Sous-titre, en plus petit sous le titre (optionnel)</label>
+                            <input type="text" placeholder="Ex : Votre argent en quelques minutes" value="${(b.subtitle || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="subtitle">
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom:8px;">
                             <label style="font-size:0.8rem;">Visibilité</label>
                             <select data-banner-published="${i}">
                                 <option value="draft" ${b.published === false ? 'selected' : ''}>🔒 Brouillon — visible par moi seul (aperçu sur mon tableau de bord)</option>
@@ -2078,6 +2082,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .map(b => ({
                     image_url: b.image_url.trim(),
                     title: (b.title || '').trim(),
+                    subtitle: (b.subtitle || '').trim(),
                     link_url: (b.link_url || '').trim(),
                     published: b.published !== false,
                     // On conserve les marqueurs des reçus automatiques
