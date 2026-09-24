@@ -163,6 +163,40 @@ svg { flex-shrink: 0; }
 /* Cadre de l'image : les petits points restent posés dessus */
 .home-banner-stage { position: relative; }
 
+/* En-tête "Bannière officielle" au-dessus de l'image */
+.home-banner-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--white, #fff);
+    border-bottom: 1px solid var(--gray-200, #e5e7eb);
+}
+
+.home-banner-head-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: var(--primary, #c45a18);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.home-banner-head-badge {
+    flex: 0 0 auto;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(16,185,129,0.14);
+    color: #0f9d6b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
 /* Zone de texte SOUS l'image : titre, sous-titre et bouton */
 .home-banner-info {
     display: flex;
