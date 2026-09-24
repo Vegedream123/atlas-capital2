@@ -271,12 +271,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             // ratio de l'image diffère de celui de la bannière → aucune
             // image n'est jamais coupée ni déformée, quelle que soit sa taille.
             const bgUrl = encodeURI(b.image_url).replace(/'/g, '%27').replace(/"/g, '%22');
+            const esc = (v) => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const hasCaption = !!(b.title || b.subtitle);
             return `
-                <${tag} class="home-banner-slide" ${hrefAttr}>
+                <${tag} class="home-banner-slide${hasCaption ? ' has-caption' : ''}" ${hrefAttr}>
                     <div class="home-banner-bg" style="background-image:url('${bgUrl}')"></div>
                     <img class="home-banner-img" src="${b.image_url}" alt="${safeTitle}" loading="lazy">
                     ${b.published === false ? '<span class="home-banner-draft">🔒 Brouillon — visible par vous seul</span>' : ''}
-                    ${b.title ? `<span class="home-banner-caption">${b.title}</span>` : ''}
+                    ${hasCaption ? `
+                        <div class="home-banner-caption">
+                            <span class="home-banner-caption-bar"></span>
+                            <div class="home-banner-caption-text">
+                                ${b.title ? `<strong>${esc(b.title)}</strong>` : ''}
+                                ${b.subtitle ? `<small>${esc(b.subtitle)}</small>` : ''}
+                            </div>
+                            ${b.link_url ? '<span class="home-banner-caption-cta">Voir ›</span>' : ''}
+                        </div>` : ''}
                 </${tag}>
             `;
         }).join('');
@@ -311,6 +321,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         let autoTimer = null;
 
         const setActiveDot = () => {
+            // Diapo active : déclenche l'animation d'apparition du texte
+            carouselTrack.querySelectorAll('.home-banner-slide').forEach((sl, i) => {
+                sl.classList.toggle('is-active', i === current);
+            });
             if (!carouselDots) return;
             carouselDots.querySelectorAll('.home-banner-dot').forEach((d, i) => {
                 d.classList.toggle('active', i === current);
@@ -346,6 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         carouselTrack.addEventListener('mouseleave', startAuto);
         window.addEventListener('resize', () => goTo(current));
 
+        setActiveDot();
         startAuto();
     })();
 
