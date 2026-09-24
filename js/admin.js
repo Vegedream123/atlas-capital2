@@ -1492,8 +1492,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-withdrawal-fee-percent').value = data.withdrawal_fee_percent ?? '';
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
-        document.getElementById('setting-withdrawal-hour-start').value = data.withdrawal_hour_start ?? '';
-        document.getElementById('setting-withdrawal-hour-end').value = data.withdrawal_hour_end ?? '';
+        document.getElementById('setting-withdrawal-time-start').value = data.withdrawal_time_start ? data.withdrawal_time_start.slice(0, 5) : '';
+        document.getElementById('setting-withdrawal-time-end').value = data.withdrawal_time_end ? data.withdrawal_time_end.slice(0, 5) : '';
         const allowedDays = (data.withdrawal_allowed_days || []).map(String);
         document.querySelectorAll('.setting-withdrawal-day').forEach(cb => {
             cb.checked = allowedDays.includes(cb.value);
@@ -1522,8 +1522,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee-percent').value) || 0,
             maintenance_mode: document.getElementById('setting-maintenance-mode').checked,
             max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
-            withdrawal_hour_start: document.getElementById('setting-withdrawal-hour-start').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-start').value) : null,
-            withdrawal_hour_end: document.getElementById('setting-withdrawal-hour-end').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-end').value) : null,
+            withdrawal_time_start: document.getElementById('setting-withdrawal-time-start').value || null,
+            withdrawal_time_end: document.getElementById('setting-withdrawal-time-end').value || null,
             withdrawal_allowed_days: Array.from(document.querySelectorAll('.setting-withdrawal-day:checked')).map(cb => Number(cb.value))
         };
 
