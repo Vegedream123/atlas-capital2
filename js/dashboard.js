@@ -255,8 +255,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const carouselDots = document.getElementById('home-banner-dots');
         if (!carouselWrap || !carouselTrack) return;
 
+        // Les bannières en "brouillon" (published === false) ne sont visibles
+        // que par un administrateur (aperçu avant de les publier pour tous).
+        const isAdminViewer = !!(profile && profile.is_admin);
         const banners = Array.isArray(siteSettings.home_banners)
-            ? siteSettings.home_banners.filter(b => b && b.image_url)
+            ? siteSettings.home_banners.filter(b => b && b.image_url && (b.published !== false || isAdminViewer))
             : [];
         if (!banners.length) return;
 
@@ -264,13 +267,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             const safeTitle = (b.title || '').replace(/"/g, '&quot;');
             const tag = b.link_url ? 'a' : 'div';
             const hrefAttr = b.link_url ? `href="${b.link_url}" target="_blank" rel="noopener"` : '';
+            // Fond flouté (même image) : comble les côtés/haut/bas quand le
+            // ratio de l'image diffère de celui de la bannière → aucune
+            // image n'est jamais coupée ni déformée, quelle que soit sa taille.
+            const bgUrl = encodeURI(b.image_url).replace(/'/g, '%27').replace(/"/g, '%22');
             return `
                 <${tag} class="home-banner-slide" ${hrefAttr}>
-                    <img src="${b.image_url}" alt="${safeTitle}" loading="lazy">
+                    <div class="home-banner-bg" style="background-image:url('${bgUrl}')"></div>
+                    <img class="home-banner-img" src="${b.image_url}" alt="${safeTitle}" loading="lazy">
+                    ${b.published === false ? '<span class="home-banner-draft">🔒 Brouillon — visible par vous seul</span>' : ''}
                     ${b.title ? `<span class="home-banner-caption">${b.title}</span>` : ''}
                 </${tag}>
             `;
         }).join('');
+
+        // Choisit le meilleur cadrage pour chaque image : si son ratio est
+        // proche de celui de la bannière → "cover" (plein cadre, rendu pro) ;
+        // sinon → "contain" (image entière visible, sur fond flouté).
+        const adaptBannerImages = () => {
+            carouselTrack.querySelectorAll('.home-banner-slide').forEach((slide) => {
+                const img = slide.querySelector('.home-banner-img');
+                if (!img || !img.naturalWidth || !slide.clientHeight) return;
+                const slideRatio = slide.clientWidth / slide.clientHeight;
+                const imgRatio = img.naturalWidth / img.naturalHeight;
+                img.classList.toggle('is-cover', Math.abs(imgRatio / slideRatio - 1) < 0.3);
+            });
+        };
+        carouselTrack.querySelectorAll('.home-banner-img').forEach((img) => {
+            img.addEventListener('load', adaptBannerImages);
+        });
+        window.addEventListener('resize', adaptBannerImages);
 
         if (banners.length > 1 && carouselDots) {
             carouselDots.innerHTML = banners.map((_, i) =>
@@ -279,6 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         carouselWrap.style.display = '';
+        adaptBannerImages();
 
         let current = 0;
         let autoTimer = null;
