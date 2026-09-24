@@ -444,14 +444,15 @@
                     </div>
                     <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Retraits autorisés à partir de (heure, 0-23)</label>
-                            <input type="number" id="setting-withdrawal-hour-start" min="0" max="23" step="1" placeholder="Ex: 8">
+                            <label>Retraits autorisés à partir de (heure locale Cameroun)</label>
+                            <input type="time" id="setting-withdrawal-time-start" step="60" placeholder="Ex: 10:00">
                         </div>
                         <div class="admin-form-group">
-                            <label>Retraits autorisés jusqu'à (heure, 0-23)</label>
-                            <input type="number" id="setting-withdrawal-hour-end" min="0" max="23" step="1" placeholder="Ex: 20">
+                            <label>Retraits autorisés jusqu'à (heure locale Cameroun)</label>
+                            <input type="time" id="setting-withdrawal-time-end" step="60" placeholder="Ex: 10:30">
                         </div>
                     </div>
+                    <p class="text-secondary" style="margin:-6px 0 12px;">Précision à la minute. Exemple : 10:00 → 10:30 ouvre une fenêtre de retrait de 30 minutes.</p>
                     <div class="admin-form-group">
                         <label>Jours de retrait autorisés</label>
                         <div class="admin-checkbox-grid">
