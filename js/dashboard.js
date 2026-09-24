@@ -243,6 +243,85 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Carrousel de bannières (annonces / nouveautés), géré depuis l'admin
+    // (site_settings.home_banners). Visible immédiatement à la connexion,
+    // sans aucune action de l'utilisateur — défile automatiquement et reste
+    // swipeable manuellement (scroll-snap natif, fonctionne au doigt).
+    // ------------------------------------------------------------------
+    (() => {
+        const carouselWrap = document.getElementById('home-banner-carousel');
+        const carouselTrack = document.getElementById('home-banner-track');
+        const carouselDots = document.getElementById('home-banner-dots');
+        if (!carouselWrap || !carouselTrack) return;
+
+        const banners = Array.isArray(siteSettings.home_banners)
+            ? siteSettings.home_banners.filter(b => b && b.image_url)
+            : [];
+        if (!banners.length) return;
+
+        carouselTrack.innerHTML = banners.map((b) => {
+            const safeTitle = (b.title || '').replace(/"/g, '&quot;');
+            const tag = b.link_url ? 'a' : 'div';
+            const hrefAttr = b.link_url ? `href="${b.link_url}" target="_blank" rel="noopener"` : '';
+            return `
+                <${tag} class="home-banner-slide" ${hrefAttr}>
+                    <img src="${b.image_url}" alt="${safeTitle}" loading="lazy">
+                    ${b.title ? `<span class="home-banner-caption">${b.title}</span>` : ''}
+                </${tag}>
+            `;
+        }).join('');
+
+        if (banners.length > 1 && carouselDots) {
+            carouselDots.innerHTML = banners.map((_, i) =>
+                `<span class="home-banner-dot${i === 0 ? ' active' : ''}"></span>`
+            ).join('');
+        }
+
+        carouselWrap.style.display = '';
+
+        let current = 0;
+        let autoTimer = null;
+
+        const setActiveDot = () => {
+            if (!carouselDots) return;
+            carouselDots.querySelectorAll('.home-banner-dot').forEach((d, i) => {
+                d.classList.toggle('active', i === current);
+            });
+        };
+
+        const goTo = (index) => {
+            current = (index + banners.length) % banners.length;
+            carouselTrack.scrollTo({ left: carouselTrack.clientWidth * current, behavior: 'smooth' });
+            setActiveDot();
+        };
+
+        const stopAuto = () => { if (autoTimer) clearInterval(autoTimer); };
+        const startAuto = () => {
+            stopAuto();
+            if (banners.length < 2) return;
+            autoTimer = setInterval(() => goTo(current + 1), 4500);
+        };
+
+        // Resynchronise l'index courant quand l'utilisateur swipe à la main
+        let scrollDebounce;
+        carouselTrack.addEventListener('scroll', () => {
+            clearTimeout(scrollDebounce);
+            scrollDebounce = setTimeout(() => {
+                const idx = Math.round(carouselTrack.scrollLeft / carouselTrack.clientWidth);
+                current = Math.max(0, Math.min(banners.length - 1, idx));
+                setActiveDot();
+            }, 80);
+        }, { passive: true });
+
+        carouselTrack.addEventListener('touchstart', stopAuto, { passive: true });
+        carouselTrack.addEventListener('mouseenter', stopAuto);
+        carouselTrack.addEventListener('mouseleave', startAuto);
+        window.addEventListener('resize', () => goTo(current));
+
+        startAuto();
+    })();
+
     // Hash SHA-256 (utilisé pour le code PIN de retrait : jamais stocké en clair)
     const sha256Hex = async (text) => {
         const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
@@ -1236,66 +1315,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // ------------------------------------------------------------------
-    // Fenêtre de retrait : vérification côté client (confort/confiance),
-    // le vrai verrou reste le trigger serveur enforce_withdrawal_limits()
-    // qui utilise aussi l'heure du Cameroun (Africa/Douala) — voir le RPC
-    // request_withdrawal(). Ici on ne fait qu'informer clairement l'utilisateur
-    // avant qu'il ne remplisse tout le formulaire pour rien.
-    const getDoualaNow = () => {
-        const parts = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'Africa/Douala', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
-        }).formatToParts(new Date());
-        const map = {};
-        parts.forEach(p => { map[p.type] = p.value; });
-        const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-        return {
-            dow: weekdayMap[map.weekday],
-            hour: Number(map.hour) % 24,
-            minute: Number(map.minute)
-        };
-    };
-    const parseHM = (s) => {
-        if (!s) return null;
-        const [h, m] = s.split(':').map(Number);
-        return h * 60 + m;
-    };
-    const DAY_NAMES_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-    const getWithdrawalWindowStatus = () => {
-        const days = siteSettings.withdrawal_allowed_days;
-        const startStr = siteSettings.withdrawal_time_start ? siteSettings.withdrawal_time_start.slice(0, 5) : null;
-        const endStr = siteSettings.withdrawal_time_end ? siteSettings.withdrawal_time_end.slice(0, 5) : null;
-        const now = getDoualaNow();
-        const nowMin = now.hour * 60 + now.minute;
-        const startMin = parseHM(startStr);
-        const endMin = parseHM(endStr);
-        const dayOk = !days || !days.length || days.includes(now.dow);
-        const timeOk = (startMin == null || endMin == null) || (nowMin >= startMin && nowMin < endMin);
-        return { open: dayOk && timeOk, dayOk, timeOk, startStr, endStr, todayName: DAY_NAMES_FR[now.dow] };
-    };
-
     // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
-        const win = getWithdrawalWindowStatus();
-        if (!win.open) {
-            const reason = !win.dayOk
-                ? "Les retraits ne sont pas autorisés aujourd'hui."
-                : (win.startStr && win.endStr
-                    ? `La fenêtre de retrait du jour (${win.startStr} – ${win.endStr}, heure du Cameroun) est fermée pour l'instant.`
-                    : "Les retraits sont momentanément fermés.");
-            withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
-                <button type="button" class="modal-close" data-close-withdraw-modal>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
-                <span class="task-modal-badge">Retrait</span>
-                <h2 class="task-modal-title">Fenêtre de retrait fermée</h2>
-                <p class="task-modal-sub">${reason}${win.startStr && win.endStr ? ` Revenez demain entre <strong>${win.startStr}</strong> et <strong>${win.endStr}</strong>.` : ''}</p>
-                <p class="task-modal-sub">Vos fonds restent disponibles et en sécurité sur votre compte — vous pourrez retirer normalement à la prochaine ouverture.</p>
-                <button type="button" class="btn btn-primary btn-full" data-close-withdraw-modal>Compris</button>`;
-            withdrawModalOverlay.querySelectorAll('[data-close-withdraw-modal]').forEach(b => b.addEventListener('click', closeWithdrawModal));
-            return;
-        }
-
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
         // Seuls les GAINS sont retirables — un dépôt non encore investi reste
@@ -1310,7 +1331,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
             <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatFCFA(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
-            <p class="task-modal-sub" style="color:var(--success, #10b981);">✅ Fenêtre de retrait ouverte jusqu'à ${win.endStr || 'la fermeture'} · Les retraits prennent généralement moins de 12h à être traités.</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
