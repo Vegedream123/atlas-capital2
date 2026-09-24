@@ -263,30 +263,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             : [];
         if (!banners.length) return;
 
+        const esc = (v) => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         carouselTrack.innerHTML = banners.map((b) => {
-            const safeTitle = (b.title || '').replace(/"/g, '&quot;');
+            const safeTitle = esc(b.title).replace(/"/g, '&quot;');
             const tag = b.link_url ? 'a' : 'div';
             const hrefAttr = b.link_url ? `href="${b.link_url}" target="_blank" rel="noopener"` : '';
             // Fond flouté (même image) : comble les côtés/haut/bas quand le
             // ratio de l'image diffère de celui de la bannière → aucune
             // image n'est jamais coupée ni déformée, quelle que soit sa taille.
             const bgUrl = encodeURI(b.image_url).replace(/'/g, '%27').replace(/"/g, '%22');
-            const esc = (v) => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const hasCaption = !!(b.title || b.subtitle);
+            // Le titre / sous-titre ne sont PAS dessinés sur l'image : ils
+            // s'affichent dans une zone dédiée, juste en dessous (voir plus bas).
             return `
-                <${tag} class="home-banner-slide${hasCaption ? ' has-caption' : ''}" ${hrefAttr}>
+                <${tag} class="home-banner-slide${b.link_url ? '' : ' is-zoomable'}" ${hrefAttr}>
                     <div class="home-banner-bg" style="background-image:url('${bgUrl}')"></div>
                     <img class="home-banner-img" src="${b.image_url}" alt="${safeTitle}" loading="lazy">
                     ${b.published === false ? '<span class="home-banner-draft">🔒 Brouillon — visible par vous seul</span>' : ''}
-                    ${hasCaption ? `
-                        <div class="home-banner-caption">
-                            <span class="home-banner-caption-bar"></span>
-                            <div class="home-banner-caption-text">
-                                ${b.title ? `<strong>${esc(b.title)}</strong>` : ''}
-                                ${b.subtitle ? `<small>${esc(b.subtitle)}</small>` : ''}
-                            </div>
-                            ${b.link_url ? '<span class="home-banner-caption-cta">Voir ›</span>' : ''}
-                        </div>` : ''}
                 </${tag}>
             `;
         }).join('');
@@ -320,11 +312,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         let current = 0;
         let autoTimer = null;
 
+        // Cadre de l'image (les petits points restent posés sur l'image) …
+        const stage = document.createElement('div');
+        stage.className = 'home-banner-stage';
+        carouselWrap.insertBefore(stage, carouselTrack);
+        stage.appendChild(carouselTrack);
+        if (carouselDots) stage.appendChild(carouselDots);
+
+        // … et zone de texte SOUS l'image (titre + sous-titre + bouton)
+        const anyCaption = banners.some(b => b.title || b.subtitle);
+        let infoEl = null;
+        if (anyCaption) {
+            infoEl = document.createElement('div');
+            infoEl.className = 'home-banner-info';
+            carouselWrap.appendChild(infoEl);
+        }
+
+        const updateInfo = () => {
+            if (!infoEl) return;
+            const b = banners[current];
+            if (!b || !(b.title || b.subtitle)) {
+                infoEl.classList.add('is-empty');
+                infoEl.innerHTML = '';
+                return;
+            }
+            infoEl.classList.remove('is-empty');
+            infoEl.innerHTML = `
+                <span class="home-banner-info-bar"></span>
+                <div class="home-banner-info-text">
+                    ${b.title ? `<strong>${esc(b.title)}</strong>` : ''}
+                    ${b.subtitle ? `<small>${esc(b.subtitle)}</small>` : ''}
+                </div>
+                <span class="home-banner-info-cta">${b.link_url ? 'Voir ›' : 'Agrandir ⤢'}</span>`;
+            infoEl.classList.remove('is-anim');
+            void infoEl.offsetWidth; // relance l'animation d'apparition
+            infoEl.classList.add('is-anim');
+        };
+
+        // Visionneuse plein écran (bannières sans lien : reçus, affiches…)
+        const openBannerLightbox = (b) => {
+            if (!b) return;
+            let box = document.getElementById('banner-lightbox');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'banner-lightbox';
+                box.className = 'banner-lightbox';
+                box.innerHTML = '<button type="button" class="banner-lightbox-close" aria-label="Fermer">✕</button><img alt=""><div class="banner-lightbox-text"></div>';
+                document.body.appendChild(box);
+                const close = () => { box.classList.remove('open'); startAuto(); };
+                box.addEventListener('click', close);
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+            }
+            box.querySelector('img').src = b.image_url;
+            box.querySelector('.banner-lightbox-text').innerHTML =
+                (b.title ? `<strong>${esc(b.title)}</strong>` : '') + (b.subtitle ? `<small>${esc(b.subtitle)}</small>` : '');
+            stopAuto();
+            box.classList.add('open');
+        };
+
+        // Clic sur l'image : lien (si défini) sinon agrandissement
+        carouselTrack.addEventListener('click', (e) => {
+            const slide = e.target.closest('.home-banner-slide');
+            if (!slide || slide.tagName === 'A') return; // les liens s'ouvrent tout seuls
+            openBannerLightbox(banners[Array.prototype.indexOf.call(carouselTrack.children, slide)]);
+        });
+        // Clic sur la zone de texte : même action que l'image affichée
+        if (infoEl) {
+            infoEl.addEventListener('click', () => {
+                const b = banners[current];
+                if (!b) return;
+                if (b.link_url) window.open(b.link_url, '_blank', 'noopener');
+                else openBannerLightbox(b);
+            });
+        }
+
         const setActiveDot = () => {
             // Diapo active : déclenche l'animation d'apparition du texte
             carouselTrack.querySelectorAll('.home-banner-slide').forEach((sl, i) => {
                 sl.classList.toggle('is-active', i === current);
             });
+            updateInfo();
             if (!carouselDots) return;
             carouselDots.querySelectorAll('.home-banner-dot').forEach((d, i) => {
                 d.classList.toggle('active', i === current);
