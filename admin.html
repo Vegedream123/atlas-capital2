@@ -558,6 +558,20 @@
                     visibles par tous les utilisateurs sans qu'ils aient besoin d'ouvrir la cloche de notifications.
                     Idéal pour annoncer une nouveauté, une promotion ou une mise à jour du site.
                 </p>
+                <p class="text-secondary" style="margin:0 0 14px; font-size:0.85rem; line-height:1.5;">
+                    📐 <strong>Taille conseillée : 1600 × 600 px</strong> (format paysage, JPG/PNG/WEBP). Gardez le texte important au centre.
+                    Les images sont automatiquement redimensionnées, allégées et affichées en entier (sur fond flouté si le format diffère) —
+                    elles ne sont jamais coupées ni déformées, sur mobile comme sur ordinateur.<br>
+                    🧾 Chaque <strong>dépôt ou retrait validé</strong> ajoute automatiquement son reçu (anonymisé, montant net) en tête de ce carrousel — les 5 plus récents sont gardés. Vous pouvez en supprimer un à tout moment.
+                </p>
+                <div style="background:var(--gray-100,#f5f5f4); border-radius:10px; padding:12px 14px; margin:0 0 14px; font-size:0.85rem; line-height:1.5;">
+                    🔒 <strong>Aperçu privé :</strong> une bannière en « Brouillon » n'apparaît que sur <strong>votre</strong> tableau de bord (avec une étiquette « Brouillon »).
+                    Vérifiez-la, puis passez-la en « Publié » et enregistrez pour la montrer à tout le monde.
+                    <label style="display:flex; gap:8px; align-items:flex-start; margin-top:8px; cursor:pointer;">
+                        <input type="checkbox" id="auto-publish-receipts" style="margin-top:3px;">
+                        <span>Publier <strong>directement</strong> les reçus automatiques (dépôts/retraits validés). Décoché = ils arrivent en brouillon, visibles par vous seul.</span>
+                    </label>
+                </div>
                 <div id="banners-list"></div>
                 <button type="button" class="btn btn-outline" id="add-banner-btn" style="margin:4px 0 18px;">+ Ajouter une bannière</button>
                 <div class="admin-form-actions">
