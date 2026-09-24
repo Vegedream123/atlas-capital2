@@ -2964,13 +2964,41 @@
 
             forgotPasswordLink.addEventListener(
                 'click',
-                event => {
+                async event => {
 
                     event.preventDefault();
 
-                    alert(
-                        'La réinitialisation du mot de passe n\'est pas disponible ici. Veuillez contacter votre responsable de recrutement pour obtenir de l\'aide.'
+                    // Va chercher l'email de support configuré dans le panel
+                    // admin (Paramètres généraux > Email support) pour ouvrir
+                    // directement le client mail de l'utilisateur, prêt à
+                    // écrire — l'admin lui communique ensuite manuellement un
+                    // nouveau mot de passe par retour de mail.
+                    let supportEmail = '';
+                    try {
+                        const { data } = await window.supabaseClient
+                            .from('site_settings')
+                            .select('support_email')
+                            .eq('id', 1)
+                            .single();
+                        supportEmail = (data && data.support_email || '').trim();
+                    } catch (err) {
+                        console.error('Erreur chargement email support :', err);
+                    }
+
+                    if (!supportEmail) {
+                        alert(
+                            "La réinitialisation du mot de passe n'est pas disponible ici. Veuillez contacter votre responsable de recrutement pour obtenir de l'aide."
+                        );
+                        return;
+                    }
+
+                    const emailInput = document.getElementById('login-email') || document.querySelector('#login-form input[type="email"]');
+                    const userEmail = emailInput && emailInput.value ? emailInput.value.trim() : '';
+                    const subject = encodeURIComponent('Réinitialisation de mot de passe - Atlas Capital');
+                    const body = encodeURIComponent(
+                        `Bonjour,\n\nJ'ai oublié mon mot de passe et je souhaite le réinitialiser.\n\nMon adresse email de connexion : ${userEmail || '[indiquez votre email de connexion ici]'}\n\nMerci de me communiquer un nouveau mot de passe.`
                     );
+                    window.location.href = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
 
                 }
             );
