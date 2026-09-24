@@ -444,15 +444,14 @@
                     </div>
                     <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Retraits autorisés à partir de (heure locale Cameroun)</label>
-                            <input type="time" id="setting-withdrawal-time-start" step="60" placeholder="Ex: 10:00">
+                            <label>Retraits autorisés à partir de (heure, 0-23)</label>
+                            <input type="number" id="setting-withdrawal-hour-start" min="0" max="23" step="1" placeholder="Ex: 8">
                         </div>
                         <div class="admin-form-group">
-                            <label>Retraits autorisés jusqu'à (heure locale Cameroun)</label>
-                            <input type="time" id="setting-withdrawal-time-end" step="60" placeholder="Ex: 10:30">
+                            <label>Retraits autorisés jusqu'à (heure, 0-23)</label>
+                            <input type="number" id="setting-withdrawal-hour-end" min="0" max="23" step="1" placeholder="Ex: 20">
                         </div>
                     </div>
-                    <p class="text-secondary" style="margin:-6px 0 12px;">Précision à la minute. Exemple : 10:00 → 10:30 ouvre une fenêtre de retrait de 30 minutes.</p>
                     <div class="admin-form-group">
                         <label>Jours de retrait autorisés</label>
                         <div class="admin-checkbox-grid">
@@ -548,6 +547,22 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <div class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>🖼️ Bannières carrousel (page d'accueil)</h2>
+                </div>
+                <p class="text-secondary" style="margin:-6px 0 14px;">
+                    Ces images défilent automatiquement tout en haut du tableau de bord, <strong>dès la connexion</strong> —
+                    visibles par tous les utilisateurs sans qu'ils aient besoin d'ouvrir la cloche de notifications.
+                    Idéal pour annoncer une nouveauté, une promotion ou une mise à jour du site.
+                </p>
+                <div id="banners-list"></div>
+                <button type="button" class="btn btn-outline" id="add-banner-btn" style="margin:4px 0 18px;">+ Ajouter une bannière</button>
+                <div class="admin-form-actions">
+                    <button type="button" class="btn btn-primary" id="banners-submit-btn">Enregistrer les bannières</button>
+                </div>
             </div>
 
             <div class="admin-panel">
