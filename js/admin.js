@@ -159,6 +159,195 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
 
+    // ----------------------------------------------------------------
+    // 1ter. Reçu "bannière" — image PAYSAGE (16:9) affichée dans le
+    // carrousel de la page d'accueil pour TOUS les utilisateurs
+    // (preuve de paiement). Volontairement ANONYMISÉ : jamais d'e-mail,
+    // jamais de numéro/destination, nom masqué (ex. « K•••• D. »).
+    // Le reçu complet (avec toutes les infos) reste envoyé en privé
+    // à l'utilisateur concerné, dans ses notifications.
+    // ----------------------------------------------------------------
+    function maskPersonName(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (!parts.length || String(name).includes('@')) return 'Client Atlas Capital';
+        const mask = (w) => w.charAt(0).toUpperCase() + '•'.repeat(Math.max(2, Math.min(5, w.length - 1)));
+        if (parts.length === 1) return mask(parts[0]);
+        return mask(parts[0]) + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.';
+    }
+
+    function drawBannerReceiptCanvas({ isWithdrawal, mainAmount, subLine, method, maskedName, date }) {
+        const W = 1280, H = 720;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+
+        // Fond aux couleurs de la marque
+        const grad = ctx.createLinearGradient(0, 0, W, H);
+        grad.addColorStop(0, '#d9691f');
+        grad.addColorStop(1, '#8f3d0c');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, W, H);
+
+        // Carte blanche
+        const m = 36;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 30;
+        tracePath(ctx, m, m, W - m * 2, H - m * 2, 28);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // En-tête : marque + badge de statut
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#c45a18';
+        ctx.font = 'bold 44px sans-serif';
+        ctx.fillText('🏛 Atlas Capital', m + 44, m + 90);
+
+        const badgeText = isWithdrawal ? 'RETRAIT VALIDÉ' : 'DÉPÔT VALIDÉ';
+        ctx.font = 'bold 28px sans-serif';
+        const bw = ctx.measureText(badgeText).width + 56;
+        const bx = W - m - 44 - bw, by = m + 48;
+        ctx.fillStyle = '#1f9d55';
+        tracePath(ctx, bx, by, bw, 56, 28);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.fillText(badgeText, bx + bw / 2, by + 38);
+
+        // Libellé + montant principal (net envoyé pour un retrait)
+        ctx.fillStyle = '#8a8580';
+        ctx.font = '32px sans-serif';
+        ctx.fillText(isWithdrawal ? 'Montant net envoyé' : 'Montant crédité', W / 2, m + 200);
+
+        let size = 130;
+        ctx.font = `bold ${size}px sans-serif`;
+        while (ctx.measureText(mainAmount).width > W - 200 && size > 50) {
+            size -= 4;
+            ctx.font = `bold ${size}px sans-serif`;
+        }
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillText(mainAmount, W / 2, m + 200 + size);
+
+        if (subLine) {
+            ctx.fillStyle = '#6b6b6b';
+            ctx.font = '30px sans-serif';
+            ctx.fillText(subLine, W / 2, m + 200 + size + 52);
+        }
+
+        // Séparateur
+        const sepY = H - m - 190;
+        ctx.strokeStyle = '#e6e2dd';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(m + 44, sepY);
+        ctx.lineTo(W - m - 44, sepY);
+        ctx.stroke();
+
+        // 3 colonnes : bénéficiaire (masqué) / méthode / date
+        const cols = [
+            ['Bénéficiaire', maskedName || 'Client Atlas Capital'],
+            ['Méthode', method || '—'],
+            ['Date', date || '—'],
+        ];
+        const colW = (W - m * 2 - 88) / 3;
+        cols.forEach(([label, value], i) => {
+            const cx = m + 44 + colW * i + colW / 2;
+            ctx.fillStyle = '#8a8580';
+            ctx.font = '24px sans-serif';
+            ctx.fillText(label, cx, sepY + 50);
+            let vs = 32;
+            ctx.font = `bold ${vs}px sans-serif`;
+            while (ctx.measureText(value).width > colW - 20 && vs > 18) {
+                vs -= 2;
+                ctx.font = `bold ${vs}px sans-serif`;
+            }
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillText(value, cx, sepY + 96);
+        });
+
+        ctx.fillStyle = '#a8a29b';
+        ctx.font = '22px sans-serif';
+        ctx.fillText('✔ Paiement vérifié — Atlas Capital', W / 2, H - m - 24);
+
+        return canvas;
+    }
+
+    // Préférence de l'admin (sur cet appareil) : les reçus automatiques
+    // arrivent en BROUILLON (visibles par lui seul) ou sont publiés direct.
+    const isAutoPublishReceipts = () => {
+        try { return localStorage.getItem('autoPublishReceipts') === '1'; } catch (e) { return false; }
+    };
+
+    // Génère le reçu-bannière d'une demande VALIDÉE (retrait ou dépôt) et
+    // l'ajoute automatiquement en tête du carrousel d'accueil.
+    async function publishReceiptBanner(kind, reqRow, profileRow) {
+        const isWithdrawal = kind === 'withdrawals';
+        const amount = Number(reqRow.amount) || 0;
+        const fee = Number(reqRow.fee_amount) || 0;
+        // Retrait : on affiche le NET réellement envoyé (montant − frais).
+        const net = isWithdrawal
+            ? (reqRow.net_amount != null ? Number(reqRow.net_amount) : amount - fee)
+            : amount;
+        const subLine = isWithdrawal && fee > 0
+            ? `Montant demandé ${formatFCFA(amount)} · Frais ${reqRow.fee_percent}% (${formatFCFA(fee)})`
+            : (isWithdrawal ? null : 'Dépôt confirmé et crédité sur le compte');
+
+        const canvas = drawBannerReceiptCanvas({
+            isWithdrawal,
+            mainAmount: formatFCFA(net),
+            subLine,
+            method: reqRow.method_name,
+            maskedName: maskPersonName(profileRow && profileRow.full_name),
+            date: formatDate(new Date()),
+        });
+        const imageUrl = await uploadReceiptImage(canvas, `banner-${isWithdrawal ? 'withdrawal' : 'deposit'}-${reqRow.id}`);
+        const { error } = await window.supabaseClient.rpc('admin_push_receipt_banner', {
+            p_image_url: imageUrl,
+            p_kind: isWithdrawal ? 'withdrawal' : 'deposit',
+            p_published: isAutoPublishReceipts(),
+        });
+        if (error) throw error;
+    }
+
+    // Redimensionne (max 1600 px de large) et compresse en JPEG une image
+    // choisie par l'admin avant l'envoi : légère, rapide à charger sur
+    // mobile, et toujours dans un format que tous les navigateurs lisent.
+    function resizeImageToBlob(file, maxWidth = 1600, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const objectUrl = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                const scale = Math.min(1, maxWidth / img.naturalWidth);
+                const w = Math.max(1, Math.round(img.naturalWidth * scale));
+                const h = Math.max(1, Math.round(img.naturalHeight * scale));
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const cctx = c.getContext('2d');
+                cctx.fillStyle = '#ffffff';
+                cctx.fillRect(0, 0, w, h);
+                cctx.drawImage(img, 0, 0, w, h);
+                URL.revokeObjectURL(objectUrl);
+                c.toBlob((b) => b ? resolve(b) : reject(new Error('Conversion de l\'image impossible.')), 'image/jpeg', quality);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error('Image illisible. Utilisez un fichier JPG, PNG ou WEBP.'));
+            };
+            img.src = objectUrl;
+        });
+    }
+
+    async function uploadBannerImage(file) {
+        const blob = await resizeImageToBlob(file);
+        const path = `banners/banner-${Date.now()}.jpg`;
+        const { error: uploadError } = await window.supabaseClient.storage
+            .from('receipts')
+            .upload(path, blob, { contentType: 'image/jpeg', upsert: true });
+        if (uploadError) throw uploadError;
+        const { data } = window.supabaseClient.storage.from('receipts').getPublicUrl(path);
+        return data.publicUrl;
+    }
+
     if (!window.supabaseClient) { window.location.href = 'index.html'; return; }
 
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
@@ -839,10 +1028,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         const rpcName = kind === 'deposits' ? 'admin_review_deposit' : 'admin_review_withdrawal';
 
         let receiptImageUrl = null;
-        if (kind === 'withdrawals' && approve) {
+        let bannerCtx = null; // données pour le reçu affiché sur la bannière
+        if (approve) {
             try {
                 const { data: reqRow } = await window.supabaseClient
-                    .from('withdrawal_requests')
+                    .from(kind === 'deposits' ? 'deposit_requests' : 'withdrawal_requests')
                     .select('*')
                     .eq('id', id)
                     .single();
@@ -852,26 +1042,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         .select('full_name, email')
                         .eq('id', reqRow.user_id)
                         .single();
-                    const canvas = drawReceiptCanvas({
-                        statusLabel: 'RETRAIT VALIDÉ',
-                        statusColor: '#1f9d55',
-                        amount: formatFCFA(reqRow.amount),
-                        netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
-                        feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
-                        method: reqRow.method_name,
-                        destination: reqRow.destination,
-                        recipientName: reqRow.recipient_name,
-                        userName: (profileRow && profileRow.full_name) || '—',
-                        userEmail: (profileRow && profileRow.email) || '—',
-                        date: formatDate(new Date()),
-                        reference: reqRow.id,
-                    });
-                    receiptImageUrl = await uploadReceiptImage(canvas, `withdrawal-${id}`);
+                    bannerCtx = { reqRow, profileRow };
+                    if (kind === 'withdrawals') {
+                        const canvas = drawReceiptCanvas({
+                            statusLabel: 'RETRAIT VALIDÉ',
+                            statusColor: '#1f9d55',
+                            amount: formatFCFA(reqRow.amount),
+                            netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
+                            feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
+                            method: reqRow.method_name,
+                            destination: reqRow.destination,
+                            recipientName: reqRow.recipient_name,
+                            userName: (profileRow && profileRow.full_name) || '—',
+                            userEmail: (profileRow && profileRow.email) || '—',
+                            date: formatDate(new Date()),
+                            reference: reqRow.id,
+                        });
+                        receiptImageUrl = await uploadReceiptImage(canvas, `withdrawal-${id}`);
+                    }
                 }
             } catch (err) {
                 console.error('Génération du reçu impossible :', err);
-                window.showToast("Le retrait sera validé, mais le reçu n'a pas pu être généré (" + err.message + ").", 'error');
-                // On ne bloque jamais la validation du retrait si le reçu échoue.
+                window.showToast("La demande sera validée, mais le reçu n'a pas pu être généré (" + err.message + ").", 'error');
+                // On ne bloque jamais la validation si le reçu échoue.
             }
         }
 
@@ -882,10 +1075,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...(kind === 'withdrawals' ? { p_receipt_image_url: receiptImageUrl } : {}),
         });
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+
+        // Reçu automatiquement ajouté sur la bannière d'accueil (validation uniquement)
+        let bannerOk = false;
+        const bannerNote = isAutoPublishReceipts()
+            ? ' Reçu publié sur la bannière.'
+            : ' Reçu ajouté à la bannière en BROUILLON (visible par vous seul) — publiez-le dans Paramètres.';
+        if (approve && bannerCtx) {
+            try {
+                await publishReceiptBanner(kind, bannerCtx.reqRow, bannerCtx.profileRow);
+                bannerOk = true;
+            } catch (err) {
+                console.error('Reçu bannière impossible :', err);
+                window.showToast("Demande validée, mais le reçu n'a pas pu être ajouté à la bannière (" + err.message + ").", 'error');
+            }
+        }
+
         if (approve && kind === 'withdrawals' && receiptImageUrl) {
-            window.showToast(`Demande validée. <a href="${receiptImageUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-weight:600;">Télécharger le reçu</a>`, 'success', 15000);
+            window.showToast(`Demande validée.${bannerOk ? bannerNote : ''} <a href="${receiptImageUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-weight:600;">Télécharger le reçu</a>`, 'success', 15000);
+        } else if (approve) {
+            window.showToast(`Demande validée.${bannerOk ? bannerNote : ''}`, 'success');
         } else {
-            window.showToast(approve ? 'Demande validée.' : 'Demande rejetée.', 'success');
+            window.showToast('Demande rejetée.', 'success');
         }
         loadRequests(kind, kind === 'deposits' ? currentDepositStatus : currentWithdrawalStatus);
         loadStats();
@@ -1737,6 +1948,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const bannersSubmitBtn = document.getElementById('banners-submit-btn');
     // Structure : [{ image_url: '', title: '', link_url: '' }]
     let bannersData = [];
+    let bannersLoadedUrls = new Set(); // photo de l'état chargé (évite d'écraser les reçus ajoutés entre-temps)
 
     async function loadBanners() {
         if (!bannersListEl) return;
@@ -1748,6 +1960,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         bannersData = Array.isArray(data.home_banners) ? data.home_banners : [];
+        bannersLoadedUrls = new Set(bannersData.map(b => b && b.image_url));
         renderBanners();
     }
 
@@ -1760,7 +1973,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         bannersListEl.innerHTML = bannersData.map((b, i) => `
             <div class="country-payment-item">
                 <div class="country-payment-header">
-                    <span style="font-weight:600;">Bannière ${i + 1}</span>
+                    <span style="font-weight:600;">Bannière ${i + 1}${b.type === 'receipt' ? ' <span class="admin-badge validated" style="margin-left:6px;">🧾 Reçu automatique</span>' : ''}
+                        <span class="admin-badge ${b.published === false ? 'pending' : 'validated'}" style="margin-left:6px;">${b.published === false ? '🔒 Brouillon' : '🌍 Publié'}</span></span>
                     <button type="button" class="remove-country-btn" data-remove-banner="${i}">Supprimer</button>
                 </div>
                 <div class="admin-form-row" style="align-items:flex-start; gap:14px;">
@@ -1769,12 +1983,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         onerror="this.style.opacity='0.25'" onload="this.style.opacity='1'">
                     <div style="flex:1; min-width:0;">
                         <div class="admin-form-group" style="margin-bottom:8px;">
-                            <label style="font-size:0.8rem;">URL de l'image (obligatoire)</label>
+                            <label style="font-size:0.8rem;">Image (obligatoire) — choisissez un fichier ou collez une URL</label>
+                            <input type="file" accept="image/*" data-banner-upload="${i}" style="margin-bottom:6px;">
                             <input type="text" placeholder="https://.../banniere.jpg" value="${(b.image_url || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="image_url">
                         </div>
                         <div class="admin-form-group" style="margin-bottom:8px;">
                             <label style="font-size:0.8rem;">Titre affiché sur la bannière (optionnel)</label>
                             <input type="text" placeholder="Ex : Nouveau ! Retraits instantanés" value="${(b.title || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="title">
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.8rem;">Visibilité</label>
+                            <select data-banner-published="${i}">
+                                <option value="draft" ${b.published === false ? 'selected' : ''}>🔒 Brouillon — visible par moi seul (aperçu sur mon tableau de bord)</option>
+                                <option value="live" ${b.published === false ? '' : 'selected'}>🌍 Publié — visible par tous les utilisateurs</option>
+                            </select>
                         </div>
                         <div class="admin-form-group" style="margin-bottom:0;">
                             <label style="font-size:0.8rem;">Lien au clic (optionnel)</label>
@@ -1799,6 +2021,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         });
+        bannersListEl.querySelectorAll('select[data-banner-published]').forEach(sel => {
+            sel.addEventListener('change', () => {
+                const i = Number(sel.getAttribute('data-banner-published'));
+                bannersData[i].published = sel.value === 'live';
+                renderBanners();
+            });
+        });
+        bannersListEl.querySelectorAll('input[data-banner-upload]').forEach(fileInput => {
+            fileInput.addEventListener('change', async () => {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) return;
+                const i = Number(fileInput.getAttribute('data-banner-upload'));
+                fileInput.disabled = true;
+                try {
+                    window.showToast('Envoi de l\'image en cours…', 'success', 2500);
+                    bannersData[i].image_url = await uploadBannerImage(file);
+                    renderBanners();
+                    window.showToast('Image ajoutée. N\'oubliez pas de cliquer sur « Enregistrer les bannières ».', 'success');
+                } catch (err) {
+                    fileInput.disabled = false;
+                    window.showToast("Erreur : " + err.message, 'error');
+                }
+            });
+        });
         bannersListEl.querySelectorAll('[data-remove-banner]').forEach(btn => {
             btn.addEventListener('click', () => {
                 bannersData.splice(Number(btn.getAttribute('data-remove-banner')), 1);
@@ -1807,9 +2053,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const autoPublishCheckbox = document.getElementById('auto-publish-receipts');
+    if (autoPublishCheckbox) {
+        autoPublishCheckbox.checked = isAutoPublishReceipts();
+        autoPublishCheckbox.addEventListener('change', () => {
+            try { localStorage.setItem('autoPublishReceipts', autoPublishCheckbox.checked ? '1' : '0'); } catch (e) {}
+        });
+    }
+
     if (addBannerBtn) {
         addBannerBtn.addEventListener('click', () => {
-            bannersData.push({ image_url: '', title: '', link_url: '' });
+            bannersData.push({ image_url: '', title: '', link_url: '', published: false });
             renderBanners();
         });
     }
@@ -1824,8 +2078,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .map(b => ({
                     image_url: b.image_url.trim(),
                     title: (b.title || '').trim(),
-                    link_url: (b.link_url || '').trim()
+                    link_url: (b.link_url || '').trim(),
+                    published: b.published !== false,
+                    // On conserve les marqueurs des reçus automatiques
+                    ...(b.type ? { type: b.type } : {}),
+                    ...(b.kind ? { kind: b.kind } : {}),
+                    ...(b.created_at ? { created_at: b.created_at } : {})
                 }));
+
+            // Reçus ajoutés automatiquement depuis le chargement de cet écran
+            // (ex. validation dans un autre onglet) : on ne les écrase pas.
+            const { data: latest } = await window.supabaseClient
+                .from('site_settings').select('home_banners').eq('id', 1).single();
+            const localUrls = new Set(cleanBanners.map(b => b.image_url));
+            const freshReceipts = (latest && Array.isArray(latest.home_banners) ? latest.home_banners : [])
+                .filter(b => b && b.type === 'receipt' && !bannersLoadedUrls.has(b.image_url) && !localUrls.has(b.image_url));
+            cleanBanners.unshift(...freshReceipts);
 
             const { error } = await window.supabaseClient.from('site_settings').upsert({ id: 1, home_banners: cleanBanners });
 
@@ -1834,8 +2102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
             bannersData = cleanBanners;
+            bannersLoadedUrls = new Set(cleanBanners.map(b => b.image_url));
             renderBanners();
-            window.showToast('Bannières enregistrées ! Les utilisateurs les verront dès leur prochaine connexion.', 'success');
+            window.showToast('Bannières enregistrées ! Les bannières « Publié » sont visibles par tous ; les « Brouillon » seulement par vous.', 'success');
         });
     }
 
