@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target === 'utilisateurs') loadUsers();
             if (target === 'codespromo') loadPromoCodes();
             if (target === 'parrainage') loadTopReferrers();
-            if (target === 'parametres') { loadSettings(); loadPaymentSettings(); }
+            if (target === 'parametres') { loadSettings(); loadPaymentSettings(); loadBanners(); }
         });
     });
 
@@ -1492,8 +1492,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('setting-withdrawal-fee-percent').value = data.withdrawal_fee_percent ?? '';
         document.getElementById('setting-maintenance-mode').checked = !!data.maintenance_mode;
         document.getElementById('setting-max-daily-withdrawal').value = data.max_daily_withdrawal_amount ?? '';
-        document.getElementById('setting-withdrawal-time-start').value = data.withdrawal_time_start ? data.withdrawal_time_start.slice(0, 5) : '';
-        document.getElementById('setting-withdrawal-time-end').value = data.withdrawal_time_end ? data.withdrawal_time_end.slice(0, 5) : '';
+        document.getElementById('setting-withdrawal-hour-start').value = data.withdrawal_hour_start ?? '';
+        document.getElementById('setting-withdrawal-hour-end').value = data.withdrawal_hour_end ?? '';
         const allowedDays = (data.withdrawal_allowed_days || []).map(String);
         document.querySelectorAll('.setting-withdrawal-day').forEach(cb => {
             cb.checked = allowedDays.includes(cb.value);
@@ -1522,8 +1522,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             withdrawal_fee_percent: Number(document.getElementById('setting-withdrawal-fee-percent').value) || 0,
             maintenance_mode: document.getElementById('setting-maintenance-mode').checked,
             max_daily_withdrawal_amount: document.getElementById('setting-max-daily-withdrawal').value ? Number(document.getElementById('setting-max-daily-withdrawal').value) : null,
-            withdrawal_time_start: document.getElementById('setting-withdrawal-time-start').value || null,
-            withdrawal_time_end: document.getElementById('setting-withdrawal-time-end').value || null,
+            withdrawal_hour_start: document.getElementById('setting-withdrawal-hour-start').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-start').value) : null,
+            withdrawal_hour_end: document.getElementById('setting-withdrawal-hour-end').value !== '' ? Number(document.getElementById('setting-withdrawal-hour-end').value) : null,
             withdrawal_allowed_days: Array.from(document.querySelectorAll('.setting-withdrawal-day:checked')).map(cb => Number(cb.value))
         };
 
@@ -1728,6 +1728,116 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
         window.showToast('Moyens de paiement enregistrés.', 'success');
     });
+
+    // ----------------------------------------------------------------
+    // 7quater. Bannières carrousel (page d'accueil du dashboard)
+    // ----------------------------------------------------------------
+    const bannersListEl = document.getElementById('banners-list');
+    const addBannerBtn = document.getElementById('add-banner-btn');
+    const bannersSubmitBtn = document.getElementById('banners-submit-btn');
+    // Structure : [{ image_url: '', title: '', link_url: '' }]
+    let bannersData = [];
+
+    async function loadBanners() {
+        if (!bannersListEl) return;
+        const { data, error } = await window.supabaseClient
+            .from('site_settings').select('home_banners').eq('id', 1).single();
+
+        if (error) {
+            window.showToast("Impossible de charger les bannières.", 'error');
+            return;
+        }
+        bannersData = Array.isArray(data.home_banners) ? data.home_banners : [];
+        renderBanners();
+    }
+
+    function renderBanners() {
+        if (!bannersListEl) return;
+        if (!bannersData.length) {
+            bannersListEl.innerHTML = `<p class="country-payment-empty">Aucune bannière pour le moment. Cliquez sur "Ajouter une bannière" ci-dessous.</p>`;
+            return;
+        }
+        bannersListEl.innerHTML = bannersData.map((b, i) => `
+            <div class="country-payment-item">
+                <div class="country-payment-header">
+                    <span style="font-weight:600;">Bannière ${i + 1}</span>
+                    <button type="button" class="remove-country-btn" data-remove-banner="${i}">Supprimer</button>
+                </div>
+                <div class="admin-form-row" style="align-items:flex-start; gap:14px;">
+                    <img data-banner-preview="${i}" src="${(b.image_url || '').replace(/"/g, '&quot;')}" alt=""
+                        style="width:120px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--gray-200,#e5e7eb); background:var(--gray-100,#f5f5f4); flex-shrink:0;"
+                        onerror="this.style.opacity='0.25'" onload="this.style.opacity='1'">
+                    <div style="flex:1; min-width:0;">
+                        <div class="admin-form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.8rem;">URL de l'image (obligatoire)</label>
+                            <input type="text" placeholder="https://.../banniere.jpg" value="${(b.image_url || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="image_url">
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom:8px;">
+                            <label style="font-size:0.8rem;">Titre affiché sur la bannière (optionnel)</label>
+                            <input type="text" placeholder="Ex : Nouveau ! Retraits instantanés" value="${(b.title || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="title">
+                        </div>
+                        <div class="admin-form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.8rem;">Lien au clic (optionnel)</label>
+                            <input type="text" placeholder="https://..." value="${(b.link_url || '').replace(/"/g, '&quot;')}" data-banner-index="${i}" data-banner-field="link_url">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        bannersListEl.querySelectorAll('input[data-banner-field]').forEach(input => {
+            input.addEventListener('input', () => {
+                const i = Number(input.getAttribute('data-banner-index'));
+                const field = input.getAttribute('data-banner-field');
+                bannersData[i][field] = input.value;
+                // Met à jour uniquement l'aperçu de l'image concernée, sans
+                // reconstruire toute la liste (sinon le champ perd le focus
+                // à chaque lettre tapée).
+                if (field === 'image_url') {
+                    const preview = bannersListEl.querySelector(`img[data-banner-preview="${i}"]`);
+                    if (preview) preview.src = input.value;
+                }
+            });
+        });
+        bannersListEl.querySelectorAll('[data-remove-banner]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                bannersData.splice(Number(btn.getAttribute('data-remove-banner')), 1);
+                renderBanners();
+            });
+        });
+    }
+
+    if (addBannerBtn) {
+        addBannerBtn.addEventListener('click', () => {
+            bannersData.push({ image_url: '', title: '', link_url: '' });
+            renderBanners();
+        });
+    }
+
+    if (bannersSubmitBtn) {
+        bannersSubmitBtn.addEventListener('click', async () => {
+            bannersSubmitBtn.disabled = true;
+            bannersSubmitBtn.textContent = 'Enregistrement…';
+
+            const cleanBanners = bannersData
+                .filter(b => (b.image_url || '').trim())
+                .map(b => ({
+                    image_url: b.image_url.trim(),
+                    title: (b.title || '').trim(),
+                    link_url: (b.link_url || '').trim()
+                }));
+
+            const { error } = await window.supabaseClient.from('site_settings').upsert({ id: 1, home_banners: cleanBanners });
+
+            bannersSubmitBtn.disabled = false;
+            bannersSubmitBtn.textContent = 'Enregistrer les bannières';
+
+            if (error) { window.showToast("Erreur : " + error.message, 'error'); return; }
+            bannersData = cleanBanners;
+            renderBanners();
+            window.showToast('Bannières enregistrées ! Les utilisateurs les verront dès leur prochaine connexion.', 'success');
+        });
+    }
 
     // ----------------------------------------------------------------
     // 7ter. Annonces — notification + push envoyée à tous les utilisateurs
