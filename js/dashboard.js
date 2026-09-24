@@ -319,6 +319,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         stage.appendChild(carouselTrack);
         if (carouselDots) stage.appendChild(carouselDots);
 
+        // En-tête officiel au-dessus de la bannière
+        const head = document.createElement('div');
+        head.className = 'home-banner-head';
+        head.innerHTML = `<span class="home-banner-head-title">Bannière officielle ${esc(siteSettings.site_name || 'Atlas Capital')}</span><span class="home-banner-head-badge">✔ Officiel</span>`;
+        carouselWrap.insertBefore(head, stage);
+
         // … et zone de texte SOUS l'image (titre + sous-titre + bouton)
         const anyCaption = banners.some(b => b.title || b.subtitle);
         let infoEl = null;
