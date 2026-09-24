@@ -1236,8 +1236,66 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    // ------------------------------------------------------------------
+    // Fenêtre de retrait : vérification côté client (confort/confiance),
+    // le vrai verrou reste le trigger serveur enforce_withdrawal_limits()
+    // qui utilise aussi l'heure du Cameroun (Africa/Douala) — voir le RPC
+    // request_withdrawal(). Ici on ne fait qu'informer clairement l'utilisateur
+    // avant qu'il ne remplisse tout le formulaire pour rien.
+    const getDoualaNow = () => {
+        const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Africa/Douala', weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(new Date());
+        const map = {};
+        parts.forEach(p => { map[p.type] = p.value; });
+        const weekdayMap = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+        return {
+            dow: weekdayMap[map.weekday],
+            hour: Number(map.hour) % 24,
+            minute: Number(map.minute)
+        };
+    };
+    const parseHM = (s) => {
+        if (!s) return null;
+        const [h, m] = s.split(':').map(Number);
+        return h * 60 + m;
+    };
+    const DAY_NAMES_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+    const getWithdrawalWindowStatus = () => {
+        const days = siteSettings.withdrawal_allowed_days;
+        const startStr = siteSettings.withdrawal_time_start ? siteSettings.withdrawal_time_start.slice(0, 5) : null;
+        const endStr = siteSettings.withdrawal_time_end ? siteSettings.withdrawal_time_end.slice(0, 5) : null;
+        const now = getDoualaNow();
+        const nowMin = now.hour * 60 + now.minute;
+        const startMin = parseHM(startStr);
+        const endMin = parseHM(endStr);
+        const dayOk = !days || !days.length || days.includes(now.dow);
+        const timeOk = (startMin == null || endMin == null) || (nowMin >= startMin && nowMin < endMin);
+        return { open: dayOk && timeOk, dayOk, timeOk, startStr, endStr, todayName: DAY_NAMES_FR[now.dow] };
+    };
+
     // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
+        const win = getWithdrawalWindowStatus();
+        if (!win.open) {
+            const reason = !win.dayOk
+                ? "Les retraits ne sont pas autorisés aujourd'hui."
+                : (win.startStr && win.endStr
+                    ? `La fenêtre de retrait du jour (${win.startStr} – ${win.endStr}, heure du Cameroun) est fermée pour l'instant.`
+                    : "Les retraits sont momentanément fermés.");
+            withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+                <button type="button" class="modal-close" data-close-withdraw-modal>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+                <span class="task-modal-badge">Retrait</span>
+                <h2 class="task-modal-title">Fenêtre de retrait fermée</h2>
+                <p class="task-modal-sub">${reason}${win.startStr && win.endStr ? ` Revenez demain entre <strong>${win.startStr}</strong> et <strong>${win.endStr}</strong>.` : ''}</p>
+                <p class="task-modal-sub">Vos fonds restent disponibles et en sécurité sur votre compte — vous pourrez retirer normalement à la prochaine ouverture.</p>
+                <button type="button" class="btn btn-primary btn-full" data-close-withdraw-modal>Compris</button>`;
+            withdrawModalOverlay.querySelectorAll('[data-close-withdraw-modal]').forEach(b => b.addEventListener('click', closeWithdrawModal));
+            return;
+        }
+
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
         // Seuls les GAINS sont retirables — un dépôt non encore investi reste
@@ -1252,6 +1310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
             <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatFCFA(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
+            <p class="task-modal-sub" style="color:var(--success, #10b981);">✅ Fenêtre de retrait ouverte jusqu'à ${win.endStr || 'la fermeture'} · Les retraits prennent généralement moins de 12h à être traités.</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
