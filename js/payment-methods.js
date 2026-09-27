@@ -60,19 +60,24 @@
         usdt: '💵'
     };
 
-    // Adresse USDT (TRC-20) courante, définie depuis l'admin via
-    // setUsdtAddress(). Tant qu'elle n'a pas été chargée, le moyen de
-    // paiement USDT reste masqué (on ne veut pas afficher une adresse
-    // vide/placeholder aux utilisateurs).
+    // Adresses USDT courantes, définies depuis l'admin via setUsdtAddress()
+    // (réseau TRC-20) et setUsdtBep20Address() (réseau BEP-20). Tant
+    // qu'une adresse n'a pas été chargée, le moyen de paiement correspondant
+    // reste masqué (on ne veut pas afficher une adresse vide/placeholder).
     let usdtAddress = '';
-    // Informations affichées au client lorsqu'il choisit l'USDT (TRC-20)
-    // comme moyen de RETRAIT (distinct de l'adresse de dépôt ci-dessus,
-    // qui appartient à Atlas Capital — au retrait, c'est le client qui
-    // fournit SON adresse). Configuré depuis l'admin.
+    let usdtBep20Address = '';
+    // Informations affichées au client lorsqu'il choisit l'USDT comme moyen
+    // de RETRAIT (distinct de l'adresse de dépôt ci-dessus, qui appartient
+    // à Atlas Capital — au retrait, c'est le client qui fournit SON
+    // adresse). Configuré depuis l'admin.
     let usdtWithdrawInfo = '';
 
     function setUsdtAddress(address) {
         usdtAddress = (address || '').trim();
+    }
+
+    function setUsdtBep20Address(address) {
+        usdtBep20Address = (address || '').trim();
     }
 
     function setUsdtWithdrawInfo(text) {
@@ -83,8 +88,9 @@
         return usdtWithdrawInfo;
     }
 
-    // Moyen de paiement universel ajouté à TOUS les pays : l'USDT (réseau
-    // TRC-20). L'adresse vient uniquement du panneau admin.
+    // Moyens de paiement universels ajoutés à TOUS les pays : l'USDT sur
+    // réseau TRC-20 et/ou BEP-20. Les adresses viennent uniquement du
+    // panneau admin.
     function getUsdtMethod() {
         if (!usdtAddress) return null;
         return {
@@ -95,6 +101,19 @@
             number: usdtAddress,
             holder: 'Réseau TRON (TRC-20) uniquement',
             note: "N'envoyez que de l'USDT sur le réseau TRC-20 à cette adresse. Tout envoi sur un autre réseau sera perdu."
+        };
+    }
+
+    function getUsdtBep20Method() {
+        if (!usdtBep20Address) return null;
+        return {
+            id: 'usdt_bep20',
+            type: 'usdt_bep20',
+            name: 'USDT (BEP-20)',
+            icon: ICONS.usdt,
+            number: usdtBep20Address,
+            holder: 'Réseau BNB Smart Chain (BEP-20) uniquement',
+            note: "N'envoyez que de l'USDT sur le réseau BEP-20 (BNB Smart Chain) à cette adresse. Tout envoi sur un autre réseau sera perdu."
         };
     }
 
@@ -240,7 +259,8 @@
             ? (countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [])
             : [];
         const usdt = getUsdtMethod();
-        return usdt ? [...specific, usdt] : [...specific];
+        const usdtBep20 = getUsdtBep20Method();
+        return [...specific, ...(usdt ? [usdt] : []), ...(usdtBep20 ? [usdtBep20] : [])];
     }
 
     // Moyens de paiement pour le RETRAIT : disponibles pour TOUS les pays
@@ -253,7 +273,8 @@
     function getWithdrawalMethods(countryCode) {
         const specific = countryOverrides[countryCode] || PAYMENT_METHODS_BY_COUNTRY[countryCode] || [];
         const usdt = getUsdtMethod();
-        return usdt ? [...specific, usdt] : [...specific];
+        const usdtBep20 = getUsdtBep20Method();
+        return [...specific, ...(usdt ? [usdt] : []), ...(usdtBep20 ? [usdtBep20] : [])];
     }
 
     // Un pays est "restreint" (mobile money local indisponible pour le
@@ -270,6 +291,7 @@
         getWithdrawalMethods,
         getPaymentLink,
         setUsdtAddress,
+        setUsdtBep20Address,
         setCountryOverrides,
         setUsdtWithdrawInfo,
         getUsdtWithdrawInfo,
