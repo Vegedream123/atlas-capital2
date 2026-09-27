@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // affiche les vraies infos au lieu des valeurs d'exemple.
     if (window.AtlasPaymentMethods) {
         window.AtlasPaymentMethods.setUsdtAddress(siteSettings.deposit_usdt_address);
+        window.AtlasPaymentMethods.setUsdtBep20Address(siteSettings.deposit_usdt_bep20_address);
         window.AtlasPaymentMethods.setCountryOverrides(siteSettings.country_payment_methods);
     }
 
@@ -1400,10 +1401,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const destInput = withdrawModalOverlay.querySelector('#withdraw-destination-input');
         const orangeHint = withdrawModalOverlay.querySelector('#withdraw-orange-hint');
         if (!nameGroup || !destLabel || !destInput) return;
-        const isUsdt = method && method.type === 'usdt';
+        const isUsdt = method && (method.type === 'usdt' || method.type === 'usdt_bep20');
         nameGroup.style.display = isUsdt ? 'none' : '';
         destLabel.textContent = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
-        destInput.placeholder = isUsdt ? 'Votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX';
+        destInput.placeholder = isUsdt ? `Votre adresse ${method.name}` : 'Ex : +237 6XX XXX XXX';
         if (orangeHint) orangeHint.style.display = (method && method.id === 'orange_money_cm') ? '' : 'none';
     };
 
@@ -1502,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const destination = destinationInput.value.trim();
 
             if (!selectedWithdrawMethod) { feedbackEl.textContent = 'Veuillez choisir un moyen de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            const isUsdt = selectedWithdrawMethod.type === 'usdt';
+            const isUsdt = selectedWithdrawMethod.type === 'usdt' || selectedWithdrawMethod.type === 'usdt_bep20';
             if (!isUsdt && !recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!destination) { feedbackEl.textContent = isUsdt ? 'Veuillez indiquer votre adresse de réception.' : 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
@@ -1527,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // retrait ne parte vers un mauvais numéro par simple faute de frappe,
     // ce qui serait une perte définitive une fois l'argent envoyé.
     const renderWithdrawConfirmStep = (withdrawData) => {
-        const isUsdt = withdrawData.method.type === 'usdt';
+        const isUsdt = withdrawData.method.type === 'usdt' || withdrawData.method.type === 'usdt_bep20';
         const destLabel = isUsdt ? 'Adresse de réception' : 'Numéro / compte de réception';
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
@@ -1546,7 +1547,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-confirm-destination-input">Retapez votre ${destLabel.toLowerCase()} pour confirmer</label>
-                <input type="text" id="withdraw-confirm-destination-input" class="form-control" placeholder="${isUsdt ? 'Retapez votre adresse USDT (TRC-20)' : 'Ex : +237 6XX XXX XXX'}" autocomplete="off">
+                <input type="text" id="withdraw-confirm-destination-input" class="form-control" placeholder="${isUsdt ? `Retapez votre adresse ${withdrawData.method.name}` : 'Ex : +237 6XX XXX XXX'}" autocomplete="off">
             </div>
 
             <div class="quiz-feedback" id="withdraw-confirm-feedback"></div>
