@@ -1785,6 +1785,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('setting-withdrawal-methods').value = linesFromValue(data.withdrawal_methods);
         document.getElementById('setting-deposit-usdt-address').value = data.deposit_usdt_address || '';
+        document.getElementById('setting-deposit-usdt-bep20-address').value = data.deposit_usdt_bep20_address || '';
         document.getElementById('setting-deposit-amounts').value = linesFromValue(data.deposit_amounts);
 
         countryPaymentData = parseCountryPaymentMethods(data.country_payment_methods);
@@ -1927,6 +1928,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: 1,
             withdrawal_methods: linesToArray(document.getElementById('setting-withdrawal-methods').value),
             deposit_usdt_address: document.getElementById('setting-deposit-usdt-address').value.trim(),
+            deposit_usdt_bep20_address: document.getElementById('setting-deposit-usdt-bep20-address').value.trim(),
             deposit_amounts: linesToArray(document.getElementById('setting-deposit-amounts').value).map(Number).filter(n => !isNaN(n)),
             country_payment_methods: cleanCountryPayments
         };
