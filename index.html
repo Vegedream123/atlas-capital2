@@ -1813,6 +1813,64 @@
         }
 
 
+        /*
+         * Sur un réseau lent (3G/LTE faible), la librairie Supabase
+         * peut encore être en train de se télécharger au moment où
+         * l'utilisateur clique sur "Se connecter" / "Créer un compte"
+         * — surtout juste après l'ouverture de la page. Avant cette
+         * correction, on abandonnait alors instantanément avec
+         * "Connexion au serveur impossible", alors que la librairie
+         * aurait fini de charger quelques secondes plus tard.
+         *
+         * Cette fonction patiente (en vérifiant toutes les 300ms)
+         * jusqu'à ce que window.supabaseClient soit prêt, ou jusqu'à
+         * un délai maximum (8 secondes par défaut) avant d'abandonner
+         * pour de bon.
+         */
+
+        function waitForSupabaseClient(
+            timeoutMs = 8000
+        ) {
+
+            return new Promise(resolve => {
+
+                if (
+                    window.supabaseClient
+                ) {
+
+                    resolve(true);
+                    return;
+
+                }
+
+                const intervalId =
+                    setInterval(() => {
+
+                        if (
+                            window.supabaseClient
+                        ) {
+
+                            clearInterval(intervalId);
+                            resolve(true);
+
+                        }
+
+                    }, 300);
+
+                setTimeout(() => {
+
+                    clearInterval(intervalId);
+                    resolve(
+                        !!window.supabaseClient
+                    );
+
+                }, timeoutMs);
+
+            });
+
+        }
+
+
         /* =========================================================
            REDIRECTION AUTOMATIQUE SI DÉJÀ CONNECTÉ
            =========================================================
@@ -2664,12 +2722,31 @@
                     !window.supabaseClient
                 ) {
 
-                    showToast(
-                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
-                        'error'
-                    );
+                    // Ne pas abandonner tout de suite : la librairie
+                    // est peut-être encore en train de charger sur un
+                    // réseau lent. On patiente jusqu'à 8 secondes.
+                    const originalButtonText =
+                        button.textContent;
 
-                    return;
+                    button.disabled = true;
+                    button.textContent = 'Connexion...';
+
+                    const ready =
+                        await waitForSupabaseClient();
+
+                    button.disabled = false;
+                    button.textContent = originalButtonText;
+
+                    if (!ready) {
+
+                        showToast(
+                            'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
+                            'error'
+                        );
+
+                        return;
+
+                    }
 
                 }
 
@@ -3225,12 +3302,31 @@
                     !window.supabaseClient
                 ) {
 
-                    showToast(
-                        'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
-                        'error'
-                    );
+                    // Ne pas abandonner tout de suite : la librairie
+                    // est peut-être encore en train de charger sur un
+                    // réseau lent. On patiente jusqu'à 8 secondes.
+                    const originalButtonTextWait =
+                        button.textContent;
 
-                    return;
+                    button.disabled = true;
+                    button.textContent = 'Création...';
+
+                    const ready =
+                        await waitForSupabaseClient();
+
+                    button.disabled = false;
+                    button.textContent = originalButtonTextWait;
+
+                    if (!ready) {
+
+                        showToast(
+                            'Connexion au serveur impossible. Vérifiez votre connexion internet et réessayez.',
+                            'error'
+                        );
+
+                        return;
+
+                    }
 
                 }
 
