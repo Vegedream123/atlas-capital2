@@ -2326,6 +2326,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', '')}?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
+        const referralCodeOnlyInput = document.getElementById('referral-code-only');
+        const referralCodeCopyBtn = document.getElementById('referral-code-copy-btn');
+        if (referralCodeOnlyInput) referralCodeOnlyInput.value = referralCode;
+        if (referralCodeCopyBtn) {
+            referralCodeCopyBtn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(referralCode);
+                } catch (err) {
+                    referralCodeOnlyInput.select();
+                    document.execCommand('copy');
+                }
+                window.showToast('Code copié !', 'success');
+            });
+        }
+
         if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
         // Le comptage et l'arbre d'équipe passent par la fonction serveur
         // get_my_referral_team() (voir loadMyTeamTree) : les requêtes directes
