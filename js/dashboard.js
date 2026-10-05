@@ -33,15 +33,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ------------------------------------------------------------------
     // 1. Authentification réelle (session Supabase)
     // ------------------------------------------------------------------
+    // Anciens liens de parrainage mal formés (/dashboard?ref=CODE) : on
+    // conserve le code et on le transmet à la page d'accueil/inscription
+    // au lieu de le perdre lors de la redirection vers la connexion.
+    const incomingRef = new URLSearchParams(window.location.search).get('ref');
+    if (incomingRef) {
+        try { localStorage.setItem('referredBy', incomingRef); } catch (e) {}
+    }
+    const homeUrl = incomingRef ? `index.html?ref=${encodeURIComponent(incomingRef)}` : 'index.html';
+
     if (!window.supabaseClient) {
-        window.location.href = 'index.html';
+        window.location.href = homeUrl;
         return;
     }
 
     const { data: sessionData } = await window.supabaseClient.auth.getSession();
     const session = sessionData && sessionData.session;
     if (!session) {
-        window.location.href = 'index.html';
+        window.location.href = homeUrl;
         return;
     }
     const authUser = session.user;
@@ -2323,7 +2332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Lien de parrainage SANS "index.html" (juste le domaine/racine + le
         // paramètre ?ref=). index.html étant servi par défaut sur la racine,
         // l'inclure explicitement n'est pas nécessaire et alourdit le lien.
-        const referralLink = `${window.location.origin}${window.location.pathname.replace('dashboard.html', '')}?ref=${referralCode}`;
+        const referralLink = `${window.location.origin}/?ref=${referralCode}`;
         referralLinkInput.value = referralLink;
 
         const referralCodeOnlyInput = document.getElementById('referral-code-only');
