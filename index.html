@@ -3244,6 +3244,9 @@
                                 ).value,
 
                             referred_by:
+                                (
+                                    (document.getElementById('reg-referral-code') || {}).value || ''
+                                ).trim().toLowerCase() ||
                                 localStorage.getItem(
                                     'referredBy'
                                 ) || null
@@ -3387,6 +3390,15 @@
             );
 
         }
+
+        // Pré-remplit le champ visible du formulaire d'inscription avec le
+        // code du lien (ou, à défaut, celui mémorisé sur ce navigateur).
+        (function prefillReferralField() {
+            const input = document.getElementById('reg-referral-code');
+            if (!input) return;
+            const saved = ref || localStorage.getItem('referredBy');
+            if (saved) input.value = saved;
+        })();
 
 
 
