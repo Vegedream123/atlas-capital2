@@ -151,6 +151,33 @@ document.addEventListener(
         }
 
 
+        // Pré-remplit le champ visible du formulaire d'inscription avec le
+        // code détecté (URL en priorité, sinon celui déjà en mémoire depuis
+        // une visite précédente sur CE navigateur). Le champ reste modifiable
+        // par la personne si rien n'a été détecté automatiquement.
+        const referralCodeInput =
+            document.getElementById(
+                'reg-referral-code'
+            );
+
+        if (referralCodeInput) {
+
+            const detectedRef =
+                refParam ||
+                localStorage.getItem(
+                    'referredBy'
+                );
+
+            if (detectedRef) {
+
+                referralCodeInput.value =
+                    detectedRef;
+
+            }
+
+        }
+
+
 
         /* =================================================================
            1. NAVBAR
@@ -1203,7 +1230,26 @@ document.addEventListener(
 
                     try {
 
+                        // Priorité à ce qui est écrit dans le champ visible du
+                        // formulaire (l'utilisateur a pu le modifier ou le
+                        // coller manuellement) ; on ne retombe sur le
+                        // localStorage que si le champ est vide ou absent —
+                        // filet de sécurité pour le cas où le lien a été
+                        // ouvert dans un autre navigateur/application.
+                        const referralCodeInput =
+                            document.getElementById(
+                                'reg-referral-code'
+                            );
+
+                        const typedReferral =
+                            referralCodeInput
+                                ? referralCodeInput.value
+                                    .trim()
+                                    .toLowerCase()
+                                : '';
+
                         const referredBy =
+                            typedReferral ||
                             localStorage.getItem(
                                 'referredBy'
                             ) ||
