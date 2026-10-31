@@ -28,7 +28,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, duration);
     };
 
-    const formatFCFA = (amount) => new Intl.NumberFormat('fr-FR').format(Math.round(amount || 0)) + ' FCFA';
+    // ------------------------------------------------------------------
+    // MODE MONEY — un seul produit fonctionne côté client.
+    //  true  : seuls les produits de catégorie « atlas » dont le NOM commence par
+    //          « MONEY » sont visibles et achetables. Les anciens produits
+    //          (Atlas 1, Atlas 2, Actifs, Quêtes, Express) sont invisibles.
+    //  false : retour à l'ancienne version (tout réapparaît). Pense aussi à
+    //          remettre les onglets dans dashboard.html (voir commentaire là-bas).
+    // ------------------------------------------------------------------
+    const MONEY_ONLY = true;
+    const MONEY_NAME_PREFIX = 'money';
+    const isVisibleProduct = (p) => !MONEY_ONLY || (p && p.category === 'atlas' && String(p.name || '').trim().toLowerCase().startsWith(MONEY_NAME_PREFIX));
+    document.body.classList.toggle('money-only', MONEY_ONLY);
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+    const formatUSDT = (amount) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(amount)) + ' USDT';
 
     // ------------------------------------------------------------------
     // 1. Authentification réelle (session Supabase)
@@ -74,7 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let profile = profileRes.data || { full_name: authUser.email, email: authUser.email, referral_code: '' };
     let wallet = walletRes.data || { balance: 0, total_income: 0, referral_earnings: 0 };
-    let products = productsRes.data || [];
+    let products = (productsRes.data || []).filter(isVisibleProduct);
     let investments = investmentsRes.data || [];
     let transactions = transactionsRes.data || [];
     let notifications = notificationsRes.data || [];
@@ -155,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return pairCompletedAt > lastQuete;
     };
 
-    // Revenu mensuel (12 valeurs FCFA, une par mois) défini PAR PRODUIT depuis
+    // Revenu mensuel (12 valeurs USDT, une par mois) défini PAR PRODUIT depuis
     // l'admin — remplace l'ancien tableau global de taux (%). Chaque produit
     // Atlas (Atlas 1, Atlas 2…) a donc ses propres montants pour 1 à 12 mois.
     const getAtlasMonthlyOptions = (product) => {
@@ -530,7 +543,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // cycle est exprimé en JOURS (duration_days), pas en mois : il faut donc
     // aussi couvrir ce cas, sinon locked_payout_amount est ignoré et le
     // calcul retombe à tort sur daily_rate (qui vaut volontairement 0 pour
-    // ces catégories), affichant 0 FCFA/jour malgré un cycle bien configuré.
+    // ces catégories), affichant 0 USDT/jour malgré un cycle bien configuré.
     const dailyGainOf = (inv) => {
         // Offres Express : le montant fixé à l'achat (locked_payout_amount)
         // est déjà le gain PUR (aucun capital restitué) — ne pas soustraire
@@ -576,14 +589,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tasksListEl.innerHTML = active.map(inv => {
             const prod = inv.investment_products || {};
-            const dailyGain = Math.round(dailyGainOf(inv));
+            const dailyGain = round2(dailyGainOf(inv));
             const remaining = msUntilUnlock(inv.last_task_at);
             const available = remaining <= 0;
             return `
                 <div class="task-item">
                     <div class="task-info">
                         <div class="task-name">${prod.name || 'Produit'}</div>
-                        <div class="task-gain">+${formatFCFA(dailyGain)} à débloquer</div>
+                        <div class="task-gain">+${formatUSDT(dailyGain)} à débloquer</div>
                     </div>
                     <div class="task-action">
                         ${available
@@ -631,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </button>
                 <span class="task-modal-badge">Tâche quotidienne</span>
                 <h2 class="task-modal-title">${productName}</h2>
-                <p class="task-modal-sub">Répondez correctement pour débloquer +${formatFCFA(dailyGain)} sur votre solde.</p>
+                <p class="task-modal-sub">Répondez correctement pour débloquer +${formatUSDT(dailyGain)} sur votre solde.</p>
                 <div class="quiz-question">${question.q}</div>
                 <div class="quiz-options">
                     ${question.options.map((opt, idx) => `<button type="button" class="quiz-option" data-idx="${idx}">${opt}</button>`).join('')}
@@ -659,7 +672,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         window.showToast(error.message || "Impossible de valider la tâche pour le moment.", 'error');
                         return;
                     }
-                    window.showToast(`<strong>Tâche validée ✅</strong><br>+${formatFCFA(dailyGain)} crédité pour ${productName}.`, 'success', { extraClass: 'investment-toast' });
+                    window.showToast(`<strong>Tâche validée ✅</strong><br>+${formatUSDT(dailyGain)} crédité pour ${productName}.`, 'success', { extraClass: 'investment-toast' });
                     setTimeout(closeTaskModal, 900);
                     await refreshDashboardData();
                 } else {
@@ -757,24 +770,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         setKpi('kpi-express', expressGainsPending);
 
         const changeEl = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-        changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatFCFA(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
+        changeEl('kpi-balance-change', wallet.total_income > 0 ? `+${formatUSDT(wallet.total_income)} cumulé` : 'Aucun revenu pour le moment');
         changeEl('kpi-rate-change', atlasActive.length ? `${atlasActive.length} placement(s) actif(s)` : 'Aucun placement actif');
         changeEl(
             'kpi-active-change',
             capitalActive.length
-                ? `${capitalActive.length} placement(s) actif(s) · ${formatFCFA(totalInvested)} investis`
+                ? `${capitalActive.length} placement(s) actif(s) · ${formatUSDT(totalInvested)} investis`
                 : 'Investissez pour démarrer'
         );
         changeEl(
             'kpi-quest-change',
             questActive.length
-                ? `${questActive.length} placement(s) actif(s) · ${formatFCFA(totalInvestedQuest)} investis`
+                ? `${questActive.length} placement(s) actif(s) · ${formatUSDT(totalInvestedQuest)} investis`
                 : 'Investissez pour démarrer'
         );
         changeEl(
             'kpi-express-change',
             expressActive.length
-                ? `${expressActive.length} placement(s) actif(s) · ${formatFCFA(totalInvestedExpress)} investis`
+                ? `${expressActive.length} placement(s) actif(s) · ${formatUSDT(totalInvestedExpress)} investis`
                 : 'Investissez pour démarrer'
         );
 
@@ -793,8 +806,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 current += increment;
                 if (step >= steps) { current = target; clearInterval(timer); }
                 counter.textContent = isDecimal
-                    ? current.toFixed(1) + suffix
-                    : new Intl.NumberFormat('fr-FR').format(Math.round(current)) + suffix;
+                    ? new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(current)) + suffix
+                    : new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(current)) + suffix;
             }, duration / steps);
         });
 
@@ -826,7 +839,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             chartArea.innerHTML = months.map(m => {
                 const val = totalsByMonth[m.key];
                 const heightPct = Math.max(4, Math.round((val / maxVal) * 100));
-                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatFCFA(val)}"></div><span class="x-label">${m.label}</span></div>`;
+                return `<div class="bar-group"><div class="bar" style="height:${heightPct}%;" title="${formatUSDT(val)}"></div><span class="x-label">${m.label}</span></div>`;
             }).join('');
         }
 
@@ -865,16 +878,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             // gain vient du cycle_payout_amount fixé à la fin de la durée en
             // jours), donc on calcule le gain/jour depuis ce montant plutôt
             // que depuis daily_rate — sinon la carte produit affiche
-            // toujours 0 FCFA.
+            // toujours 0 USDT.
             // Offres Express : cycle_payout_amount est le gain PUR (le prix payé
             // n'est jamais restitué au client) — ne pas soustraire p.price.
             // Constant/Analyse/Quête : cycle_payout_amount = capital + gain,
             // donc on soustrait p.price pour obtenir le gain net.
             const dailyGain = isCycle
                 ? (p.category === 'express'
-                    ? Math.round(Number(p.cycle_payout_amount || 0) / Math.max(1, Number(p.duration_days) || 1))
-                    : Math.round((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1)))
-                : Math.round(Number(p.price) * Number(p.daily_rate) / 100);
+                    ? round2(Number(p.cycle_payout_amount || 0) / Math.max(1, Number(p.duration_days) || 1))
+                    : round2((Number(p.cycle_payout_amount || 0) - Number(p.price)) / Math.max(1, Number(p.duration_days) || 1)))
+                : round2(Number(p.price) * Number(p.daily_rate) / 100);
             const affordable = wallet.balance >= Number(p.price);
 
             // Placements actifs de l'utilisateur sur CE produit précis (pas la catégorie entière)
@@ -889,7 +902,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             // cliquable (jamais un "Indisponible" figé) — un clic sans les
             // conditions requises affiche un message explicite au lieu d'agir.
             const lockedReason = (p.category === 'constant' || p.category === 'analyse') && !hasAtlasAvailableForActif(p.vip_level, p.category)
-                ? `Achetez d'abord Revenu Annuel (Atlas) VIP ${p.vip_level || '?'}`
+                ? `Achetez d'abord MONEY VIP ${p.vip_level || '?'}`
                 : (p.category === 'quete' && !hasQueteAvailableForLevel(p.vip_level))
                     ? `Achetez les 2 Actifs (Constant + Analyse) VIP ${p.vip_level || '?'} dans les dernières 24h`
                     : null;
@@ -907,11 +920,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="vip-icon">★</div>
                         <span class="vip-name">${p.name}</span>
                     </div>
-                    <div class="vip-price">${formatFCFA(p.price)}</div>
+                    <div class="vip-price">${formatUSDT(p.price)}</div>
                     <div class="vip-stats">
                         <div class="vip-stat">
                             <span class="vip-stat-label">Gain / jour</span>
-                            <span class="vip-stat-value">${isAtlas ? 'Selon échéance' : formatFCFA(dailyGain)}</span>
+                            <span class="vip-stat-value">${isAtlas ? 'Selon échéance' : formatUSDT(dailyGain)}</span>
                         </div>
                         <div class="vip-stat">
                             <span class="vip-stat-label">Échéance</span>
@@ -921,7 +934,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${ownedCount > 0 ? `
                     <div class="vip-owned-box">
                         <div class="vip-owned-row"><span>Placements actifs</span><span class="val">${ownedCount}</span></div>
-                        <div class="vip-owned-row"><span>Gain journalier en cours</span><span class="val">+${formatFCFA(ownedDailyGain)}</span></div>
+                        <div class="vip-owned-row"><span>Gain journalier en cours</span><span class="val">+${formatUSDT(ownedDailyGain)}</span></div>
                     </div>` : ''}
                     ${lockedReason ? `<p class="text-secondary" style="font-size:0.8rem;margin:8px 0 0;">🔒 ${lockedReason}</p>` : ''}
                     <button class="btn btn-primary btn-full buy-product-btn"
@@ -954,7 +967,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const active = activeInvestments.filter(i => i.investment_products && i.investment_products.category === category);
             const gain = active.reduce((sum, i) => sum + dailyGainOf(i), 0);
             if (active.length) {
-                el.textContent = `${active.length} placement(s) actif(s) · +${formatFCFA(gain)}/jour`;
+                el.textContent = `${active.length} placement(s) actif(s) · +${formatUSDT(gain)}/jour`;
                 el.classList.add('has-active');
             } else {
                 el.textContent = 'Aucun placement actif';
@@ -964,7 +977,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // --- Portefeuille : solde réel ---
         const walletBalanceEl = document.getElementById('wallet-balance-amount');
-        if (walletBalanceEl) walletBalanceEl.textContent = formatFCFA(wallet.balance);
+        if (walletBalanceEl) walletBalanceEl.textContent = formatUSDT(wallet.balance);
 
         // --- Historique des transactions ---
         const transactionsList = document.getElementById('transactions-list');
@@ -999,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="transaction-meta">
                             <div class="transaction-date">${date}</div>
-                            <div class="transaction-amount ${positive ? 'positive' : 'negative'}">${positive ? '+' : ''}${formatFCFA(amount)}</div>
+                            <div class="transaction-amount ${positive ? 'positive' : 'negative'}">${positive ? '+' : ''}${formatUSDT(amount)}</div>
                         </div>
                     </div>`;
             }).join('') : '<p class="text-secondary" style="padding:12px 2px;">Aucune transaction pour le moment.</p>';
@@ -1021,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.supabaseClient.from('transactions').select('*').eq('user_id', authUser.id).order('created_at', { ascending: false }).limit(100)
         ]);
         wallet = w.data || wallet;
-        products = p.data ? sortProductsByVip(p.data) : products;
+        products = p.data ? sortProductsByVip(p.data.filter(isVisibleProduct)) : products;
         investments = inv.data || investments;
         transactions = tr.data || transactions;
         renderDashboardData();
@@ -1045,7 +1058,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Message de validation affiché après l'achat, avec les infos réelles du produit activé
-    const categoryLabel = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne', express: 'Offre Express' };
+    const categoryLabel = { atlas: 'MONEY', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête Quotidienne', express: 'Offre Express' };
     const showPurchaseConfirmation = (btn, durationMonths) => {
         const name = btn.getAttribute('data-product-name');
         const category = btn.getAttribute('data-product-category');
@@ -1126,13 +1139,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </button>
                 <h2 class="task-modal-title">Choisissez une échéance</h2>
-                <p class="task-modal-sub">Montant : ${formatFCFA(price)}. Le montant reçu est fixé pour toute la durée choisie.</p>
+                <p class="task-modal-sub">Montant : ${formatUSDT(price)}. Le montant reçu est fixé pour toute la durée choisie.</p>
                 <div id="duration-options-list" style="display:flex; flex-direction:column; gap:10px; margin:14px 0;">
                     ${options.map(o => {
                         const gain = o.total - price;
-                        const daily = Math.round(gain / (o.duration_months * 30));
+                        const daily = round2(gain / (o.duration_months * 30));
                         return `<button type="button" class="quiz-option duration-option" data-duration="${o.duration_months}">
-                            <strong>${o.duration_months} mois</strong> — ${formatFCFA(o.total)} au total (~${formatFCFA(daily)}/jour)
+                            <strong>${o.duration_months} mois</strong> — ${formatUSDT(o.total)} au total (~${formatUSDT(daily)}/jour)
                         </button>`;
                     }).join('')}
                 </div>
@@ -1169,6 +1182,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
+            if (MONEY_ONLY && category !== 'atlas') {
+                window.showToast('Ce produit est verrouillé pour le moment.', 'error');
+                return;
+            }
             if (category === 'atlas') {
                 openDurationModal(btn);
             } else {
@@ -1283,8 +1300,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="deposit-method-details" style="margin-bottom:14px;"></div>
 
                 <div class="form-group">
-                    <label class="form-label" for="deposit-amount-input">Montant (FCFA)</label>
-                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minDeposit)}" min="${minDeposit || 1}">
+                    <label class="form-label" for="deposit-amount-input">Montant (USDT)</label>
+                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minDeposit)}" min="${minDeposit || 1}" step="0.01">
                 </div>
 
                 <div class="form-group">
@@ -1330,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
             if (amount < minDeposit) {
-                feedbackEl.textContent = `Montant minimum : ${formatFCFA(minDeposit)}.`;
+                feedbackEl.textContent = `Montant minimum : ${formatUSDT(minDeposit)}.`;
                 feedbackEl.className = 'quiz-feedback error';
                 return;
             }
@@ -1448,14 +1465,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // bloqué (non_withdrawable_balance) tant qu'il n'a pas été placé sur
         // un produit. Voir request_withdrawal() côté base, qui applique la
         // même règle en dernier recours (source de vérité).
-        const withdrawable = Math.max(0, Math.floor(Number(wallet.balance) - Number(wallet.non_withdrawable_balance || 0)));
+        const withdrawable = Math.max(0, Math.floor((Number(wallet.balance) - Number(wallet.non_withdrawable_balance || 0)) * 100) / 100);
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Retirer des fonds</h2>
-            <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatFCFA(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
+            <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatUSDT(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable. Choisissez comment vous souhaitez être payé.</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-country-select">Pays</label>
@@ -1478,8 +1495,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="withdraw-amount-input">Montant (FCFA)</label>
-                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatFCFA(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}" step="1">
+                <label class="form-label" for="withdraw-amount-input">Montant (USDT)</label>
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}" step="0.01">
             </div>
             <p class="task-modal-sub" id="withdraw-orange-hint" style="display:none; margin-top:-6px; color:var(--danger, #e0631e);">Avec Orange Money, le montant doit se terminer par 0 ou 5 (multiple de 5).</p>
             <p class="task-modal-sub" id="withdraw-fee-preview" style="margin-top:-6px;"></p>
@@ -1495,10 +1512,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const updateFeePreview = () => {
             const val = Number(withdrawModalOverlay.querySelector('#withdraw-amount-input').value);
             if (!val || val <= 0) { feePreviewEl.textContent = ''; return; }
-            if (!feePercent) { feePreviewEl.innerHTML = `Aucun frais. Vous recevrez <strong>${formatFCFA(val)}</strong>.`; return; }
-            const fee = Math.round(val * feePercent / 100);
+            if (!feePercent) { feePreviewEl.innerHTML = `Aucun frais. Vous recevrez <strong>${formatUSDT(val)}</strong>.`; return; }
+            const fee = round2(val * feePercent / 100);
             const net = val - fee;
-            feePreviewEl.innerHTML = `Frais de retrait ${feePercent}% = ${formatFCFA(fee)}. Vous recevrez net : <strong>${formatFCFA(net)}</strong>.`;
+            feePreviewEl.innerHTML = `Frais de retrait ${feePercent}% = ${formatUSDT(fee)}. Vous recevrez net : <strong>${formatUSDT(net)}</strong>.`;
         };
         withdrawModalOverlay.querySelector('#withdraw-amount-input').addEventListener('input', updateFeePreview);
 
@@ -1515,8 +1532,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isUsdt = selectedWithdrawMethod.type === 'usdt' || selectedWithdrawMethod.type === 'usdt_bep20';
             if (!isUsdt && !recipientName) { feedbackEl.textContent = 'Veuillez indiquer le nom de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
             if (!destination) { feedbackEl.textContent = isUsdt ? 'Veuillez indiquer votre adresse de réception.' : 'Veuillez indiquer votre numéro / compte de réception.'; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatFCFA(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
-            if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatFCFA(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (!amount || amount < minWithdrawal) { feedbackEl.textContent = `Montant minimum : ${formatUSDT(minWithdrawal)}.`; feedbackEl.className = 'quiz-feedback error'; return; }
+            if (amount > withdrawable) { feedbackEl.textContent = `Vous ne pouvez retirer que vos gains (${formatUSDT(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`; feedbackEl.className = 'quiz-feedback error'; return; }
             // Orange Money (Cameroun) n'accepte que des montants multiples de 5
             // (terminant par 0 ou 5) — contrainte propre à cet opérateur.
             if (selectedWithdrawMethod.id === 'orange_money_cm' && amount % 5 !== 0) {
@@ -1548,7 +1565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <p class="task-modal-sub">Une fois envoyé, un retrait ne peut plus être annulé. Merci de bien vérifier chaque information avant de continuer.</p>
 
             <div class="withdraw-recap">
-                <div class="withdraw-recap-row"><span>Montant</span><strong>${formatFCFA(withdrawData.amount)}</strong></div>
+                <div class="withdraw-recap-row"><span>Montant</span><strong>${formatUSDT(withdrawData.amount)}</strong></div>
                 <div class="withdraw-recap-row"><span>Moyen</span><strong>${withdrawData.method.icon || ''} ${withdrawData.method.name}</strong></div>
                 ${!isUsdt ? `<div class="withdraw-recap-row"><span>Nom de réception</span><strong>${withdrawData.recipientName}</strong></div>` : ''}
                 <div class="withdraw-recap-row"><span>${destLabel}</span><strong>${withdrawData.destination}</strong></div>
@@ -1598,18 +1615,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Sans PIN correct, la demande de retrait n'est jamais envoyée.
     const renderWithdrawPinStep = (withdrawData) => {
         const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
-        const feeAmount = feePercent ? Math.round(withdrawData.amount * feePercent / 100) : 0;
+        const feeAmount = feePercent ? round2(withdrawData.amount * feePercent / 100) : 0;
         const netAmount = withdrawData.amount - feeAmount;
         const feeLine = feePercent
-            ? `Frais de retrait ${feePercent}% = ${formatFCFA(feeAmount)}. Montant net que vous recevrez : <strong>${formatFCFA(netAmount)}</strong>.`
-            : `Aucun frais. Vous recevrez <strong>${formatFCFA(netAmount)}</strong>.`;
+            ? `Frais de retrait ${feePercent}% = ${formatUSDT(feeAmount)}. Montant net que vous recevrez : <strong>${formatUSDT(netAmount)}</strong>.`
+            : `Aucun frais. Vous recevrez <strong>${formatUSDT(netAmount)}</strong>.`;
         withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
             <button type="button" class="modal-close" data-close-withdraw-modal>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
             <span class="task-modal-badge">Retrait</span>
             <h2 class="task-modal-title">Confirmez votre code PIN</h2>
-            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour envoyer votre demande de <strong>${formatFCFA(withdrawData.amount)}</strong>.<br>${feeLine}</p>
+            <p class="task-modal-sub">Saisissez votre code PIN de retrait à 5 chiffres pour envoyer votre demande de <strong>${formatUSDT(withdrawData.amount)}</strong>.<br>${feeLine}</p>
 
             <div class="form-group">
                 <label class="form-label" for="withdraw-pin-input">Code PIN</label>
@@ -1689,7 +1706,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         if (wallet.balance < minWithdrawal) {
-            window.showToast(`Solde insuffisant pour un retrait. Minimum requis : ${formatFCFA(minWithdrawal)}.`, 'error');
+            window.showToast(`Solde insuffisant pour un retrait. Minimum requis : ${formatUSDT(minWithdrawal)}.`, 'error');
             return;
         }
 
@@ -2350,7 +2367,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        if (referralEarningsEl) referralEarningsEl.textContent = formatFCFA(wallet.referral_earnings);
+        if (referralEarningsEl) referralEarningsEl.textContent = formatUSDT(wallet.referral_earnings);
         // Le comptage et l'arbre d'équipe passent par la fonction serveur
         // get_my_referral_team() (voir loadMyTeamTree) : les requêtes directes
         // sur "profiles"/"deposit_requests" sont bloquées par la sécurité au
@@ -2440,7 +2457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="team-tree-item-sub">Inscrit le ${formatShortDate(u.created_at)}</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="team-tree-item-deposit">${formatFCFA(u.total_deposited)}</span>
+                            <span class="team-tree-item-deposit">${formatUSDT(u.total_deposited)}</span>
                             <span class="team-tree-item-badge ${u.is_active ? 'actif' : 'inactif'}">${u.is_active ? 'Actif' : 'Inactif'}</span>
                         </div>
                     </div>`).join('');
@@ -2482,7 +2499,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="team-tree-item-name">${t.description || 'Commission de parrainage'}</div>
                     <div class="team-tree-item-sub">${formatShortDate(t.created_at)}</div>
                 </div>
-                <span class="team-tree-item-deposit">+${formatFCFA(t.amount)}</span>
+                <span class="team-tree-item-deposit">+${formatUSDT(t.amount)}</span>
             </div>`).join('');
     }
 
@@ -2506,7 +2523,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             redeemInput.value = '';
             redeemInputRow.classList.remove('open');
             if (redeemToggleBtn) redeemToggleBtn.classList.remove('open');
-            window.showToast(`🎁 Code validé ! +${formatFCFA(Number(amount))} crédités sur votre solde.`, 'success');
+            window.showToast(`🎁 Code validé ! +${formatUSDT(Number(amount))} crédités sur votre solde.`, 'success');
             await refreshDashboardData();
         });
     }
