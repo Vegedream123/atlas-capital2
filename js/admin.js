@@ -3,7 +3,8 @@
 // ==========================================================================
 document.addEventListener('DOMContentLoaded', async () => {
 
-    const formatFCFA = (amount) => new Intl.NumberFormat('fr-FR').format(Math.round(amount || 0)) + ' FCFA';
+    const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
+    const formatUSDT = (amount) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(amount)) + ' USDT';
     const formatDate = (d) => d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
     window.showToast = (message, type = 'info', duration = 4000) => {
@@ -289,12 +290,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? (reqRow.net_amount != null ? Number(reqRow.net_amount) : amount - fee)
             : amount;
         const subLine = isWithdrawal && fee > 0
-            ? `Montant demandé ${formatFCFA(amount)} · Frais ${reqRow.fee_percent}% (${formatFCFA(fee)})`
+            ? `Montant demandé ${formatUSDT(amount)} · Frais ${reqRow.fee_percent}% (${formatUSDT(fee)})`
             : (isWithdrawal ? null : 'Dépôt confirmé et crédité sur le compte');
 
         const canvas = drawBannerReceiptCanvas({
             isWithdrawal,
-            mainAmount: formatFCFA(net),
+            mainAmount: formatUSDT(net),
             subLine,
             method: reqRow.method_name,
             maskedName: maskPersonName(profileRow && profileRow.full_name),
@@ -411,16 +412,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const { data, error } = await window.supabaseClient.rpc('admin_get_stats');
         if (error) { window.showToast("Impossible de charger les statistiques.", 'error'); return; }
         document.getElementById('stat-total-users').textContent = data.total_users;
-        document.getElementById('stat-total-deposits').textContent = formatFCFA(data.total_deposits_validated);
-        document.getElementById('stat-total-withdrawals').textContent = formatFCFA(data.total_withdrawals_validated);
-        document.getElementById('stat-pending-deposits').textContent = `${data.deposits_pending_count} (${formatFCFA(data.deposits_pending_amount)})`;
-        document.getElementById('stat-pending-withdrawals').textContent = `${data.withdrawals_pending_count} (${formatFCFA(data.withdrawals_pending_amount)})`;
+        document.getElementById('stat-total-deposits').textContent = formatUSDT(data.total_deposits_validated);
+        document.getElementById('stat-total-withdrawals').textContent = formatUSDT(data.total_withdrawals_validated);
+        document.getElementById('stat-pending-deposits').textContent = `${data.deposits_pending_count} (${formatUSDT(data.deposits_pending_amount)})`;
+        document.getElementById('stat-pending-withdrawals').textContent = `${data.withdrawals_pending_count} (${formatUSDT(data.withdrawals_pending_amount)})`;
     }
 
     // ----------------------------------------------------------------
     // 3ter. Échéances à venir — vue anticipée des placements Revenu
     // Annuel encore actifs, triés par date d'échéance la plus proche,
-    // pour préparer la liquidité (FCFA / USDT) avant les retraits.
+    // pour préparer la liquidité (USDT / USDT) avant les retraits.
     // ----------------------------------------------------------------
     async function loadUpcomingMaturities() {
         const tbody = document.getElementById('maturities-tbody');
@@ -453,10 +454,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const totalToPay = rows.reduce((sum, r) => sum + Number(r.locked_payout_amount || r.amount || 0), 0);
         if (summaryEl) {
-            summaryEl.innerHTML = `<strong>${rows.length}</strong> placement(s) arrivent à échéance sous 30 jours, pour un total à payer d'environ <strong>${formatFCFA(totalToPay)}</strong>.`;
+            summaryEl.innerHTML = `<strong>${rows.length}</strong> placement(s) arrivent à échéance sous 30 jours, pour un total à payer d'environ <strong>${formatUSDT(totalToPay)}</strong>.`;
         }
 
-        const MATURITY_CATEGORY_LABEL = { atlas: 'Revenu Annuel', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête', express: 'Express' };
+        const MATURITY_CATEGORY_LABEL = { atlas: 'MONEY', constant: 'Actif — Constant', analyse: 'Actif — Analyse', quete: 'Quête', express: 'Express' };
         const now = Date.now();
         tbody.innerHTML = rows.map(inv => {
             const user = inv.profiles || {};
@@ -465,14 +466,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             const daysLabel = daysLeft < 0
                 ? `<span style="color:var(--danger,#e11);">en retard de ${Math.abs(daysLeft)} j</span>`
                 : (daysLeft === 0 ? `<strong>aujourd'hui</strong>` : `dans ${daysLeft} j`);
-            const payout = inv.locked_payout_amount ? formatFCFA(inv.locked_payout_amount) : formatFCFA(inv.amount);
+            const payout = inv.locked_payout_amount ? formatUSDT(inv.locked_payout_amount) : formatUSDT(inv.amount);
             const categoryName = (inv.investment_products && MATURITY_CATEGORY_LABEL[inv.investment_products.category]) || '—';
             return `<tr>
                 <td>${formatDate(inv.matures_at)}<br><span class="text-secondary" style="font-size:0.72rem;">${daysLabel}</span></td>
                 <td>${categoryName}</td>
                 <td>${user.full_name || '—'}</td>
                 <td>${user.phone || '—'}</td>
-                <td>${formatFCFA(inv.amount)}</td>
+                <td>${formatUSDT(inv.amount)}</td>
                 <td><strong>${payout}</strong></td>
             </tr>`;
         }).join('');
@@ -541,7 +542,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         monthlyRevenuesGrid.innerHTML = Array.from({ length: MONTHLY_REVENUE_COUNT }, (_, i) => `
             <div class="admin-monthly-revenue-field">
                 <label>Mois ${i + 1}</label>
-                <input type="number" min="0" step="1" class="product-monthly-revenue-input" data-month="${i + 1}">
+                <input type="number" min="0" step="0.01" class="product-monthly-revenue-input" data-month="${i + 1}">
             </div>`).join('');
     }
 
@@ -577,10 +578,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const cyclePayoutHelp = document.getElementById('product-cycle-payout-help');
         if (cyclePayoutLabel && cyclePayoutHelp) {
             if (productCategoryInput.value === 'express') {
-                cyclePayoutLabel.textContent = 'Revenu final versé à la fin du cycle (FCFA)';
+                cyclePayoutLabel.textContent = 'Revenu final versé à la fin du cycle (USDT)';
                 cyclePayoutHelp.textContent = "Somme totale et unique reçue par l'utilisateur à la fin du cycle (il n'y a pas de capital distinct restitué séparément). Le gain/jour affiché est simplement ce montant divisé par la durée.";
             } else {
-                cyclePayoutLabel.textContent = 'Montant total à la fin du cycle (FCFA)';
+                cyclePayoutLabel.textContent = 'Montant total à la fin du cycle (USDT)';
                 cyclePayoutHelp.textContent = 'Capital + gain rendus en une fois à la fin du cycle (doit être supérieur au Prix). Remplace le %/jour pour les produits Actif.';
             }
         }
@@ -628,7 +629,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const updateDailyGainPreview = () => {
         const price = Number(productPriceInput.value) || 0;
         const rate = Number(productRateInput.value) || 0;
-        productDailyGainPreview.textContent = formatFCFA(price * rate / 100) + ' / jour';
+        productDailyGainPreview.textContent = formatUSDT(price * rate / 100) + ' / jour';
     };
     productPriceInput.addEventListener('input', updateDailyGainPreview);
     productRateInput.addEventListener('input', updateDailyGainPreview);
@@ -644,10 +645,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Offres Express : on affiche le montant total réparti sur la
             // durée (capital + gain confondus), pas le profit net —
             // demande explicite pour ce type d'offre.
-            cycleGainPreview.textContent = `Total à verser : ${formatFCFA(total)} sur ${days} j (~${formatFCFA(total / days)} / jour)`;
+            cycleGainPreview.textContent = `Total à verser : ${formatUSDT(total)} sur ${days} j (~${formatUSDT(total / days)} / jour)`;
         } else {
             const gain = total - price;
-            cycleGainPreview.textContent = `Gain total : ${formatFCFA(gain)} sur ${days} j (~${formatFCFA(gain / days)} / jour)`;
+            cycleGainPreview.textContent = `Gain total : ${formatUSDT(gain)} sur ${days} j (~${formatUSDT(gain / days)} / jour)`;
         }
     };
     productPriceInput.addEventListener('input', updateCycleGainPreview);
@@ -723,7 +724,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (category !== 'atlas') return '—';
         const arr = Array.isArray(monthlyRevenues) ? monthlyRevenues : [];
         if (!arr.length || arr.every(v => !v)) return '—';
-        return `<div class="admin-monthly-revenues-view">${arr.map((v, i) => `<span>M${i + 1}: ${formatFCFA(v)}</span>`).join('')}</div>`;
+        return `<div class="admin-monthly-revenues-view">${arr.map((v, i) => `<span>M${i + 1}: ${formatUSDT(v)}</span>`).join('')}</div>`;
     }
 
     async function loadProducts() {
@@ -746,8 +747,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${p.name}</td>
                 <td>${p.category}</td>
                 <td>${p.vip_level || '—'}</td>
-                <td>${formatFCFA(p.price)}</td>
-                <td>${['constant', 'analyse', 'quete', 'express'].includes(p.category) ? formatFCFA(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
+                <td>${formatUSDT(p.price)}</td>
+                <td>${['constant', 'analyse', 'quete', 'express'].includes(p.category) ? formatUSDT(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
                 <td>${p.duration_days} j</td>
                 <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
@@ -850,14 +851,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : (inv.duration_days ? `${inv.duration_days} jours` : '—');
             const echeance = inv.matures_at ? formatDate(inv.matures_at) : '—';
             const rendement = inv.locked_payout_amount
-                ? `${formatFCFA(inv.locked_payout_amount)} <span class="text-secondary" style="font-size:0.72rem;">(à l'échéance)</span>`
+                ? `${formatUSDT(inv.locked_payout_amount)} <span class="text-secondary" style="font-size:0.72rem;">(à l'échéance)</span>`
                 : '—';
             return `<tr>
                 <td>${formatDate(inv.created_at)}</td>
                 <td>${user.full_name || user.email || inv.user_id}</td>
                 <td>${product.name || '—'}</td>
                 <td>${product.category || '—'}</td>
-                <td>${formatFCFA(inv.amount)}</td>
+                <td>${formatUSDT(inv.amount)}</td>
                 <td>${rendement}</td>
                 <td>${dureeLabel}<br><span class="text-secondary" style="font-size:0.72rem;">Échéance : ${echeance}</span></td>
                 <td><span class="admin-badge ${inv.status}">${inv.status}</span></td>
@@ -883,15 +884,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const user = inv.profiles || {};
 
         document.getElementById('pd-detail-status').innerHTML = `<span class="admin-badge ${inv.status}">${inv.status}</span>`;
-        document.getElementById('pd-detail-payout').textContent = inv.locked_payout_amount ? formatFCFA(inv.locked_payout_amount) : '—';
-        document.getElementById('pd-detail-amount').textContent = formatFCFA(inv.amount);
+        document.getElementById('pd-detail-payout').textContent = inv.locked_payout_amount ? formatUSDT(inv.locked_payout_amount) : '—';
+        document.getElementById('pd-detail-amount').textContent = formatUSDT(inv.amount);
         document.getElementById('pd-detail-date').textContent = formatDate(inv.created_at);
         document.getElementById('pd-detail-matures').textContent = inv.matures_at ? formatDate(inv.matures_at) : '—';
 
         document.getElementById('pd-detail-fullname').textContent = user.full_name || '—';
         document.getElementById('pd-detail-email').textContent = user.email || '—';
         document.getElementById('pd-detail-phone').textContent = user.phone || '—';
-        document.getElementById('pd-detail-balance').textContent = wallet ? formatFCFA(wallet.balance) : '—';
+        document.getElementById('pd-detail-balance').textContent = wallet ? formatUSDT(wallet.balance) : '—';
 
         document.getElementById('pd-detail-product').textContent = product.name || '—';
         document.getElementById('pd-detail-category').textContent = product.category || '—';
@@ -928,7 +929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return `<tr>
                     <td>${formatDate(r.created_at)}</td>
                     <td>${u.full_name || u.email || r.user_id}</td>
-                    <td>${formatFCFA(r.amount)}</td>
+                    <td>${formatUSDT(r.amount)}</td>
                     <td>${r.method_name || '—'}</td>
                     <td>${r.proof_url ? `<span class="admin-proof-link" data-img="${r.proof_url}">Voir la capture</span>` : '—'}</td>
                     <td><span class="admin-badge ${status}">${status}</span>${r.admin_note ? `<br><span class="text-secondary" style="font-size:0.72rem;">« ${r.admin_note} »</span>` : ''}</td>
@@ -938,7 +939,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return `<tr>
                 <td>${formatDate(r.created_at)}</td>
                 <td>${u.full_name || u.email || r.user_id}</td>
-                <td>${formatFCFA(r.amount)}${r.fee_amount ? `<br><span class="text-secondary" style="font-size:0.72rem;">frais ${r.fee_percent}% (${formatFCFA(r.fee_amount)}) → <strong>net ${formatFCFA(r.net_amount)}</strong></span>` : ''}</td>
+                <td>${formatUSDT(r.amount)}${r.fee_amount ? `<br><span class="text-secondary" style="font-size:0.72rem;">frais ${r.fee_percent}% (${formatUSDT(r.fee_amount)}) → <strong>net ${formatUSDT(r.net_amount)}</strong></span>` : ''}</td>
                 <td>${r.method_name || '—'}</td>
                 <td>${r.destination || '—'}</td>
                 <td>${r.recipient_name || '—'}</td>
@@ -993,9 +994,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const canvas = drawReceiptCanvas({
                 statusLabel: 'RETRAIT VALIDÉ',
                 statusColor: '#1f9d55',
-                amount: formatFCFA(reqRow.amount),
-                netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
-                feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
+                amount: formatUSDT(reqRow.amount),
+                netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatUSDT(reqRow.net_amount)}` : null,
+                feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatUSDT(reqRow.fee_amount)})` : null,
                 method: reqRow.method_name,
                 destination: reqRow.destination,
                 recipientName: reqRow.recipient_name,
@@ -1009,7 +1010,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const { error: notifError } = await window.supabaseClient.rpc('admin_send_receipt_notification', {
                 p_user_id: reqRow.user_id,
                 p_title: 'Reçu de votre retrait',
-                p_body: `Voici le reçu de votre retrait de ${formatFCFA(reqRow.amount)}.`,
+                p_body: `Voici le reçu de votre retrait de ${formatUSDT(reqRow.amount)}.`,
                 p_image_url: receiptImageUrl
             });
             if (notifError) throw notifError;
@@ -1047,9 +1048,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const canvas = drawReceiptCanvas({
                             statusLabel: 'RETRAIT VALIDÉ',
                             statusColor: '#1f9d55',
-                            amount: formatFCFA(reqRow.amount),
-                            netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatFCFA(reqRow.net_amount)}` : null,
-                            feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatFCFA(reqRow.fee_amount)})` : null,
+                            amount: formatUSDT(reqRow.amount),
+                            netAmount: reqRow.fee_amount ? `Montant net envoyé : ${formatUSDT(reqRow.net_amount)}` : null,
+                            feeLabel: reqRow.fee_amount ? `${reqRow.fee_percent}% (${formatUSDT(reqRow.fee_amount)})` : null,
                             method: reqRow.method_name,
                             destination: reqRow.destination,
                             recipientName: reqRow.recipient_name,
@@ -1166,10 +1167,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const netAmount = r.net_amount != null ? r.net_amount : (r.amount - (r.fee_amount || 0));
 
-        document.getElementById('wd-detail-net-amount').textContent = formatFCFA(netAmount);
-        document.getElementById('wd-detail-gross-amount').textContent = formatFCFA(r.amount);
+        document.getElementById('wd-detail-net-amount').textContent = formatUSDT(netAmount);
+        document.getElementById('wd-detail-gross-amount').textContent = formatUSDT(r.amount);
         document.getElementById('wd-detail-fee').textContent = r.fee_amount
-            ? `${formatFCFA(r.fee_amount)} (${r.fee_percent || 0}%)` : 'Aucun';
+            ? `${formatUSDT(r.fee_amount)} (${r.fee_percent || 0}%)` : 'Aucun';
         document.getElementById('wd-detail-status').innerHTML = `<span class="admin-badge ${r.status}">${r.status}</span>`;
         document.getElementById('wd-detail-date').textContent = formatDate(r.created_at);
         document.getElementById('wd-detail-method').textContent = r.method_name || '—';
@@ -1181,8 +1182,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('wd-detail-phone').textContent = (profile && profile.phone) || '—';
         document.getElementById('wd-detail-registered').textContent = profile ? formatDate(profile.created_at) : '—';
 
-        document.getElementById('wd-detail-balance').textContent = wallet ? formatFCFA(wallet.balance) : '—';
-        document.getElementById('wd-detail-referral-earnings').textContent = wallet ? formatFCFA(wallet.referral_earnings || 0) : '0 FCFA';
+        document.getElementById('wd-detail-balance').textContent = wallet ? formatUSDT(wallet.balance) : '—';
+        document.getElementById('wd-detail-referral-earnings').textContent = wallet ? formatUSDT(wallet.referral_earnings || 0) : '0 USDT';
 
         const tbody = document.getElementById('wd-detail-investments');
         const list = investments || [];
@@ -1204,10 +1205,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const statusClass = inv.status === 'active' ? 'validated' : (inv.status === 'completed' ? 'active' : 'pending');
                 return `<tr>
                     <td>${productName}<br><span class="text-secondary" style="font-size:0.72rem;">${category}${prod.vip_level ? ' · VIP ' + prod.vip_level : ''}</span></td>
-                    <td>${formatFCFA(inv.amount)}</td>
+                    <td>${formatUSDT(inv.amount)}</td>
                     <td>${formatDate(inv.created_at)}</td>
                     <td>${daysElapsed} j</td>
-                    <td>${formatFCFA(Math.round(dailyGain))}/j<br><span class="text-secondary" style="font-size:0.72rem;">≈ ${formatFCFA(Math.round(totalEarned))} accumulé</span></td>
+                    <td>${formatUSDT(dailyGain)}/j<br><span class="text-secondary" style="font-size:0.72rem;">≈ ${formatUSDT(totalEarned)} accumulé</span></td>
                     <td><span class="admin-badge ${statusClass}">${statusLabel}</span></td>
                 </tr>`;
             }).join('');
@@ -1226,7 +1227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${formatDate(t.created_at)}</td>
                 <td>${txLabelMap[t.type] || t.type || '—'}</td>
                 <td>${t.description || '—'}</td>
-                <td style="color:${positive ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">${positive ? '+' : ''}${formatFCFA(amount)}</td>
+                <td style="color:${positive ? 'var(--success)' : 'var(--danger)'}; font-weight:700;">${positive ? '+' : ''}${formatUSDT(amount)}</td>
             </tr>`;
         }).join('') : `<tr><td colspan="4">Aucune transaction enregistrée.</td></tr>`;
 
@@ -1259,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <tr>
                 <td>${u.full_name || '—'}</td>
                 <td>${u.email || '—'}</td>
-                <td>${formatFCFA(u.balance)}</td>
+                <td>${formatUSDT(u.balance)}</td>
                 <td><span class="admin-badge ${u.is_blocked ? 'blocked' : 'active'}">${u.is_blocked ? 'Bloqué' : 'Actif'}</span>${u.is_admin ? ' <span class="admin-badge active">Admin</span>' : ''}</td>
                 <td>${formatDate(u.created_at)}</td>
                 <td>
@@ -1341,8 +1342,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${u.phone || u.email || '—'}</td>
                 <td>${u.referral_code || '—'}</td>
                 <td><strong>${u.referralCount}</strong></td>
-                <td>${formatFCFA(u.referralEarnings)}</td>
-                <td>${formatFCFA(u.balance)}</td>
+                <td>${formatUSDT(u.referralEarnings)}</td>
+                <td>${formatUSDT(u.balance)}</td>
                 <td>${formatDate(u.created_at)}</td>
                 <td><button class="admin-btn-sm admin-btn-view" data-view-referrer="${u.id}">Voir</button></td>
             </tr>`).join('');
@@ -1388,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('user-detail-name').textContent = user.full_name || user.email || 'Utilisateur';
         document.getElementById('user-detail-phone').textContent = user.phone || user.email || '—';
         document.getElementById('user-detail-registered').textContent = 'Inscrit le ' + formatDate(user.created_at);
-        document.getElementById('user-detail-balance').textContent = formatFCFA(user.balance);
+        document.getElementById('user-detail-balance').textContent = formatUSDT(user.balance);
         await refreshUserDetailBlockUI(user);
 
         const [{ data: deposits }, { data: withdrawals }, { count: referralCount }, { data: investments }] = await Promise.all([
@@ -1402,12 +1403,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const depositsBody = document.getElementById('user-detail-deposits');
         depositsBody.innerHTML = (deposits && deposits.length) ? deposits.map(d => `
-            <tr><td>${formatDate(d.created_at)}</td><td>${formatFCFA(d.amount)}</td><td>${d.method_name || '—'}</td><td><span class="admin-badge ${d.status}">${d.status}</span></td></tr>
+            <tr><td>${formatDate(d.created_at)}</td><td>${formatUSDT(d.amount)}</td><td>${d.method_name || '—'}</td><td><span class="admin-badge ${d.status}">${d.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun dépôt.</td></tr>`;
 
         const withdrawalsBody = document.getElementById('user-detail-withdrawals');
         withdrawalsBody.innerHTML = (withdrawals && withdrawals.length) ? withdrawals.map(w => `
-            <tr><td>${formatDate(w.created_at)}</td><td>${formatFCFA(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
+            <tr><td>${formatDate(w.created_at)}</td><td>${formatUSDT(w.amount)}</td><td>${w.method_name || '—'}</td><td>${w.recipient_name || '—'}</td><td><span class="admin-badge ${w.status}">${w.status}</span></td></tr>
         `).join('') : `<tr><td>Aucun retrait.</td></tr>`;
 
         const investmentsBody = document.getElementById('user-detail-investments');
@@ -1418,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const statusLabel = i.status === 'active' ? 'En cours' : (i.status === 'completed' ? 'Terminé' : (i.status || '—'));
             const statusClass = i.status === 'active' ? 'validated' : (i.status === 'completed' ? 'active' : 'pending');
             return `
-            <tr><td>${formatDate(i.created_at)}</td><td>${productName} <span style="color:var(--text-secondary); font-size:0.75rem;">(${category})</span></td><td>${formatFCFA(i.amount)}</td><td><span class="admin-badge ${statusClass}">${statusLabel}</span></td></tr>`;
+            <tr><td>${formatDate(i.created_at)}</td><td>${productName} <span style="color:var(--text-secondary); font-size:0.75rem;">(${category})</span></td><td>${formatUSDT(i.amount)}</td><td><span class="admin-badge ${statusClass}">${statusLabel}</span></td></tr>`;
         }).join('') : `<tr><td>Aucune machine/produit acheté.</td></tr>`;
 
         document.getElementById('user-detail-deposits-count').textContent =
@@ -1432,7 +1433,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         let referralEarnings = 0;
         const { data: wallet } = await window.supabaseClient.from('wallets').select('referral_earnings').eq('user_id', userId).maybeSingle();
         if (wallet) referralEarnings = wallet.referral_earnings || 0;
-        document.getElementById('user-detail-referral-earnings').textContent = formatFCFA(referralEarnings);
+        document.getElementById('user-detail-referral-earnings').textContent = formatUSDT(referralEarnings);
 
         document.getElementById('user-detail-tree-sponsor-label').textContent =
             user.referred_by ? `(parrainé par ${user.referred_by})` : '';
@@ -1512,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="admin-tree-item-sub">${u.phone || u.email || '—'} · inscrit le ${formatDate(u.created_at)}</div>
                         </div>
                         <div style="display:flex; align-items:center; gap:8px;">
-                            <span class="admin-tree-item-deposit">${formatFCFA(deposited)}</span>
+                            <span class="admin-tree-item-deposit">${formatUSDT(deposited)}</span>
                             <span class="admin-tree-item-badge ${isActive ? 'actif' : 'inactif'}">${isActive ? 'Actif' : 'Inactif'}</span>
                         </div>
                     </div>`;
@@ -1549,7 +1550,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // dans Compte > Code promo ; personne d'autre ne peut l'utiliser.
     document.getElementById('user-detail-give-bonus').addEventListener('click', async () => {
         if (!currentDetailUserId) return;
-        const rawAmount = prompt('Plafond du bonus pour cet utilisateur (FCFA) :');
+        const rawAmount = prompt('Plafond du bonus pour cet utilisateur (USDT) :');
         if (rawAmount === null) return;
         const maxAmount = Number(rawAmount);
         if (!maxAmount || maxAmount <= 0) { window.showToast('Montant invalide.', 'error'); return; }
@@ -1567,7 +1568,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function adjustUserFunds(sign) {
         if (!currentDetailUserId) return;
         const label = sign > 0 ? 'ajouter' : 'retirer';
-        const raw = prompt(`Montant à ${label} (FCFA) :`);
+        const raw = prompt(`Montant à ${label} (USDT) :`);
         if (raw === null) return;
         const amount = Number(raw);
         if (!amount || amount <= 0) { window.showToast('Montant invalide.', 'error'); return; }
@@ -1632,8 +1633,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             <tr>
                 <td><code>${c.code}</code></td>
                 <td>${c.assigned_to_profile ? `🔒 ${c.assigned_to_profile.full_name || c.assigned_to_profile.email}` : 'Tout le monde'}</td>
-                <td>Jusqu'à ${formatFCFA(c.max_amount)}</td>
-                <td>${credited != null ? formatFCFA(credited) : '—'}</td>
+                <td>Jusqu'à ${formatUSDT(c.max_amount)}</td>
+                <td>${credited != null ? formatUSDT(credited) : '—'}</td>
                 <td><span class="admin-badge ${statusCls}">${statusLabel}</span></td>
                 <td>${c.used_by_profile ? (c.used_by_profile.full_name || c.used_by_profile.email) : '—'}</td>
                 <td>${formatDate(c.created_at)}</td>
