@@ -277,6 +277,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const carouselTrack = document.getElementById('home-banner-track');
         const carouselDots = document.getElementById('home-banner-dots');
         if (!carouselWrap || !carouselTrack) return;
+        // Mode MONEY : plus aucune bannière (reçus de retrait, annonces) sur l'accueil.
+        if (MONEY_ONLY) { carouselWrap.style.display = 'none'; return; }
 
         // Les bannières en "brouillon" (published === false) ne sont visibles
         // que par un administrateur (aperçu avant de les publier pour tous).
