@@ -80,7 +80,7 @@
 
             <div class="admin-panel">
                 <div class="admin-panel-header">
-                    <h2>Placements Revenu Annuel — échéances</h2>
+                    <h2>Placements MONEY — échéances</h2>
                 </div>
                 <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
                     Une tâche automatique crédite chaque heure le capital + gain des placements Atlas
@@ -94,8 +94,8 @@
 
                 <h3 class="admin-form-subtitle">Échéances à venir (prochains 30 jours)</h3>
                 <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
-                    Placements Revenu Annuel encore actifs, du plus proche au plus lointain — pour anticiper
-                    la liquidité (FCFA / USDT) à préparer avant que ces clients ne demandent un retrait.
+                    Placements MONEY encore actifs, du plus proche au plus lointain — pour anticiper
+                    la liquidité (USDT) à préparer avant que ces clients ne demandent un retrait.
                 </p>
                 <div class="admin-computed" id="maturities-summary" style="margin-bottom:14px;"></div>
                 <div class="admin-table-wrap">
@@ -120,16 +120,16 @@
                     <div class="admin-form-row">
                         <div class="admin-form-group">
                             <label>Nom du produit</label>
-                            <input type="text" id="product-name" required placeholder="Ex: Pack Atlas 1">
+                            <input type="text" id="product-name" required placeholder="Ex: MONEY 1">
                         </div>
                         <div class="admin-form-group">
                             <label>Catégorie</label>
                             <select id="product-category" required>
-                                <option value="atlas">Revenu Annuel (Atlas)</option>
-                                <option value="constant">Actif — Constant</option>
-                                <option value="analyse">Actif — Analyse</option>
-                                <option value="quete">Quête Quotidienne</option>
-                                <option value="express">Offres Express (achat direct)</option>
+                                <option value="atlas">MONEY (le nom doit commencer par MONEY pour être visible)</option>
+                                <option value="constant">Actif — Constant (verrouillé, non visible côté client)</option>
+                                <option value="analyse">Actif — Analyse (verrouillé, non visible côté client)</option>
+                                <option value="quete">Quête Quotidienne (verrouillé, non visible côté client)</option>
+                                <option value="express">Offres Express (achat direct) (verrouillé, non visible côté client)</option>
                             </select>
                         </div>
                         <div class="admin-form-group">
@@ -144,8 +144,8 @@
                     </div>
                     <div class="admin-form-row" id="product-rate-duration-row">
                         <div class="admin-form-group">
-                            <label>Prix (FCFA)</label>
-                            <input type="number" id="product-price" min="0" step="1" required>
+                            <label>Prix (USDT)</label>
+                            <input type="number" id="product-price" min="0" step="0.01" required>
                         </div>
                         <div class="admin-form-group" id="product-rate-group">
                             <label>Pourcentage / jour (%)</label>
@@ -162,8 +162,8 @@
                             </p>
                         </div>
                         <div class="admin-form-group" id="product-cycle-payout-group" style="display:none;">
-                            <label id="product-cycle-payout-label">Montant total à la fin du cycle (FCFA)</label>
-                            <input type="number" id="product-cycle-payout" min="0" step="1">
+                            <label id="product-cycle-payout-label">Montant total à la fin du cycle (USDT)</label>
+                            <input type="number" id="product-cycle-payout" min="0" step="0.01">
                             <p id="product-cycle-payout-help" style="margin:4px 0 0; color:var(--text-secondary,#666); font-size:12px;">
                                 Capital + gain rendus en une fois à la fin du cycle (doit être supérieur au Prix).
                                 Remplace le %/jour pour les produits Actif.
@@ -176,10 +176,10 @@
                         <div class="admin-computed" id="product-daily-gain-preview">—</div>
                     </div>
                     <div class="admin-form-group" id="product-monthly-revenues-group" style="display:none;">
-                        <label>Revenu mensuel (FCFA) — un montant par mois</label>
+                        <label>Revenu mensuel (USDT) — un montant par mois</label>
                         <p style="margin:-2px 0 10px; color:var(--text-secondary,#666); font-size:13px;">
-                            Réservé aux produits « Revenu Annuel ». Le montant versé au client peut être différent
-                            chaque mois (ex: mois 1 = 50 000 FCFA, mois 2 = 55 000 FCFA…).
+                            Réservé aux produits « MONEY ». Le montant versé au client peut être différent
+                            chaque mois (ex: mois 1 = 50 USDT, mois 2 = 55 USDT…).
                         </p>
                         <div class="admin-monthly-revenues-grid" id="product-monthly-revenues-grid"></div>
                     </div>
@@ -286,8 +286,8 @@
                 <form id="promo-form" class="admin-form">
                     <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Plafond du gain (FCFA)</label>
-                            <input type="number" id="promo-max-amount" min="1" step="1" required>
+                            <label>Plafond du gain (USDT)</label>
+                            <input type="number" id="promo-max-amount" min="1" step="0.01" required>
                         </div>
                         <div class="admin-form-group">
                             <label>Nombre de codes à générer</label>
@@ -415,12 +415,12 @@
                     </div>
                     <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Dépôt minimum (FCFA)</label>
-                            <input type="number" id="setting-min-deposit" min="0" step="1">
+                            <label>Dépôt minimum (USDT)</label>
+                            <input type="number" id="setting-min-deposit" min="0" step="0.01">
                         </div>
                         <div class="admin-form-group">
-                            <label>Retrait minimum (FCFA)</label>
-                            <input type="number" id="setting-min-withdrawal" min="0" step="1">
+                            <label>Retrait minimum (USDT)</label>
+                            <input type="number" id="setting-min-withdrawal" min="0" step="0.01">
                         </div>
                         <div class="admin-form-group">
                             <label>Frais de retrait (%)</label>
@@ -438,8 +438,8 @@
                     <p class="text-secondary" style="margin:-6px 0 12px;">Laisse un champ vide (ou aucun jour coché) pour ne fixer aucune limite sur ce point.</p>
                     <div class="admin-form-row">
                         <div class="admin-form-group">
-                            <label>Plafond de retrait par jour et par utilisateur (FCFA)</label>
-                            <input type="number" id="setting-max-daily-withdrawal" min="0" step="1" placeholder="Illimité si vide">
+                            <label>Plafond de retrait par jour et par utilisateur (USDT)</label>
+                            <input type="number" id="setting-max-daily-withdrawal" min="0" step="0.01" placeholder="Illimité si vide">
                         </div>
                     </div>
                     <div class="admin-form-row">
@@ -491,7 +491,7 @@
                         <input type="text" id="setting-deposit-usdt-bep20-address" placeholder="Adresse de réception USDT (réseau BEP-20 / BNB Smart Chain)">
                     </div>
                     <div class="admin-form-group">
-                        <label>Montants de dépôt proposés (FCFA, un par ligne)</label>
+                        <label>Montants de dépôt proposés (USDT, un par ligne)</label>
                         <textarea id="setting-deposit-amounts" rows="6" placeholder="5000&#10;15000&#10;50000&#10;150000&#10;250000&#10;500000"></textarea>
                     </div>
 
@@ -603,8 +603,8 @@
                         </select>
                     </div>
                     <div class="admin-form-group">
-                        <label>Montant (ex : 20 000 FCFA)</label>
-                        <input type="text" id="receipt-amount" placeholder="20 000 FCFA">
+                        <label>Montant (ex : 20 USDT)</label>
+                        <input type="text" id="receipt-amount" placeholder="20 USDT">
                     </div>
                     <div class="admin-form-group">
                         <label>Nom du bénéficiaire (compte)</label>
@@ -695,7 +695,7 @@
             <div class="admin-user-referral">
                 <h4>👥 Parrainage (<span id="user-detail-referral-count">0</span> recruté(s))</h4>
                 <div class="admin-user-label">Parrain : <span id="user-detail-sponsor">Aucun</span></div>
-                <div class="admin-user-label">Commissions gagnées : <span id="user-detail-referral-earnings">0 FCFA</span></div>
+                <div class="admin-user-label">Commissions gagnées : <span id="user-detail-referral-earnings">0 USDT</span></div>
             </div>
 
             <div class="admin-tree-card">
@@ -742,7 +742,7 @@
         <div class="modal-body">
             <div class="admin-net-highlight">
                 <span>Montant NET à envoyer à l'utilisateur</span>
-                <strong id="wd-detail-net-amount">0 FCFA</strong>
+                <strong id="wd-detail-net-amount">0 USDT</strong>
             </div>
 
             <div class="admin-user-stats-row">
@@ -757,7 +757,7 @@
             <div class="admin-user-row-line"><div><div class="admin-user-label">Téléphone</div><div class="admin-user-value" id="wd-detail-phone">—</div></div></div>
             <div class="admin-user-row-line"><div><div class="admin-user-label">Inscrit le</div><div class="admin-user-value" id="wd-detail-registered">—</div></div></div>
             <div class="admin-user-row-line"><div><div class="admin-user-label">Solde actuel du compte</div><div class="admin-user-value" id="wd-detail-balance">—</div></div></div>
-            <div class="admin-user-row-line"><div><div class="admin-user-label">Commissions de parrainage cumulées</div><div class="admin-user-value" id="wd-detail-referral-earnings">0 FCFA</div></div></div>
+            <div class="admin-user-row-line"><div><div class="admin-user-label">Commissions de parrainage cumulées</div><div class="admin-user-value" id="wd-detail-referral-earnings">0 USDT</div></div></div>
 
             <h4>💳 Destination du paiement</h4>
             <div class="admin-user-row-line"><div><div class="admin-user-label">Méthode</div><div class="admin-user-value" id="wd-detail-method">—</div></div></div>
@@ -813,7 +813,7 @@
         <div class="modal-body">
             <div class="admin-net-highlight">
                 <span>Montant total à percevoir par l'utilisateur (capital + gain)</span>
-                <strong id="pd-detail-payout">0 FCFA</strong>
+                <strong id="pd-detail-payout">0 USDT</strong>
             </div>
 
             <div class="admin-user-stats-row">
