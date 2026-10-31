@@ -578,8 +578,49 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `${h}h ${m.toString().padStart(2, '0')}min`;
     };
 
+    // Mode MONEY : à la place des anciennes « Tâches Quotidiennes », l'accueil
+    // affiche le suivi de chaque placement MONEY (montant, gain/jour, progression,
+    // jours restants, montant reçu à l'échéance).
+    function renderMoneyPlacements() {
+        if (!tasksListEl || !tasksCardEl) return;
+        const titleEl = tasksCardEl.querySelector('.card-title');
+        const subEl = tasksCardEl.querySelector('.card-header .text-secondary');
+        if (titleEl) titleEl.textContent = 'Mes placements MONEY';
+        if (subEl) subEl.textContent = 'Suivi de vos placements en cours';
+        const active = investments.filter(i => i.status === 'active');
+        if (!active.length) { tasksCardEl.style.display = 'none'; return; }
+        tasksCardEl.style.display = '';
+        const DAY = 24 * 60 * 60 * 1000;
+        tasksListEl.innerHTML = active.map(inv => {
+            const prod = inv.investment_products || {};
+            const start = new Date(inv.created_at).getTime();
+            const end = inv.matures_at ? new Date(inv.matures_at).getTime() : null;
+            const pct = end && end > start ? Math.max(0, Math.min(100, Math.round((Date.now() - start) / (end - start) * 100))) : 0;
+            const daysLeft = end ? Math.max(0, Math.ceil((end - Date.now()) / DAY)) : null;
+            const endLabel = end ? new Date(end).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+            const payout = inv.locked_payout_amount != null ? formatUSDT(inv.locked_payout_amount) : '—';
+            return `
+                <div class="money-placement">
+                    <div class="money-placement-head">
+                        <span class="money-placement-name">${prod.name || 'MONEY'}</span>
+                        <span class="money-placement-amount">${formatUSDT(inv.amount)}</span>
+                    </div>
+                    <div class="money-progress"><div class="money-progress-bar" style="width:${pct}%;"></div></div>
+                    <div class="money-placement-meta">
+                        <span>${pct}% · ${daysLeft === null ? '' : (daysLeft === 0 ? 'échéance aujourd\'hui' : daysLeft + ' j restants')}</span>
+                        <span>Échéance : ${endLabel}</span>
+                    </div>
+                    <div class="money-placement-rows">
+                        <div><span>Gain / jour</span><strong>+${formatUSDT(round2(dailyGainOf(inv)))}</strong></div>
+                        <div><span>Reçu à l'échéance</span><strong>${payout}</strong></div>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
     function renderDailyTasks() {
         if (!tasksListEl || !tasksCardEl) return;
+        if (MONEY_ONLY) { renderMoneyPlacements(); return; }
         const active = investments.filter(i => i.status === 'active');
 
         if (!active.length) {
