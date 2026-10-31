@@ -887,3 +887,17 @@ select.form-control {
 body.money-only .kpi-card.primary-border,
 body.money-only .kpi-card.warning-border,
 body.money-only .kpi-card.express-border { display: none; }
+
+/* Accueil (mode MONEY) : suivi des placements */
+.money-placement { background: var(--gray-50); border: 1px solid var(--gray-100, #eee); border-radius: 14px; padding: 14px; }
+.money-placement-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.money-placement-name { font-weight: 800; color: var(--primary); }
+.money-placement-amount { font-weight: 800; }
+.money-progress { height: 8px; border-radius: 999px; background: var(--gray-100, #e9e9e9); overflow: hidden; }
+.money-progress-bar { height: 100%; border-radius: 999px; background: var(--gold-gradient, linear-gradient(90deg,#ff7a2f,#e8501a)); }
+.money-placement-meta { display: flex; justify-content: space-between; gap: 8px; margin: 8px 0 10px; font-size: 0.78rem; color: var(--text-secondary); }
+.money-placement-rows { display: flex; justify-content: space-between; gap: 12px; font-size: 0.85rem; }
+.money-placement-rows div { display: flex; flex-direction: column; gap: 2px; }
+.money-placement-rows span { color: var(--text-secondary); font-size: 0.75rem; }
+.money-placement-rows strong { color: var(--success, #10b981); }
+.money-placement-rows div:last-child { text-align: right; }
