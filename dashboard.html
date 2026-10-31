@@ -113,7 +113,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" id="kpi-balance" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-balance" data-target="0" data-suffix=" USDT">0 USDT</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive" id="kpi-balance-change">—</span>
                             <span class="kpi-period">cumul des revenus</span>
@@ -122,12 +122,12 @@
 
                     <div class="kpi-card success-border">
                         <div class="kpi-header">
-                            <span class="kpi-label">Revenu Annuel</span>
+                            <span class="kpi-label">MONEY</span>
                             <div class="kpi-icon">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" id="kpi-annual-rate" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-annual-rate" data-target="0" data-suffix=" USDT">0 USDT</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive" id="kpi-rate-change">—</span>
                             <span class="kpi-period">gains récupérés</span>
@@ -141,7 +141,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" id="kpi-active-investments" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-active-investments" data-target="0" data-suffix=" USDT">0 USDT</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive" id="kpi-active-change">—</span>
                             <span class="kpi-period">gains en attente</span>
@@ -155,7 +155,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" id="kpi-daily-quest" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-daily-quest" data-target="0" data-suffix=" USDT">0 USDT</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive" id="kpi-quest-change">—</span>
                             <span class="kpi-period">gains en attente</span>
@@ -169,7 +169,7 @@
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
                             </div>
                         </div>
-                        <div class="kpi-value stat-number" id="kpi-express" data-target="0" data-suffix=" FCFA">0 FCFA</div>
+                        <div class="kpi-value stat-number" id="kpi-express" data-target="0" data-suffix=" USDT">0 USDT</div>
                         <div class="kpi-footer">
                             <span class="kpi-change positive" id="kpi-express-change">—</span>
                             <span class="kpi-period">gains en attente</span>
@@ -192,17 +192,22 @@
                 <div class="page-header">
                     <div>
                         <h1 class="page-title">Mes Finances</h1>
-                        <p class="page-subtitle">Gérez vos revenus, analysez vos actifs et participez aux quêtes.</p>
+                        <p class="page-subtitle">Placez vos USDT et recevez un gain chaque jour.</p>
                     </div>
                 </div>
                 
                 <!-- Navigation rapide (défile vers la section, ne cache plus rien) -->
                 <div class="finances-quicknav-wrap">
+                    <!-- RETOUR ANCIENNE VERSION : remplacer les 3 <span class="quicknav-btn locked"> par
+                         <a href="#sub-actifs" class="quicknav-btn" data-target="sub-actifs">Actifs</a>
+                         <a href="#sub-quetes" class="quicknav-btn" data-target="sub-quetes">Quêtes Quotidiennes</a>
+                         <a href="#sub-express" class="quicknav-btn" data-target="sub-express">Offres Express</a>
+                         et mettre MONEY_ONLY = false dans js/dashboard.js -->
                     <div class="finances-quicknav">
-                        <a href="#sub-revenu" class="quicknav-btn active" data-target="sub-revenu">Revenu Annuel</a>
-                        <a href="#sub-actifs" class="quicknav-btn" data-target="sub-actifs">Actifs</a>
-                        <a href="#sub-quetes" class="quicknav-btn" data-target="sub-quetes">Quêtes Quotidiennes</a>
-                        <a href="#sub-express" class="quicknav-btn" data-target="sub-express">Offres Express</a>
+                        <a href="#sub-revenu" class="quicknav-btn active" data-target="sub-revenu">MONEY</a>
+                        <span class="quicknav-btn locked" aria-disabled="true" tabindex="-1">🔒 Actifs</span>
+                        <span class="quicknav-btn locked" aria-disabled="true" tabindex="-1">🔒 Quêtes Quotidiennes</span>
+                        <span class="quicknav-btn locked" aria-disabled="true" tabindex="-1">🔒 Offres Express</span>
                     </div>
                 </div>
 
@@ -210,10 +215,10 @@
 
                     <!-- Bloc 1: Revenu Annuel -->
                     <div id="sub-revenu" class="finances-group active">
-                        <h3 class="finances-group-title"><span class="finances-group-icon">📈</span> Revenu Annuel</h3>
-                        <p class="finances-group-desc">Placez un capital une fois et recevez un gain chaque jour jusqu'à l'échéance que vous choisissez (1 à 12 mois). C'est le point de départ : il débloque les produits "Actifs" ci-dessous.</p>
+                        <h3 class="finances-group-title"><span class="finances-group-icon">💰</span> MONEY</h3>
+                        <p class="finances-group-desc">Placez un montant en USDT une fois et recevez un gain chaque jour jusqu'à l'échéance que vous choisissez (1 à 12 mois).</p>
                         <div class="vip-section">
-                            <h4 class="vip-section-title">Atlas <span class="vip-section-stats" id="section-stats-atlas">Aucun placement actif</span></h4>
+                            <h4 class="vip-section-title">Mes placements <span class="vip-section-stats" id="section-stats-atlas">Aucun placement actif</span></h4>
                             <div class="vip-grid" id="vip-grid-atlas">
                                 <p class="text-secondary" style="padding:12px 2px;">Chargement des produits…</p>
                             </div>
@@ -280,7 +285,7 @@
                 <div class="wallet-overview">
                     <div class="wallet-balance-card">
                         <div class="wallet-label">Solde Disponible</div>
-                        <div class="wallet-amount" id="wallet-balance-amount">0 FCFA</div>
+                        <div class="wallet-amount" id="wallet-balance-amount">0 USDT</div>
                         <div class="wallet-actions">
                             <button class="btn btn-primary" id="wallet-deposit-btn">Faire un dépôt</button>
                             <button class="btn btn-outline" id="wallet-withdraw-btn">Retirer des fonds</button>
@@ -564,7 +569,7 @@
                                 <span class="referral-stat-label">Filleuls</span>
                             </div>
                             <div class="referral-stat">
-                                <span class="referral-stat-value" id="referral-earnings">0 FCFA</span>
+                                <span class="referral-stat-value" id="referral-earnings">0 USDT</span>
                                 <span class="referral-stat-label">Gains parrainage</span>
                             </div>
                             <div class="referral-stat">
