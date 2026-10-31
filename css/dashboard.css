@@ -879,3 +879,11 @@ select.form-control {
 .deposit-method-option.selected {
     border-color: var(--gold); background: rgba(249,115,22,0.08); color: var(--primary);
 }
+
+/* Onglets verrouillés (Finances) : visibles mais totalement non cliquables */
+.quicknav-btn.locked { opacity: 0.45; cursor: not-allowed; pointer-events: none; user-select: none; filter: grayscale(1); }
+
+/* Mode MONEY : on cache les cartes d'accueil des anciens produits */
+body.money-only .kpi-card.primary-border,
+body.money-only .kpi-card.warning-border,
+body.money-only .kpi-card.express-border { display: none; }
