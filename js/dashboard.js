@@ -1440,13 +1440,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // ------------------------------------------------------------------
-    // MODE MONEY — Dépôt 100 % USDT : réseau -> adresse -> montant -> hash (TXID) -> preuve
-    // Le hash de transaction est unique en base (provider_reference) : impossible de
-    // réutiliser le même paiement pour deux dépôts, et l'admin vérifie sur la blockchain.
+    // MODE MONEY — Dépôt 100 % USDT : réseau -> adresse -> montant -> capture d'écran (obligatoire)
+    // La capture d'écran est obligatoire : l'admin vérifie le paiement dessus.
     // ------------------------------------------------------------------
     const escHtml = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const getUsdtNetworks = () => (window.AtlasPaymentMethods && window.AtlasPaymentMethods.getUsdtNetworks) ? window.AtlasPaymentMethods.getUsdtNetworks() : [];
-    const normalizeTxid = (v) => String(v || '').trim().toLowerCase().replace(/^0x/, '');
     const copyText = async (text) => {
         try { await navigator.clipboard.writeText(text); return true; } catch (e) {
             try {
@@ -1473,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button type="button" class="modal-close" data-close-deposit-modal>${CLOSE_SVG}</button>
                 <span class="task-modal-badge">Dépôt USDT</span>
                 <h2 class="task-modal-title">Faire un dépôt</h2>
-                <p class="task-modal-sub">Envoyez des USDT à l'adresse ci-dessous, puis renseignez le hash de la transaction. Votre solde est crédité après vérification par notre équipe.</p>
+                <p class="task-modal-sub">Envoyez des USDT à l'adresse ci-dessous, puis joignez la capture d'écran du paiement. Votre solde est crédité après vérification par notre équipe.</p>
                 ${networks.length ? `
                 <div class="form-group">
                     <label class="form-label">Réseau</label>
@@ -1487,11 +1485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <input type="number" id="deposit-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minDeposit)}" min="${minDeposit || 0.01}" step="0.01" inputmode="decimal">
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="deposit-txid-input">Hash de la transaction (TXID)</label>
-                    <input type="text" id="deposit-txid-input" class="form-control" placeholder="64 caractères" autocomplete="off" autocapitalize="off" spellcheck="false">
-                </div>
-                <div class="form-group">
-                    <label class="form-label" for="deposit-proof-input">Capture d'écran (facultatif)</label>
+                    <label class="form-label" for="deposit-proof-input">Capture d'écran (obligatoire)</label>
                     <div class="file-input-group">
                         <label class="file-input-btn" for="deposit-proof-input">Choisir le fichier</label>
                         <span class="file-input-filename" id="deposit-proof-filename">Aucun fichier sélectionné</span>
@@ -1542,39 +1536,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             const submitBtn = q('#deposit-submit-btn');
             const fail = (msg) => { feedbackEl.textContent = msg; feedbackEl.className = 'quiz-feedback error'; };
             const amount = Number(q('#deposit-amount-input').value);
-            const txid = normalizeTxid(q('#deposit-txid-input').value);
             const proofFile = q('#deposit-proof-input').files && q('#deposit-proof-input').files[0];
 
             if (!selected) return fail('Veuillez choisir le réseau (TRC-20 ou BEP-20).');
             if (!amount || amount <= 0) return fail('Veuillez saisir le montant envoyé.');
             if (amount < minDeposit) return fail(`Montant minimum : ${formatUSDT(minDeposit)}.`);
-            if (!/^[0-9a-f]{64}$/.test(txid)) return fail('Hash de transaction invalide : il doit contenir 64 caractères (lettres a-f et chiffres).');
+            if (!proofFile) return fail('Veuillez joindre la capture d\'écran de votre paiement.');
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Envoi en cours...';
             feedbackEl.textContent = '';
             try {
-                let proofUrl = null;
-                if (proofFile) {
-                    const path = `${authUser.id}/${Date.now()}_${proofFile.name}`;
-                    const { error: uploadError } = await window.supabaseClient.storage.from('deposit-proofs').upload(path, proofFile);
-                    if (uploadError) throw uploadError;
-                    const { data: publicUrlData } = window.supabaseClient.storage.from('deposit-proofs').getPublicUrl(path);
-                    proofUrl = publicUrlData ? publicUrlData.publicUrl : null;
-                }
+                const path = `${authUser.id}/${Date.now()}_${proofFile.name}`;
+                const { error: uploadError } = await window.supabaseClient.storage.from('deposit-proofs').upload(path, proofFile);
+                if (uploadError) throw uploadError;
+                const { data: publicUrlData } = window.supabaseClient.storage.from('deposit-proofs').getPublicUrl(path);
+                const proofUrl = publicUrlData ? publicUrlData.publicUrl : null;
                 const { error: insertError } = await window.supabaseClient.from('deposit_requests').insert({
                     user_id: authUser.id,
                     amount,
                     method_name: selected.name,
                     proof_url: proofUrl,
-                    provider_reference: txid,
                     status: 'pending'
                 });
-                if (insertError) {
-                    if (insertError.code === '23505') throw new Error('Ce hash de transaction a déjà été utilisé pour un autre dépôt.');
-                    throw insertError;
-                }
-                window.showToast('<strong>Demande envoyée ✅</strong><br>Votre dépôt sera crédité après vérification de la transaction.', 'success', { extraClass: 'investment-toast' });
+                if (insertError) throw insertError;
+                window.showToast('<strong>Demande envoyée ✅</strong><br>Votre dépôt sera crédité après vérification de votre capture.', 'success', { extraClass: 'investment-toast' });
                 closeDepositModal();
                 await refreshDashboardData();
                 await refreshNotifications();
