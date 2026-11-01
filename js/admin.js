@@ -5,6 +5,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
     const formatUSDT = (amount) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(amount)) + ' USDT';
+    // Liens "vérifier sur la blockchain" (dépôt : hash ; retrait : adresse)
+    const escAttr = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const isBep = (method) => /bep/i.test(method || '');
+    const txExplorerLink = (hash, method) => {
+        if (!hash) return '';
+        const url = isBep(method) ? `https://bscscan.com/tx/0x${encodeURIComponent(hash)}` : `https://tronscan.org/#/transaction/${encodeURIComponent(hash)}`;
+        return `<br><a href="${url}" target="_blank" rel="noopener" style="font-size:0.72rem;">Vérifier le hash ↗</a><br><span class="text-secondary" style="font-size:0.68rem; word-break:break-all;">${escAttr(hash)}</span>`;
+    };
+    const addrExplorerLink = (addr, method) => {
+        if (!addr || !/usdt/i.test(method || '')) return '';
+        const url = isBep(method) ? `https://bscscan.com/address/${encodeURIComponent(addr)}` : `https://tronscan.org/#/address/${encodeURIComponent(addr)}`;
+        return `<br><a href="${url}" target="_blank" rel="noopener" style="font-size:0.72rem;">Voir l'adresse ↗</a>`;
+    };
     const formatDate = (d) => d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
     window.showToast = (message, type = 'info', duration = 4000) => {
@@ -930,7 +943,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td>${formatDate(r.created_at)}</td>
                     <td>${u.full_name || u.email || r.user_id}</td>
                     <td>${formatUSDT(r.amount)}</td>
-                    <td>${r.method_name || '—'}</td>
+                    <td>${r.method_name || '—'}${txExplorerLink(r.provider_reference, r.method_name)}</td>
                     <td>${r.proof_url ? `<span class="admin-proof-link" data-img="${r.proof_url}">Voir la capture</span>` : '—'}</td>
                     <td><span class="admin-badge ${status}">${status}</span>${r.admin_note ? `<br><span class="text-secondary" style="font-size:0.72rem;">« ${r.admin_note} »</span>` : ''}</td>
                     <td>${actions}</td>
@@ -941,7 +954,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${u.full_name || u.email || r.user_id}</td>
                 <td>${formatUSDT(r.amount)}${r.fee_amount ? `<br><span class="text-secondary" style="font-size:0.72rem;">frais ${r.fee_percent}% (${formatUSDT(r.fee_amount)}) → <strong>net ${formatUSDT(r.net_amount)}</strong></span>` : ''}</td>
                 <td>${r.method_name || '—'}</td>
-                <td>${r.destination || '—'}</td>
+                <td style="word-break:break-all;">${r.destination || '—'}${addrExplorerLink(r.destination, r.method_name)}</td>
                 <td>${r.recipient_name || '—'}</td>
                 <td><span class="admin-badge ${status}">${status}</span>${r.admin_note ? `<br><span class="text-secondary" style="font-size:0.72rem;">« ${r.admin_note} »</span>` : ''}</td>
                 <td>${actions}</td>
