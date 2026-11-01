@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const MONEY_NAME_PREFIX = 'money';
     const isVisibleProduct = (p) => !MONEY_ONLY || (p && p.category === 'atlas' && String(p.name || '').trim().toLowerCase().startsWith(MONEY_NAME_PREFIX));
     document.body.classList.toggle('money-only', MONEY_ONLY);
+    const isMoneyOffer = (p) => !!p && p.category === 'atlas' && Number(p.return_percent) > 0;
     const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
     const formatUSDT = (amount) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(round2(amount)) + ' USDT';
 
@@ -612,7 +613,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     <div class="money-placement-rows">
                         <div><span>Gain / jour</span><strong>+${formatUSDT(round2(dailyGainOf(inv)))}</strong></div>
-                        <div><span>Reçu à l'échéance</span><strong>${payout}</strong></div>
+                        ${(inv.locked_rate_percent != null && inv.duration_days) ? `<div><span>Capital restitué à la fin</span><strong>${formatUSDT(inv.amount)}</strong></div>` : `<div><span>Reçu à l'échéance</span><strong>${payout}</strong></div>`}
                     </div>
                 </div>`;
         }).join('');
@@ -914,7 +915,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             return Number(inv.amount) * Number((inv.investment_products && inv.investment_products.daily_rate) || 0) / 100;
         };
 
+        // Offre MONEY : montant libre, rendement fixe (%) à l'échéance. Tout se règle
+        // dans la base (investment_products : return_percent, duration_days, price = minimum).
+        const renderMoneyOfferCard = (p) => {
+            const pct = Number(p.return_percent);
+            const days = Number(p.duration_days) || 30;
+            const ownedActive = activeInvestments.filter(i => i.product_id === p.id);
+            const ownedGain = ownedActive.reduce((sum, i) => sum + dailyGainOf(i), 0);
+            return `
+            <div class="vip-card money-offer-card${ownedActive.length ? ' is-owned' : ''}">
+                <span class="money-offer-badge">Offre MONEY</span>
+                <div class="money-offer-rate">+${pct}<span>% / jour</span></div>
+                <p class="money-offer-sub">de votre capital, versé chaque jour sur votre solde</p>
+                <ul class="money-offer-points">
+                    <li>Investissez le montant de votre choix, dès ${formatUSDT(p.price)}</li>
+                    <li>Gains <strong>retirables directement</strong> dès ${formatUSDT(Number(siteSettings.min_withdrawal) || 0)}</li>
+                    <li>Versement pendant <strong>${days} jours</strong>, puis votre capital vous est restitué</li>
+                </ul>
+                ${ownedActive.length ? `
+                <div class="vip-owned-box">
+                    <div class="vip-owned-row"><span>Placements actifs</span><span class="val">${ownedActive.length}</span></div>
+                    <div class="vip-owned-row"><span>Gain journalier en cours</span><span class="val">+${formatUSDT(ownedGain)}</span></div>
+                </div>` : ''}
+                <button class="btn btn-primary btn-full buy-product-btn" data-money-offer="1"
+                    data-product-id="${p.id}" data-product-name="${p.name}" data-product-category="${p.category}">
+                    ${ownedActive.length ? 'Investir à nouveau' : 'Investir maintenant'}
+                </button>
+            </div>`;
+        };
+
         const renderProductCard = (p) => {
+            if (isMoneyOffer(p)) return renderMoneyOfferCard(p);
             const isAtlas = p.category === 'atlas';
             const isCycle = ['constant', 'analyse', 'quete', 'express'].includes(p.category);
             // Pour Constant/Analyse/Quête, daily_rate vaut volontairement 0 (le
@@ -1207,6 +1238,130 @@ document.addEventListener('DOMContentLoaded', async () => {
         durationModalOverlay.classList.add('active');
     };
 
+
+    // ------------------------------------------------------------------
+    // Modal d'investissement MONEY : montant libre + calculateur en direct
+    // ------------------------------------------------------------------
+    let moneyModalOverlay = null;
+    const closeMoneyModal = () => { if (moneyModalOverlay) moneyModalOverlay.classList.remove('active'); };
+
+    const openMoneyInvestModal = (productId) => {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+        const pct = Number(product.return_percent);
+        const days = Number(product.duration_days) || 30;
+        const minAmount = Number(product.price) || 0;
+        const balance = Number(wallet.balance) || 0;
+
+        if (!moneyModalOverlay) {
+            moneyModalOverlay = document.createElement('div');
+            moneyModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(moneyModalOverlay);
+            moneyModalOverlay.addEventListener('click', (e) => { if (e.target === moneyModalOverlay) closeMoneyModal(); });
+        }
+        const canInvest = balance >= minAmount;
+        const chips = [minAmount, 10, 25, 50, 100].filter((v, i, a) => v >= minAmount && v <= balance && a.indexOf(v) === i);
+
+        moneyModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-money-modal>${CLOSE_SVG}</button>
+                <span class="task-modal-badge">MONEY · +${pct} % / jour</span>
+                <h2 class="task-modal-title">Investir aujourd'hui</h2>
+                <p class="task-modal-sub">Recevez <strong>${pct} % de votre capital chaque jour</strong> pendant ${days} jours. Vos gains sont retirables dès que votre solde atteint le minimum de retrait.</p>
+                <div class="money-balance-line"><span>Solde disponible</span><strong>${formatUSDT(balance)}</strong></div>
+                ${canInvest ? `
+                <div class="form-group">
+                    <label class="form-label" for="money-amount-input">Montant à investir (USDT)</label>
+                    <input type="number" id="money-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minAmount)}" min="${minAmount}" max="${balance}" step="0.01" inputmode="decimal">
+                    <div class="money-chips">
+                        ${chips.map(v => `<button type="button" class="money-chip" data-amount="${v}">${formatUSDT(v).replace(' USDT', '')}</button>`).join('')}
+                        <button type="button" class="money-chip" data-amount="${Math.floor(balance * 100) / 100}">Max</button>
+                    </div>
+                </div>
+                <div class="money-summary" id="money-summary">
+                    <div class="money-summary-row"><span>Capital investi</span><strong id="money-sum-capital">—</strong></div>
+                    <div class="money-summary-row"><span>Gain chaque jour (+${pct} %)</span><strong class="positive" id="money-sum-daily">—</strong></div>
+                    <div class="money-summary-row"><span>Durée</span><strong>${days} jours</strong></div>
+                    <div class="money-summary-row"><span>Fin des gains</span><strong id="money-sum-date">—</strong></div>
+                    <div class="money-summary-row"><span>Capital restitué à la fin</span><strong id="money-sum-capital2">—</strong></div>
+                    <div class="money-summary-total"><span>Total des gains</span><strong id="money-sum-total">—</strong></div>
+                </div>
+                <div class="quiz-feedback" id="money-feedback"></div>
+                <button type="button" class="btn btn-primary btn-full" id="money-confirm-btn" disabled>Confirmer l'investissement</button>
+                ` : `
+                <p class="text-secondary" style="margin:16px 0;">Il vous faut au moins <strong>${formatUSDT(minAmount)}</strong> de solde pour investir. Faites un dépôt pour commencer.</p>
+                <button type="button" class="btn btn-primary btn-full" id="money-deposit-btn">Faire un dépôt</button>
+                `}
+            </div>`;
+
+        const q = (sel) => moneyModalOverlay.querySelector(sel);
+        q('[data-close-money-modal]').addEventListener('click', closeMoneyModal);
+        moneyModalOverlay.classList.add('active');
+
+        if (!canInvest) {
+            q('#money-deposit-btn').addEventListener('click', () => {
+                closeMoneyModal();
+                const b = document.getElementById('wallet-deposit-btn');
+                if (b) b.click();
+            });
+            return;
+        }
+
+        const input = q('#money-amount-input');
+        const confirmBtn = q('#money-confirm-btn');
+        const feedback = q('#money-feedback');
+        const endDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+        q('#money-sum-date').textContent = endDate;
+
+        const update = () => {
+            const amount = round2(Number(input.value));
+            const valid = amount >= minAmount && amount <= balance;
+            const gain = round2(amount * pct / 100);
+            q('#money-sum-capital').textContent = amount > 0 ? formatUSDT(amount) : '—';
+            q('#money-sum-capital2').textContent = amount > 0 ? formatUSDT(amount) : '—';
+            q('#money-sum-daily').textContent = amount > 0 ? '+' + formatUSDT(gain) : '—';
+            q('#money-sum-total').textContent = amount > 0 ? '+' + formatUSDT(round2(gain * days)) : '—';
+            feedback.className = 'quiz-feedback';
+            feedback.textContent = '';
+            if (amount > 0 && amount < minAmount) { feedback.textContent = `Montant minimum : ${formatUSDT(minAmount)}.`; feedback.className = 'quiz-feedback error'; }
+            else if (amount > balance) { feedback.textContent = 'Solde insuffisant pour ce montant.'; feedback.className = 'quiz-feedback error'; }
+            confirmBtn.disabled = !valid;
+        };
+        input.addEventListener('input', update);
+        moneyModalOverlay.querySelectorAll('.money-chip').forEach(chip => {
+            chip.addEventListener('click', () => { input.value = chip.getAttribute('data-amount'); update(); });
+        });
+
+        confirmBtn.addEventListener('click', async () => {
+            if (isPurchasing) return;
+            const amount = round2(Number(input.value));
+            if (!(amount >= minAmount && amount <= balance)) return;
+            isPurchasing = true;
+            setAllBuyButtonsDisabled(true);
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Traitement...';
+            try {
+                const { error } = await window.supabaseClient.rpc('purchase_money', { p_product_id: productId, p_amount: amount });
+                if (error) throw error;
+                closeMoneyModal();
+                window.showToast(
+                    `<strong>Investissement activé ✅</strong><br>${formatUSDT(amount)} investis · vous recevrez <strong>+${formatUSDT(round2(amount * pct / 100))}</strong> chaque jour jusqu'au ${endDate}.`,
+                    'success', { extraClass: 'investment-toast', duration: 7000 }
+                );
+                await refreshDashboardData();
+                await refreshNotifications();
+            } catch (err) {
+                feedback.textContent = err.message || "Impossible d'effectuer cet investissement.";
+                feedback.className = 'quiz-feedback error';
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = "Confirmer l'investissement";
+            } finally {
+                isPurchasing = false;
+                setAllBuyButtonsDisabled(false);
+            }
+        });
+    };
+
     // Achat d'un produit (délégation d'événement, débite le solde côté serveur)
     document.querySelectorAll('.vip-grid').forEach(grid => {
         grid.addEventListener('click', (e) => {
@@ -1214,6 +1369,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!btn || btn.disabled || isPurchasing) return;
             const category = btn.getAttribute('data-product-category');
             const productId = btn.getAttribute('data-product-id');
+            if (btn.getAttribute('data-money-offer')) { openMoneyInvestModal(productId); return; }
             const vipLevel = btn.getAttribute('data-product-vip-level') || null;
 
             if ((category === 'constant' || category === 'analyse') && !hasAtlasAvailableForActif(vipLevel, category)) {
