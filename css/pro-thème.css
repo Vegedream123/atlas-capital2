@@ -158,3 +158,79 @@ header h1 { color: #fff; }
 /* ---- Redeem call-to-action: emerald instead of amber ---- */
 .redeem-cta { background: var(--accent) !important; color: #fff !important; border-radius: 12px; box-shadow: none !important; }
 .redeem-cta:hover { background: var(--accent-hover) !important; }
+
+/* ==========================================================================
+   LAYOUT & TYPOGRAPHY — compact, calm, "real fintech" density
+   ========================================================================== */
+html { font-size: 15px; }
+body { font-feature-settings: "tnum" 1, "cv11" 1; line-height: 1.45; }
+
+/* page frame */
+.dashboard-main { padding: 18px 14px 96px; }
+.page-header { margin-bottom: 16px; gap: 10px; }
+.page-title { font-size: 1.3rem; font-weight: 700; color: var(--ink); letter-spacing: -.025em; margin-bottom: 2px; }
+.page-subtitle { font-size: .84rem; color: var(--gray-500); }
+.user-name { color: var(--ink); }
+.card-title { font-size: .98rem; font-weight: 700; color: var(--ink); letter-spacing: -.01em; }
+.card-header { margin-bottom: 12px; }
+.content-grid, .kpi-grid { gap: 12px; }
+.kpi-grid { margin-bottom: 14px; }
+
+/* cards: borders carry the structure, not shadows */
+.chart-card, .finance-card, .invest-card, .investments-card, .wallet-info-card, .transactions-card, .vip-card {
+    border-radius: 22px; padding: 18px; box-shadow: none; border: 1px solid var(--gray-200);
+}
+.wallet-balance-card { border-radius: 22px; padding: 22px 18px; }
+.interactive-card:hover { transform: none; box-shadow: var(--shadow-sm); }
+.kpi-card { padding: 18px; }
+.kpi-card .kpi-value, .kpi-value { font-weight: 700; letter-spacing: -.03em; color: var(--ink); }
+.wallet-amount { font-size: 2rem; letter-spacing: -.035em; }
+
+/* transaction list: compact rows, soft square icon tiles */
+.transactions-card { padding: 4px 16px; }
+.transaction-item { padding: 13px 0; gap: 12px; border-bottom: 1px solid #EEF1F5; }
+.transaction-icon { width: 40px; height: 40px; border-radius: 12px; }
+.transaction-title { font-size: .9rem; font-weight: 600; color: var(--ink); margin-bottom: 1px; }
+.transaction-desc { font-size: .76rem; color: var(--gray-500); line-height: 1.35; }
+.transaction-meta { flex-shrink: 0; }
+.transaction-amount { font-size: .92rem; font-weight: 700; letter-spacing: -.01em; }
+.transaction-date { font-size: .7rem; color: #8592A6; margin: 2px 0 0; order: 2; }
+.transaction-meta { display: flex; flex-direction: column; align-items: flex-end; }
+.bg-success-light { background: var(--accent-soft); }
+.bg-primary-light { background: var(--gray-100); }
+.bg-warning-light { background: #FEF4E2; }
+.bg-danger-light { background: #FEECEC; }
+
+/* selection pills: near-black when selected, quiet grey otherwise */
+.quicknav-btn { padding: 8px 14px; font-size: .8rem; background: var(--gray-100); color: var(--gray-700); border: 1px solid transparent; }
+.quicknav-btn.active { background: var(--ink) !important; color: #fff !important; }
+.period-tabs { background: var(--gray-100); border-radius: 12px; padding: 3px; }
+.tab-btn { border-radius: 9px; }
+.tab-btn.active { background: #fff; color: var(--ink); }
+
+/* forms: inset "well" fields */
+.form-group label, label { font-size: .8rem; font-weight: 600; color: var(--gray-700); }
+.form-control, .auth-card input[type=email], .auth-card input[type=password], .auth-card input[type=text] {
+    background: #F6F7F9; border: 1px solid #E8EBF0; border-radius: 14px; min-height: 48px; font-weight: 500; color: var(--ink);
+}
+.form-control:focus { background: #fff; }
+.btn { min-height: 46px; border-radius: 14px; font-size: .92rem; }
+.btn-full { min-height: 50px; }
+
+/* bottom navigation */
+.bottom-nav { padding-top: 6px; }
+.bottom-nav-item { font-size: .66rem; font-weight: 600; gap: 2px; }
+
+/* auth page */
+.auth-card h1, .auth-card h2, .auth-panel h1, .auth-panel h2 { font-size: 1.45rem; letter-spacing: -.03em; color: var(--ink); }
+
+@media (min-width: 900px) {
+    html { font-size: 15.5px; }
+    .dashboard-main { padding: 28px 24px 48px; }
+    .page-title { font-size: 1.5rem; }
+}
+
+/* Wallet hero: primary action must stand out on the navy card */
+.wallet-actions .btn-primary { background: var(--accent) !important; color: #fff !important; }
+.wallet-actions .btn-primary:hover { background: var(--accent-hover) !important; }
+.wallet-actions .btn { min-width: 150px; }
