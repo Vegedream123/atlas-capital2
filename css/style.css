@@ -55,15 +55,15 @@ button {
    Root Variables
    ========================================================================== */
 :root {
-    --primary: #FF4D00;
-    --primary-light: #FF7A40;
-    --primary-hover: #D94100;
-    --accent: #FF4D00;
-    --accent-hover: #D94100;
-    --gold: #FF4D00;
-    --gold-light: #FF9D73;
-    --gold-dark: #B23600;
-    --gold-gradient: linear-gradient(135deg, #FF9D73 0%, #FF4D00 45%, #B23600 100%);
+    --primary: #1B2A4A;
+    --primary-light: #2E4472;
+    --primary-hover: #111C33;
+    --accent: #1B2A4A;
+    --accent-hover: #111C33;
+    --gold: #1B2A4A;
+    --gold-light: #8DA2CF;
+    --gold-dark: #0F172A;
+    --gold-gradient: linear-gradient(135deg, #8DA2CF 0%, #1B2A4A 45%, #0F172A 100%);
     --success: #10B981;
     --warning: #F59E0B;
     --danger: #EF4444;
@@ -74,13 +74,13 @@ button {
     --gray-300: #D6D3D1;
     --gray-500: #78716C;
     --gray-700: #44403C;
-    --text-primary: #B23600;
+    --text-primary: #0F172A;
     --text-secondary: #57534E;
     
-    --shadow-sm: 0 1px 2px rgba(255,77,0,0.06);
-    --shadow: 0 4px 6px -1px rgba(255,77,0,0.09), 0 2px 4px -2px rgba(255,77,0,0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(255,77,0,0.10), 0 4px 6px -4px rgba(255,77,0,0.06);
-    --shadow-xl: 0 20px 25px -5px rgba(255,77,0,0.12), 0 8px 10px -6px rgba(255,77,0,0.06);
+    --shadow-sm: 0 1px 2px rgba(27,42,74,0.06);
+    --shadow: 0 4px 6px -1px rgba(27,42,74,0.09), 0 2px 4px -2px rgba(27,42,74,0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(27,42,74,0.10), 0 4px 6px -4px rgba(27,42,74,0.06);
+    --shadow-xl: 0 20px 25px -5px rgba(27,42,74,0.12), 0 8px 10px -6px rgba(27,42,74,0.06);
     
     --radius-sm: 8px;
     --radius: 12px;
@@ -539,7 +539,7 @@ h3 {
 .feature-icon {
     width: 56px;
     height: 56px;
-    background: rgba(249,115,22, 0.12);
+    background: rgba(27,42,74, 0.12);
     color: var(--accent);
     border-radius: 50%;
     display: flex;
@@ -645,7 +645,7 @@ h3 {
     right: 0;
     width: 200px;
     height: 200px;
-    background: radial-gradient(circle, rgba(249,115,22,0.3) 0%, rgba(255,255,255,0) 70%);
+    background: radial-gradient(circle, rgba(27,42,74,0.3) 0%, rgba(255,255,255,0) 70%);
 }
 
 .security-badges {
@@ -836,7 +836,7 @@ h3 {
 
 .newsletter-form input:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(249,115,22, 0.12);
+    box-shadow: 0 0 0 3px rgba(27,42,74, 0.12);
 }
 
 /* ==========================================================================
@@ -961,7 +961,7 @@ h3 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(67,20,7, 0.8);
+    background: rgba(12,18,29, 0.8);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -1032,7 +1032,7 @@ h3 {
 
 .form-control:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(249,115,22, 0.12);
+    box-shadow: 0 0 0 3px rgba(27,42,74, 0.12);
 }
 
 .password-input {
