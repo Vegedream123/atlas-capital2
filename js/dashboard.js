@@ -1439,7 +1439,154 @@ document.addEventListener('DOMContentLoaded', async () => {
         depositModalOverlay.classList.add('active');
     };
 
-    if (depositBtn) depositBtn.addEventListener('click', openDepositModal);
+    // ------------------------------------------------------------------
+    // MODE MONEY — Dépôt 100 % USDT : réseau -> adresse -> montant -> hash (TXID) -> preuve
+    // Le hash de transaction est unique en base (provider_reference) : impossible de
+    // réutiliser le même paiement pour deux dépôts, et l'admin vérifie sur la blockchain.
+    // ------------------------------------------------------------------
+    const escHtml = (v) => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const getUsdtNetworks = () => (window.AtlasPaymentMethods && window.AtlasPaymentMethods.getUsdtNetworks) ? window.AtlasPaymentMethods.getUsdtNetworks() : [];
+    const normalizeTxid = (v) => String(v || '').trim().toLowerCase().replace(/^0x/, '');
+    const copyText = async (text) => {
+        try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+            try {
+                const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+                document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+            } catch (e2) { return false; }
+        }
+    };
+    const CLOSE_SVG = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+
+    const openDepositModalUsdt = () => {
+        if (!depositModalOverlay) {
+            depositModalOverlay = document.createElement('div');
+            depositModalOverlay.className = 'modal-overlay';
+            document.body.appendChild(depositModalOverlay);
+            depositModalOverlay.addEventListener('click', (e) => { if (e.target === depositModalOverlay) closeDepositModal(); });
+        }
+        const minDeposit = Number(siteSettings.min_deposit) || 0;
+        const networks = getUsdtNetworks().filter(n => n.address);
+        let selected = networks.length === 1 ? networks[0] : null;
+
+        depositModalOverlay.innerHTML = `
+            <div class="modal-card">
+                <button type="button" class="modal-close" data-close-deposit-modal>${CLOSE_SVG}</button>
+                <span class="task-modal-badge">Dépôt USDT</span>
+                <h2 class="task-modal-title">Faire un dépôt</h2>
+                <p class="task-modal-sub">Envoyez des USDT à l'adresse ci-dessous, puis renseignez le hash de la transaction. Votre solde est crédité après vérification par notre équipe.</p>
+                ${networks.length ? `
+                <div class="form-group">
+                    <label class="form-label">Réseau</label>
+                    <div id="deposit-network-list" style="display:flex; gap:10px;">
+                        ${networks.map(n => `<button type="button" class="quiz-option deposit-method-option${selected && selected.id === n.id ? ' selected' : ''}" data-network-id="${n.id}" style="flex:1; text-align:center;">${n.network}</button>`).join('')}
+                    </div>
+                </div>
+                <div id="deposit-network-details" style="margin-bottom:14px;"></div>
+                <div class="form-group">
+                    <label class="form-label" for="deposit-amount-input">Montant envoyé (USDT)</label>
+                    <input type="number" id="deposit-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minDeposit)}" min="${minDeposit || 0.01}" step="0.01" inputmode="decimal">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="deposit-txid-input">Hash de la transaction (TXID)</label>
+                    <input type="text" id="deposit-txid-input" class="form-control" placeholder="64 caractères" autocomplete="off" autocapitalize="off" spellcheck="false">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="deposit-proof-input">Capture d'écran (facultatif)</label>
+                    <div class="file-input-group">
+                        <label class="file-input-btn" for="deposit-proof-input">Choisir le fichier</label>
+                        <span class="file-input-filename" id="deposit-proof-filename">Aucun fichier sélectionné</span>
+                        <input type="file" id="deposit-proof-input" accept="image/*">
+                    </div>
+                </div>
+                <div class="quiz-feedback" id="deposit-feedback"></div>
+                <button type="button" class="btn btn-primary btn-full" id="deposit-submit-btn">Envoyer ma demande de dépôt</button>
+                ` : `<p class="text-secondary" style="margin:18px 0;">Les dépôts sont momentanément indisponibles. Réessayez plus tard.</p>`}
+            </div>`;
+
+        const q = (sel) => depositModalOverlay.querySelector(sel);
+        q('[data-close-deposit-modal]').addEventListener('click', closeDepositModal);
+        depositModalOverlay.classList.add('active');
+        if (!networks.length) return;
+
+        const renderDetails = () => {
+            const box = q('#deposit-network-details');
+            if (!selected) { box.innerHTML = ''; return; }
+            box.innerHTML = `
+                <div class="deposit-method-details-box">
+                    <p><strong>Adresse USDT ${selected.network}</strong></p>
+                    <p style="word-break:break-all; font-family:monospace; font-size:0.9rem;">${escHtml(selected.address)}</p>
+                    <button type="button" class="btn btn-outline" id="deposit-copy-btn" style="margin:8px 0;">Copier l'adresse</button>
+                    <p class="text-secondary" style="font-size:0.82rem;">⚠️ Envoyez uniquement des USDT sur le réseau ${selected.network}. Tout envoi sur un autre réseau est définitivement perdu.</p>
+                </div>`;
+            q('#deposit-copy-btn').addEventListener('click', async (e) => {
+                const ok = await copyText(selected.address);
+                e.target.textContent = ok ? 'Adresse copiée ✓' : 'Copie impossible : sélectionnez l\'adresse';
+            });
+        };
+        renderDetails();
+        depositModalOverlay.querySelectorAll('[data-network-id]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                depositModalOverlay.querySelectorAll('[data-network-id]').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selected = networks.find(n => n.id === btn.getAttribute('data-network-id'));
+                renderDetails();
+            });
+        });
+        q('#deposit-proof-input').addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            q('#deposit-proof-filename').textContent = file ? file.name : 'Aucun fichier sélectionné';
+        });
+
+        q('#deposit-submit-btn').addEventListener('click', async () => {
+            const feedbackEl = q('#deposit-feedback');
+            const submitBtn = q('#deposit-submit-btn');
+            const fail = (msg) => { feedbackEl.textContent = msg; feedbackEl.className = 'quiz-feedback error'; };
+            const amount = Number(q('#deposit-amount-input').value);
+            const txid = normalizeTxid(q('#deposit-txid-input').value);
+            const proofFile = q('#deposit-proof-input').files && q('#deposit-proof-input').files[0];
+
+            if (!selected) return fail('Veuillez choisir le réseau (TRC-20 ou BEP-20).');
+            if (!amount || amount <= 0) return fail('Veuillez saisir le montant envoyé.');
+            if (amount < minDeposit) return fail(`Montant minimum : ${formatUSDT(minDeposit)}.`);
+            if (!/^[0-9a-f]{64}$/.test(txid)) return fail('Hash de transaction invalide : il doit contenir 64 caractères (lettres a-f et chiffres).');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+            feedbackEl.textContent = '';
+            try {
+                let proofUrl = null;
+                if (proofFile) {
+                    const path = `${authUser.id}/${Date.now()}_${proofFile.name}`;
+                    const { error: uploadError } = await window.supabaseClient.storage.from('deposit-proofs').upload(path, proofFile);
+                    if (uploadError) throw uploadError;
+                    const { data: publicUrlData } = window.supabaseClient.storage.from('deposit-proofs').getPublicUrl(path);
+                    proofUrl = publicUrlData ? publicUrlData.publicUrl : null;
+                }
+                const { error: insertError } = await window.supabaseClient.from('deposit_requests').insert({
+                    user_id: authUser.id,
+                    amount,
+                    method_name: selected.name,
+                    proof_url: proofUrl,
+                    provider_reference: txid,
+                    status: 'pending'
+                });
+                if (insertError) {
+                    if (insertError.code === '23505') throw new Error('Ce hash de transaction a déjà été utilisé pour un autre dépôt.');
+                    throw insertError;
+                }
+                window.showToast('<strong>Demande envoyée ✅</strong><br>Votre dépôt sera crédité après vérification de la transaction.', 'success', { extraClass: 'investment-toast' });
+                closeDepositModal();
+                await refreshDashboardData();
+                await refreshNotifications();
+            } catch (err) {
+                fail('Erreur : ' + (err.message || "impossible d'envoyer la demande."));
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Envoyer ma demande de dépôt';
+            }
+        });
+    };
+
+    if (depositBtn) depositBtn.addEventListener('click', () => (MONEY_ONLY ? openDepositModalUsdt() : openDepositModal()));
 
     // ------------------------------------------------------------------
     // 7ter. Retrait : pays -> moyen de réception -> montant, puis code
@@ -1500,8 +1647,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
+    // MODE MONEY — Retrait 100 % USDT : réseau -> adresse (format vérifié) -> montant.
+    // Plus de pays, plus de nom : une adresse crypto n'a pas de titulaire.
+    const renderWithdrawFormUsdt = () => {
+        const networks = getUsdtNetworks();
+        const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
+        const withdrawable = Math.max(0, Math.floor((Number(wallet.balance) - Number(wallet.non_withdrawable_balance || 0)) * 100) / 100);
+        const feePercent = Number(siteSettings.withdrawal_fee_percent) || 0;
+        selectedWithdrawMethod = null;
+        withdrawModalOverlay.querySelector('.modal-card').innerHTML = `
+            <button type="button" class="modal-close" data-close-withdraw-modal>${CLOSE_SVG}</button>
+            <span class="task-modal-badge">Retrait USDT</span>
+            <h2 class="task-modal-title">Retirer des fonds</h2>
+            <p class="task-modal-sub">Montant retirable (gains uniquement) : <strong>${formatUSDT(withdrawable)}</strong>. Un dépôt non encore investi n'est pas retirable.</p>
+
+            <div class="form-group">
+                <label class="form-label">Réseau de réception</label>
+                <div style="display:flex; gap:10px;">
+                    ${networks.map(n => `<button type="button" class="quiz-option deposit-method-option" data-network-id="${n.id}" style="flex:1; text-align:center;">${n.network}</button>`).join('')}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-destination-input">Adresse USDT de réception</label>
+                <input type="text" id="withdraw-destination-input" class="form-control" placeholder="Choisissez d'abord le réseau" autocomplete="off" autocapitalize="off" spellcheck="false">
+                <p class="text-secondary" id="withdraw-address-hint" style="font-size:0.8rem; margin:6px 0 0;"></p>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="withdraw-amount-input">Montant (USDT)</label>
+                <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minWithdrawal)}" min="${minWithdrawal || 0.01}" max="${withdrawable}" step="0.01" inputmode="decimal">
+            </div>
+            <p class="task-modal-sub" id="withdraw-fee-preview" style="margin-top:-6px;"></p>
+
+            <div class="quiz-feedback" id="withdraw-feedback"></div>
+            <button type="button" class="btn btn-primary btn-full" id="withdraw-submit-btn">Continuer</button>`;
+
+        const q = (sel) => withdrawModalOverlay.querySelector(sel);
+        q('[data-close-withdraw-modal]').addEventListener('click', closeWithdrawModal);
+
+        withdrawModalOverlay.querySelectorAll('[data-network-id]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                withdrawModalOverlay.querySelectorAll('[data-network-id]').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedWithdrawMethod = networks.find(n => n.id === btn.getAttribute('data-network-id'));
+                q('#withdraw-destination-input').placeholder = selectedWithdrawMethod.placeholder;
+                q('#withdraw-address-hint').textContent = selectedWithdrawMethod.hint;
+            });
+        });
+
+        const feePreviewEl = q('#withdraw-fee-preview');
+        q('#withdraw-amount-input').addEventListener('input', () => {
+            const val = Number(q('#withdraw-amount-input').value);
+            if (!val || val <= 0) { feePreviewEl.textContent = ''; return; }
+            if (!feePercent) { feePreviewEl.innerHTML = `Aucun frais. Vous recevrez <strong>${formatUSDT(val)}</strong>.`; return; }
+            const fee = round2(val * feePercent / 100);
+            feePreviewEl.innerHTML = `Frais de retrait ${feePercent}% = ${formatUSDT(fee)}. Vous recevrez net : <strong>${formatUSDT(round2(val - fee))}</strong>.`;
+        });
+
+        q('#withdraw-submit-btn').addEventListener('click', () => {
+            const feedbackEl = q('#withdraw-feedback');
+            const fail = (msg) => { feedbackEl.textContent = msg; feedbackEl.className = 'quiz-feedback error'; };
+            const amount = Number(q('#withdraw-amount-input').value);
+            const destination = q('#withdraw-destination-input').value.trim();
+            if (!selectedWithdrawMethod) return fail('Veuillez choisir le réseau de réception (TRC-20 ou BEP-20).');
+            if (!destination) return fail('Veuillez indiquer votre adresse USDT.');
+            if (!selectedWithdrawMethod.pattern.test(destination)) return fail(`Adresse invalide pour le réseau ${selectedWithdrawMethod.network}. ${selectedWithdrawMethod.hint}`);
+            if (!amount || amount < minWithdrawal) return fail(`Montant minimum : ${formatUSDT(minWithdrawal)}.`);
+            if (amount > withdrawable) return fail(`Vous ne pouvez retirer que vos gains (${formatUSDT(withdrawable)} disponibles). Un dépôt non investi n'est pas retirable.`);
+            renderWithdrawConfirmStep({ amount, recipientName: '', destination, method: selectedWithdrawMethod });
+        });
+    };
+
     // Étape 1 : formulaire de retrait (pays -> moyen de réception -> montant)
     const renderWithdrawForm = () => {
+        if (MONEY_ONLY) { renderWithdrawFormUsdt(); return; }
         const countries = window.AtlasCountries || [];
         const minWithdrawal = Number(siteSettings.min_withdrawal) || 0;
         // Seuls les GAINS sont retirables — un dépôt non encore investi reste
@@ -1619,6 +1839,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <input type="text" id="withdraw-confirm-destination-input" class="form-control" placeholder="${isUsdt ? `Retapez votre adresse ${withdrawData.method.name}` : 'Ex : +237 6XX XXX XXX'}" autocomplete="off">
             </div>
 
+            ${isUsdt ? `<label class="withdraw-ack" style="display:flex; gap:10px; align-items:flex-start; margin:0 0 14px; font-size:0.88rem; line-height:1.4;">
+                <input type="checkbox" id="withdraw-ack-checkbox" style="margin-top:3px;">
+                <span>Je confirme que cette adresse est bien une adresse <strong>${withdrawData.method.network || 'USDT'}</strong> qui m'appartient. Un envoi vers une mauvaise adresse ou un mauvais réseau est définitivement perdu.</span>
+            </label>` : ''}
             <div class="quiz-feedback" id="withdraw-confirm-feedback"></div>
             <button type="button" class="btn btn-outline btn-full" id="withdraw-confirm-back-btn" style="margin-bottom:10px;">Modifier mes informations</button>
             <button type="button" class="btn btn-primary btn-full" id="withdraw-confirm-submit-btn">C'est bien correct, continuer</button>`;
@@ -1630,6 +1854,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const proceedToConfirm = () => {
             const feedbackEl = withdrawModalOverlay.querySelector('#withdraw-confirm-feedback');
             const retyped = confirmInputEl.value.trim();
+            const ackEl = withdrawModalOverlay.querySelector('#withdraw-ack-checkbox');
+            if (ackEl && !ackEl.checked) { feedbackEl.textContent = 'Merci de cocher la case de confirmation.'; feedbackEl.className = 'quiz-feedback error'; return; }
             // Comparaison normalisée (espaces retirés) pour ne pas rejeter
             // à tort un numéro identique mais tapé avec/sans espaces.
             const normalize = (s) => s.replace(/\s+/g, '');
@@ -1718,7 +1944,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     p_amount: withdrawData.amount,
                     p_method_name: withdrawData.method.name,
                     p_destination: withdrawData.destination,
-                    p_recipient_name: withdrawData.recipientName
+                    p_recipient_name: withdrawData.recipientName || null
                 });
                 if (rpcError) throw rpcError;
 
