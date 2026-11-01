@@ -284,10 +284,33 @@
         return countryCode !== 'CM';
     }
 
+    // Réseaux USDT (dépôt ET retrait), sans notion de pays.
+    // `address` = adresse de dépôt de la plateforme (configurée dans l'admin).
+    // `pattern` = format valide d'une adresse client (évite les pertes par faute de frappe).
+    function getUsdtNetworks() {
+        return [
+            {
+                id: 'usdt_trc20', type: 'usdt', name: 'USDT (TRC-20)', network: 'TRC-20', icon: ICONS.usdt,
+                address: usdtAddress,
+                pattern: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
+                hint: "Adresse TRC-20 : commence par T, 34 caractères.",
+                placeholder: 'Ex : TXyz…'
+            },
+            {
+                id: 'usdt_bep20', type: 'usdt_bep20', name: 'USDT (BEP-20)', network: 'BEP-20', icon: ICONS.usdt,
+                address: usdtBep20Address,
+                pattern: /^0x[a-fA-F0-9]{40}$/,
+                hint: "Adresse BEP-20 : commence par 0x, 42 caractères.",
+                placeholder: 'Ex : 0x…'
+            }
+        ];
+    }
+
     global.AtlasCountries = COUNTRIES;
     global.AtlasPaymentMethods = {
         getCountryName,
         getPaymentMethods,
+        getUsdtNetworks,
         getWithdrawalMethods,
         getPaymentLink,
         setUsdtAddress,
