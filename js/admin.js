@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const ctx = canvas.getContext('2d');
 
         // Fond
-        ctx.fillStyle = '#f4f1ee';
+        ctx.fillStyle = '#F0F1F2';
         ctx.fillRect(0, 0, W, H);
 
         // Carte blanche centrale avec ombre légère
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.shadowBlur = 0;
 
         // Bandeau haut (couleur marque Atlas Capital)
-        ctx.fillStyle = '#c45a18';
+        ctx.fillStyle = '#233456';
         ctx.fillRect(pad, pad, W - pad * 2, 170);
 
         // Logo texte
@@ -197,8 +197,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Fond aux couleurs de la marque
         const grad = ctx.createLinearGradient(0, 0, W, H);
-        grad.addColorStop(0, '#d9691f');
-        grad.addColorStop(1, '#8f3d0c');
+        grad.addColorStop(0, '#283B61');
+        grad.addColorStop(1, '#19253D');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, W, H);
 
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // En-tête : marque + badge de statut
         ctx.textAlign = 'left';
-        ctx.fillStyle = '#c45a18';
+        ctx.fillStyle = '#233456';
         ctx.font = 'bold 44px sans-serif';
         ctx.fillText('🏛 Atlas Capital', m + 44, m + 90);
 
