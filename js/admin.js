@@ -740,7 +740,52 @@ document.addEventListener('DOMContentLoaded', async () => {
         return `<div class="admin-monthly-revenues-view">${arr.map((v, i) => `<span>M${i + 1}: ${formatUSDT(v)}</span>`).join('')}</div>`;
     }
 
+    // ---- Offre MONEY : gain quotidien + durée réglés ici ----
+    const moneyForm = document.getElementById('money-offer-form');
+    const moneyRate = document.getElementById('money-offer-rate');
+    const moneyDays = document.getElementById('money-offer-days');
+    const moneyMin = document.getElementById('money-offer-min');
+    const moneyActive = document.getElementById('money-offer-active');
+    const moneyPreview = document.getElementById('money-offer-preview');
+    const updateMoneyPreview = () => {
+        if (!moneyPreview) return;
+        const r = Number(moneyRate.value), d = Number(moneyDays.value);
+        if (!(r > 0 && d > 0)) { moneyPreview.textContent = ''; return; }
+        moneyPreview.innerHTML = `Exemple : pour <strong>100 USDT</strong> investis → <strong>${formatUSDT(100 * r / 100)}</strong> par jour pendant ${d} jours = <strong>${formatUSDT(100 * r / 100 * d)}</strong> de gains au total, puis capital de 100 USDT restitué.`;
+    };
+    async function loadMoneyOffer() {
+        if (!moneyForm) return;
+        const { data } = await window.supabaseClient.from('investment_products').select('*').eq('category', 'atlas').not('return_percent', 'is', null).limit(1);
+        const p = data && data[0];
+        if (!p) return;
+        moneyRate.value = p.return_percent; moneyDays.value = p.duration_days; moneyMin.value = p.price;
+        moneyActive.value = p.is_active ? 'true' : 'false';
+        updateMoneyPreview();
+    }
+    if (moneyForm) {
+        [moneyRate, moneyDays].forEach(el => el.addEventListener('input', updateMoneyPreview));
+        moneyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('money-offer-save');
+            btn.disabled = true;
+            try {
+                const { error } = await window.supabaseClient.rpc('admin_set_money_offer', {
+                    p_daily_percent: Number(moneyRate.value),
+                    p_duration_days: Number(moneyDays.value),
+                    p_min_amount: Number(moneyMin.value),
+                    p_is_active: moneyActive.value === 'true'
+                });
+                if (error) throw error;
+                window.showToast('Offre MONEY enregistrée !', 'success');
+                loadProducts();
+            } catch (err) {
+                window.showToast('Erreur : ' + err.message, 'error');
+            } finally { btn.disabled = false; }
+        });
+    }
+
     async function loadProducts() {
+        loadMoneyOffer();
         const tbody = document.getElementById('products-tbody');
         const { data: raw, error } = await window.supabaseClient.from('investment_products').select('*').order('category').order('sort_order');
         // Même tri que le dashboard : sort_order n'est jamais renseigné (0
@@ -761,16 +806,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${p.category}</td>
                 <td>${p.vip_level || '—'}</td>
                 <td>${formatUSDT(p.price)}</td>
-                <td>${['constant', 'analyse', 'quete', 'express'].includes(p.category) ? formatUSDT(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%'}</td>
+                <td>${p.return_percent ? p.return_percent + ' %/jour' : (['constant', 'analyse', 'quete', 'express'].includes(p.category) ? formatUSDT(p.cycle_payout_amount || 0) + ' /cycle' : p.daily_rate + '%')}</td>
                 <td>${p.duration_days} j</td>
                 <td>${renderMonthlyRevenuesPreview(p.category, p.monthly_revenues)}</td>
                 <td><span class="admin-badge ${p.is_active ? 'active' : 'blocked'}">${p.is_active ? 'Actif' : 'Désactivé'}</span></td>
                 <td>
-                    <button class="admin-btn-sm admin-btn-edit" data-edit="${p.id}">Modifier</button>
+                    ${p.return_percent ? `<button class="admin-btn-sm admin-btn-edit" data-edit-money="1">Régler MONEY</button>` : `<button class="admin-btn-sm admin-btn-edit" data-edit="${p.id}">Modifier</button>`}
                     ${p.is_active ? `<button class="admin-btn-sm admin-btn-reject" data-deactivate="${p.id}">Désactiver</button>` : ''}
                 </td>
             </tr>`).join('');
 
+        tbody.querySelectorAll('[data-edit-money]').forEach(btn => btn.addEventListener('click', () => {
+            const panel = document.getElementById('money-offer-panel');
+            if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }));
         tbody.querySelectorAll('[data-edit]').forEach(btn => {
             btn.addEventListener('click', () => {
                 const p = data.find(x => x.id === btn.getAttribute('data-edit'));
