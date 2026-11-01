@@ -2940,6 +2940,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ------------------------------------------------------------------
+    // 13bis. Pop-up d'accueil MONEY : s'affiche à chaque entrée sur la
+    //    plateforme. Le point « Tapez ici » en bas redirige directement vers
+    //    l'investissement (ou vers le dépôt si le solde est insuffisant).
+    //    Les chiffres (min., %, durée) viennent du produit MONEY en base.
+    // ------------------------------------------------------------------
+    (function initWelcomePromo() {
+        const offer = products.find(isMoneyOffer);
+        if (!offer) return;
+        const pct = Number(offer.return_percent) || 0;
+        const days = Number(offer.duration_days) || 30;
+        const minAmount = Number(offer.price) || 10;
+        if (!pct) return;
+        const daily = round2(minAmount * pct / 100);
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay promo-overlay';
+        overlay.innerHTML = `
+            <div class="modal-card promo-card">
+                <button type="button" class="modal-close" data-close-promo aria-label="Fermer">${CLOSE_SVG}</button>
+                <span class="task-modal-badge">MONEY · Offre du moment</span>
+                <h2 class="promo-title">Déposez ${formatUSDT(minAmount).replace(' USDT', '')} USD et gagnez ${pct} %</h2>
+                <p class="promo-sub">${pct} % de ${formatUSDT(minAmount).replace(' USDT', '')} USD, c'est <strong>${formatUSDT(daily).replace(' USDT', '')} USD chaque jour</strong> pendant <strong>${days} jours</strong>.</p>
+                <button type="button" class="promo-tap" id="promo-tap-btn">
+                    <span class="promo-dot" aria-hidden="true"></span>
+                    <span>Tapez ici pour investir</span>
+                </button>
+            </div>`;
+        document.body.appendChild(overlay);
+
+        const closePromo = () => { overlay.classList.remove('active'); setTimeout(() => overlay.remove(), 300); };
+        overlay.querySelector('[data-close-promo]').addEventListener('click', closePromo);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) closePromo(); });
+        overlay.querySelector('#promo-tap-btn').addEventListener('click', () => {
+            closePromo();
+            // Aller sur l'onglet Finances (bloc MONEY)
+            const financesLink = document.querySelector('.nav-link[data-target="finances"]');
+            if (financesLink) financesLink.click();
+            const moneyTab = document.querySelector('.quicknav-btn[data-target="sub-revenu"]');
+            if (moneyTab) moneyTab.click();
+            if ((Number(wallet.balance) || 0) >= minAmount) {
+                // Solde suffisant : formulaire où le membre tape son montant
+                setTimeout(() => openMoneyInvestModal(offer.id), 250);
+            } else {
+                // Solde insuffisant : on l'envoie directement faire son dépôt
+                const depositTrigger = document.getElementById('wallet-deposit-btn');
+                if (depositTrigger) setTimeout(() => depositTrigger.click(), 250);
+            }
+        });
+
+        // On attend que les autres pop-ups (ex. notifications) soient fermées
+        let tries = 0;
+        const tryShow = () => {
+            const busy = document.querySelector('.modal-overlay.active');
+            if (busy && tries++ < 40) { setTimeout(tryShow, 700); return; }
+            overlay.classList.add('active');
+        };
+        setTimeout(tryShow, 900);
+    })();
+
+    // ------------------------------------------------------------------
     // 14. Accès admin (n'affiche l'entrée que si le profil est marqué admin)
     // ------------------------------------------------------------------
     const adminMenuItem = document.getElementById('admin-menu-item');
