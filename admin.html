@@ -111,6 +111,39 @@
 
         <!-- VUE: PRODUITS -->
         <section class="admin-view" id="view-produits">
+            <div class="admin-panel" id="money-offer-panel">
+                <div class="admin-panel-header"><h2>Offre MONEY (gain quotidien)</h2></div>
+                <p style="margin:0 0 14px; color:var(--text-secondary,#666); font-size:14px;">
+                    Le client investit le montant de son choix. Chaque jour, le taux ci-dessous (en % de son capital)
+                    est ajouté à son solde et peut être retiré dès que le minimum de retrait est atteint.
+                    Après la durée choisie, les gains s'arrêtent et le capital est restitué.
+                    Les changements ne s'appliquent qu'aux <strong>nouveaux</strong> placements.
+                </p>
+                <form id="money-offer-form" class="admin-form">
+                    <div class="admin-form-row">
+                        <div class="admin-form-group">
+                            <label>Gain par jour (% du capital)</label>
+                            <input type="number" id="money-offer-rate" min="0.01" max="100" step="0.01" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Durée / échéance (jours)</label>
+                            <input type="number" id="money-offer-days" min="1" step="1" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Investissement minimum (USDT)</label>
+                            <input type="number" id="money-offer-min" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Offre</label>
+                            <select id="money-offer-active"><option value="true">Active</option><option value="false">Désactivée</option></select>
+                        </div>
+                    </div>
+                    <p id="money-offer-preview" class="admin-computed" style="margin:0 0 12px;"></p>
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-primary" id="money-offer-save">Enregistrer l'offre MONEY</button>
+                    </div>
+                </form>
+            </div>
             <div class="admin-panel">
                 <div class="admin-panel-header">
                     <h2 id="product-form-title">Ajouter un produit</h2>
