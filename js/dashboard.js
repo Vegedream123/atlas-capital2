@@ -1903,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <label class="form-label" for="withdraw-amount-input">Montant (USDT)</label>
                 <input type="number" id="withdraw-amount-input" class="form-control" placeholder="Min. ${formatUSDT(minWithdrawal)}" min="${minWithdrawal || 1}" max="${withdrawable}" step="0.01">
             </div>
-            <p class="task-modal-sub" id="withdraw-orange-hint" style="display:none; margin-top:-6px; color:var(--danger, #e0631e);">Avec Orange Money, le montant doit se terminer par 0 ou 5 (multiple de 5).</p>
+            <p class="task-modal-sub" id="withdraw-orange-hint" style="display:none; margin-top:-6px; color:var(--danger, #293C63);">Avec Orange Money, le montant doit se terminer par 0 ou 5 (multiple de 5).</p>
             <p class="task-modal-sub" id="withdraw-fee-preview" style="margin-top:-6px;"></p>
 
             <div class="quiz-feedback" id="withdraw-feedback"></div>
